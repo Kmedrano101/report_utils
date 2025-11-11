@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Report Utils - Configuration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tab-active { @apply border-blue-500 text-blue-600; }
+        .tab-inactive { @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300; }
+        .status-dot { @apply h-3 w-3 rounded-full; }
+        .status-healthy { @apply bg-green-500; }
+        .status-unhealthy { @apply bg-red-500; }
+        .status-unknown { @apply bg-gray-400; }
+        .dark .dark\:bg-gray-800 { background-color: #1f2937; }
+        .dark .dark\:bg-gray-900 { background-color: #111827; }
+        .dark .dark\:text-white { color: #fff; }
+        .dark .dark\:text-gray-300 { color: #d1d5db; }
+        .dark .dark\:text-gray-400 { color: #9ca3af; }
+        .dark .dark\:border-gray-700 { border-color: #374151; }
+        .dark .dark\:hover\:bg-gray-600:hover { background-color: #4b5563; }
+        .dark .dark\:bg-gray-700 { background-color: #374151; }
+        .dark .dark\:hover\:bg-gray-600:hover { background-color: #4b5563; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-chart-line text-blue-600 text-3xl mr-3"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tidop IoT Report Utils</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Configuration & Management</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="status-dot" id="systemStatus"></span>
+                        <span class="text-sm font-medium dark:text-gray-300" id="systemStatusText">Checking...</span>
+                    </div>
+                    <button onclick="checkHealth()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button id="theme-toggle" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">
+                        <i id="theme-toggle-icon" class="fas fa-sun"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-active border-b-2 py-4 px-1 text-sm font-medium">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                </button>
+                <button onclick="showTab('database')" id="tab-database" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
+                    <i class="fas fa-database mr-2"></i>Database Config
+                </button>
+                <button onclick="showTab('reports')" id="tab-reports" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
+                    <i class="fas fa-file-pdf mr-2"></i>Reports
+                </button>
+                <button onclick="showTab('api')" id="tab-api" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
+                    <i class="fas fa-code mr-2"></i>API Explorer
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="content-dashboard" class="tab-content">
+            <!-- Dashboard Tab -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <!-- System Health Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">System Health</h3>
+                        <i class="fas fa-heartbeat text-2xl text-blue-600"></i>
+                    </div>
+                    <div id="healthDetails" class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Status</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="health-status">Loading...</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Uptime</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="health-uptime">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Memory</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="health-memory">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Database</h3>
+                        <i class="fas fa-database text-2xl text-green-600"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Connection</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="db-status">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Pool</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="db-pool">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Type</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="db-type">TimescaleDB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Reports</h3>
+                        <i class="fas fa-chart-bar text-2xl text-purple-600"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Generated</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="report-count">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Templates</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="template-count">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">PDF Engine</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="pdf-status">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensors Overview -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <i class="fas fa-microchip mr-2"></i>Sensors Overview
+                </h3>
+                <div id="sensorsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Sensors will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <i class="fas fa-bolt mr-2"></i>Quick Actions
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="generateQuickReport()" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition">
+                        <i class="fas fa-file-pdf text-3xl text-blue-600 mb-2"></i>
+                        <p class="text-sm font-medium dark:text-gray-300">Generate Report</p>
+                    </button>
+                    <button onclick="showTab('database')" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-gray-700 transition">
+                        <i class="fas fa-cog text-3xl text-green-600 mb-2"></i>
+                        <p class="text-sm font-medium dark:text-gray-300">Configure Database</p>
+                    </button>
+                    <button onclick="showTab('api')" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-gray-700 transition">
+                        <i class="fas fa-terminal text-3xl text-purple-600 mb-2"></i>
+                        <p class="text-sm font-medium dark:text-gray-300">API Explorer</p>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-database" class="tab-content hidden">
+            <!-- Database Configuration Tab -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                    <i class="fas fa-database mr-2"></i>Database Configuration
+                </h3>
+
+                <!-- Connection Profiles -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Connection Profile</label>
+                    <div class="flex space-x-2">
+                        <select id="dbProfile" class="flex-1 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="default">Default (Built-in)</option>
+                            <option value="external">External Database</option>
+                            <option value="custom">Custom Configuration</option>
+                        </select>
+                        <button onclick="loadProfile()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            <i class="fas fa-upload mr-2"></i>Load
+                        </button>
+                        <button onclick="saveProfile()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                            <i class="fas fa-save mr-2"></i>Save
+                        </button>
+                    </div>
+                </div>
+
+                <form id="dbConfigForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Host</label>
+                            <input type="text" id="dbHost" placeholder="localhost" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Port</label>
+                            <input type="number" id="dbPort" placeholder="5432" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Database Name</label>
+                            <input type="text" id="dbName" placeholder="iot_reports" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                            <input type="text" id="dbUser" placeholder="postgres" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <input type="password" id="dbPassword" placeholder="••••••••" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SSL Mode</label>
+                            <select id="dbSSL" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="disable">Disable</option>
+                                <option value="prefer">Prefer</option>
+                                <option value="require">Require</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Connection Pool Min</label>
+                            <input type="number" id="dbPoolMin" placeholder="2" min="1" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Connection Pool Max</label>
+                            <input type="number" id="dbPoolMax" placeholder="10" min="1" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-4 pt-4">
+                        <button type="button" onclick="testConnection()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            <i class="fas fa-plug mr-2"></i>Test Connection
+                        </button>
+                        <button type="button" onclick="applyConfig()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                            <i class="fas fa-check mr-2"></i>Apply Configuration
+                        </button>
+                    </div>
+                </form>
+
+                <div id="connectionResult" class="mt-4 hidden">
+                    <!-- Connection test result will appear here -->
+                </div>
+            </div>
+
+            <!-- Schema Mapping -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                    <i class="fas fa-sitemap mr-2"></i>Schema Mapping
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Map your existing database schema to IoT Report Utils</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sensors Table</label>
+                        <input type="text" id="tableSensors" placeholder="iot.sensors" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Readings Table</label>
+                        <input type="text" id="tableReadings" placeholder="iot.sensor_readings" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sensor Types Table</label>
+                        <input type="text" id="tableSensorTypes" placeholder="iot.sensor_types" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <button onclick="detectSchema()" class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                        <i class="fas fa-search mr-2"></i>Auto-Detect Schema
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-reports" class="tab-content hidden">
+            <!-- Reports Tab -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                    <i class="fas fa-file-pdf mr-2"></i>Generate Report
+                </h3>
+
+                <form id="reportForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Type</label>
+                            <select id="reportType" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="iot-summary">IoT Summary Report</option>
+                                <option value="sensor-detailed">Sensor Detailed Report</option>
+                                <option value="building">Building Report</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Output Format</label>
+                            <select id="reportFormat" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="pdf">PDF</option>
+                                <option value="html">HTML</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                            <input type="date" id="reportStartDate" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                            <input type="date" id="reportEndDate" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div id="sensorSelection">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Sensors (Optional)</label>
+                        <div id="sensorCheckboxes" class="grid grid-cols-1 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto p-4 border rounded-md dark:border-gray-700">
+                            <!-- Sensor checkboxes will be loaded here -->
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="generateReport()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-lg font-medium">
+                        <i class="fas fa-file-download mr-2"></i>Generate & Download Report
+                    </button>
+                </form>
+
+                <div id="reportProgress" class="mt-4 hidden">
+                    <div class="flex items-center justify-center space-x-3">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span class="text-gray-600 dark:text-gray-400">Generating report...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Reports -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                    <i class="fas fa-history mr-2"></i>Recent Reports
+                </h3>
+                <div id="recentReports" class="space-y-2">
+                    <!-- Recent reports will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="content-api" class="tab-content hidden">
+            <!-- API Explorer Tab -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                    <i class="fas fa-code mr-2"></i>API Explorer
+                </h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Endpoint</label>
+                        <select id="apiEndpoint" onchange="updateApiExample()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="/health">GET /health - Health Check</option>
+                            <option value="/api/sensors">GET /api/sensors - List Sensors</option>
+                            <option value="/api/kpis">GET /api/kpis - List KPIs</option>
+                            <option value="/api/reports/templates">GET /api/reports/templates - List Templates</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">cURL Command</label>
+                        <div class="relative">
+                            <pre id="curlCommand" class="bg-gray-900 text-green-400 p-4 rounded-md overflow-x-auto text-sm">curl http://localhost:3000/health</pre>
+                            <button onclick="copyCurl()" class="absolute top-2 right-2 px-3 py-1 bg-gray-700 text-white rounded text-xs hover:bg-gray-600">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <button onclick="testEndpoint()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        <i class="fas fa-play mr-2"></i>Test Endpoint
+                    </button>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Response</label>
+                        <pre id="apiResponse" class="bg-gray-100 dark:bg-gray-900 dark:text-gray-300 p-4 rounded-md overflow-x-auto text-sm max-h-96">Click "Test Endpoint" to see response</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <p class="text-center text-gray-500 dark:text-gray-400 text-sm">
+                Tidop IoT Report Utils v1.0.0 - Built with ❤️ for IoT Analytics
+            </p>
+        </div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

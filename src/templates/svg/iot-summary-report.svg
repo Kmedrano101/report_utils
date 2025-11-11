@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 794 1123" version="1.1">
+  <!-- A4 Size: 210mm x 297mm -->
+
+  <!-- Styles -->
+  <defs>
+    <style type="text/css">
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap');
+
+      .title { font-family: 'Inter', sans-serif; font-size: 32px; font-weight: 700; fill: #1a1a1a; }
+      .subtitle { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 600; fill: #4a4a4a; }
+      .header { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; fill: #2563eb; }
+      .text { font-family: 'Inter', sans-serif; font-size: 14px; fill: #4a4a4a; }
+      .small { font-family: 'Inter', sans-serif; font-size: 12px; fill: #6b7280; }
+      .value { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 600; fill: #1a1a1a; }
+      .unit { font-family: 'Inter', sans-serif; font-size: 14px; fill: #6b7280; }
+      .label { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; fill: #6b7280; text-transform: uppercase; }
+
+      .card { fill: #ffffff; stroke: #e5e7eb; stroke-width: 1; }
+      .card-blue { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+      .card-green { fill: #f0fdf4; stroke: #10b981; stroke-width: 2; }
+      .card-orange { fill: #fff7ed; stroke: #f59e0b; stroke-width: 2; }
+      .card-red { fill: #fef2f2; stroke: #ef4444; stroke-width: 2; }
+
+      .divider { stroke: #e5e7eb; stroke-width: 1; }
+    </style>
+
+    <!-- Linear Gradient for Charts -->
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.05" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="794" height="1123" fill="#fafafa"/>
+
+  <!-- Header Section -->
+  <g id="header">
+    <rect x="0" y="0" width="794" height="120" fill="#2563eb"/>
+    <text x="40" y="60" class="title" fill="#ffffff">{{report_title}}</text>
+    <text x="40" y="90" class="subtitle" fill="#dbeafe">{{report_subtitle}}</text>
+  </g>
+
+  <!-- Report Info Bar -->
+  <g id="info-bar">
+    <rect x="40" y="140" width="714" height="60" class="card"/>
+    <text x="60" y="165" class="label">Generated</text>
+    <text x="60" y="185" class="small">{{generation_date}}</text>
+
+    <text x="250" y="165" class="label">Period</text>
+    <text x="250" y="185" class="small">{{date_range}}</text>
+
+    <text x="450" y="165" class="label">Total Sensors</text>
+    <text x="450" y="185" class="value" font-size="20">{{total_sensors}}</text>
+
+    <text x="600" y="165" class="label">Active</text>
+    <text x="600" y="185" class="value" font-size="20" fill="#10b981">{{active_sensors}}</text>
+  </g>
+
+  <!-- KPI Cards -->
+  <g id="kpi-section">
+    <text x="40" y="245" class="header">Key Performance Indicators</text>
+
+    <!-- KPI Card 1 -->
+    <g id="kpi-1">
+      <rect x="40" y="260" width="165" height="120" class="card-blue" rx="8"/>
+      <text x="60" y="285" class="label">{{kpi_1_name}}</text>
+      <text x="60" y="325" class="value">{{kpi_1_value}}</text>
+      <text x="60" y="350" class="unit">{{kpi_1_unit}}</text>
+    </g>
+
+    <!-- KPI Card 2 -->
+    <g id="kpi-2">
+      <rect x="220" y="260" width="165" height="120" class="card-green" rx="8"/>
+      <text x="240" y="285" class="label">{{kpi_2_name}}</text>
+      <text x="240" y="325" class="value">{{kpi_2_value}}</text>
+      <text x="240" y="350" class="unit">{{kpi_2_unit}}</text>
+    </g>
+
+    <!-- KPI Card 3 -->
+    <g id="kpi-3">
+      <rect x="400" y="260" width="165" height="120" class="card-orange" rx="8"/>
+      <text x="420" y="285" class="label">{{kpi_3_name}}</text>
+      <text x="420" y="325" class="value">{{kpi_3_value}}</text>
+      <text x="420" y="350" class="unit">{{kpi_3_unit}}</text>
+    </g>
+
+    <!-- KPI Card 4 -->
+    <g id="kpi-4">
+      <rect x="580" y="260" width="165" height="120" class="card-red" rx="8"/>
+      <text x="600" y="285" class="label">{{kpi_4_name}}</text>
+      <text x="600" y="325" class="value">{{kpi_4_value}}</text>
+      <text x="600" y="350" class="unit">{{kpi_4_unit}}</text>
+    </g>
+  </g>
+
+  <!-- Sensor List Section -->
+  <g id="sensor-section">
+    <text x="40" y="425" class="header">Sensor Overview</text>
+
+    <rect x="40" y="440" width="714" height="40" fill="#f9fafb"/>
+    <text x="60" y="465" class="label">Sensor</text>
+    <text x="280" y="465" class="label">Type</text>
+    <text x="420" y="465" class="label">Location</text>
+    <text x="620" y="465" class="label">Latest Value</text>
+
+    <line x1="40" y1="480" x2="754" y2="480" class="divider"/>
+
+    <!-- Dynamic sensor rows will be generated here -->
+    <g id="sensor-rows">
+      {{sensor_rows}}
+    </g>
+  </g>
+
+  <!-- Chart Placeholder -->
+  <g id="chart-section">
+    <text x="40" y="{{chart_y_position}}" class="header">Time Series Data</text>
+    <rect x="40" y="{{chart_y_position_plus_15}}" width="714" height="300" class="card" rx="8"/>
+    <text x="397" y="{{chart_center_y}}" class="text" text-anchor="middle">
+      [Chart will be dynamically generated]
+    </text>
+    <!-- Actual chart will be injected by JavaScript -->
+    <foreignObject x="50" y="{{chart_y_position_plus_25}}" width="694" height="280">
+      <div xmlns="http://www.w3.org/1999/xhtml" id="chart-container">
+        <canvas id="time-series-chart"></canvas>
+      </div>
+    </foreignObject>
+  </g>
+
+  <!-- Footer -->
+  <g id="footer">
+    <line x1="40" y1="1080" x2="754" y2="1080" class="divider"/>
+    <text x="397" y="1100" class="small" text-anchor="middle">
+      IoT Report Utils - Generated on {{generation_timestamp}}
+    </text>
+  </g>
+</svg>
