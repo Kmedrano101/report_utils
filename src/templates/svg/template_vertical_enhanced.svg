@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width='210mm' height='297mm' viewBox="0 0 794 1123">
+  <!-- A4 Portrait: 210mm x 297mm -->
+
+  <!-- Styles -->
+  <defs>
+    <style type="text/css">
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap');
+
+      .metric-title { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+      .metric-value { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; fill: #1a1a1a; }
+      .metric-unit { font-family: 'Inter', sans-serif; font-size: 11px; fill: #6b7280; }
+      .section-header { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: #374151; }
+      .table-header { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: #6b7280; text-transform: uppercase; }
+      .table-text { font-family: 'Inter', sans-serif; font-size: 11px; fill: #374151; }
+      .table-small { font-family: 'Inter', sans-serif; font-size: 9px; fill: #6b7280; }
+
+      .card { fill: #ffffff; stroke: #e5e7eb; stroke-width: 1; }
+      .card-blue { fill: #dbeafe; stroke: #3b82f6; stroke-width: 1.5; }
+      .card-green { fill: #d1fae5; stroke: #10b981; stroke-width: 1.5; }
+      .card-orange { fill: #fed7aa; stroke: #f97316; stroke-width: 1.5; }
+      .divider { stroke: #e5e7eb; stroke-width: 0.8; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="794" height="1123" fill="#FFFFFF"/>
+
+  <!-- ========================================= -->
+  <!-- HEADER SECTION (Customizable) -->
+  <!-- ========================================= -->
+  <g id="header">
+    <rect width="794" height="140" fill="{{header_bg}}"/>
+    <image href="{{logo_url}}" x="30" y="25" width="90" height="90" preserveAspectRatio="xMidYMid meet"/>
+    <text x="140" y="65" fill="{{header_text_color}}" font-size="26" font-family="Inter, Arial, sans-serif" font-weight="700">
+      {{header_title}}
+    </text>
+    <text x="140" y="95" fill="{{header_subtitle_color}}" font-size="16" font-family="Inter, Arial, sans-serif" font-weight="400">
+      {{header_subtitle}}
+    </text>
+  </g>
+
+  <!-- ========================================= -->
+  <!-- CONTENT AREA STARTS HERE -->
+  <!-- ========================================= -->
+
+  <!-- Report Info Bar -->
+  <g id="report-info">
+    <rect x="30" y="160" width="734" height="45" class="card" rx="4"/>
+    <text x="50" y="177" class="table-header">Period</text>
+    <text x="50" y="194" class="table-text">{{date_range}}</text>
+
+    <text x="280" y="177" class="table-header">Building</text>
+    <text x="280" y="194" class="table-text">{{building_name}}</text>
+
+    <text x="480" y="177" class="table-header">Total Sensors</text>
+    <text x="480" y="194" class="metric-value" font-size="18">{{total_sensors}}</text>
+
+    <text x="630" y="177" class="table-header">Active</text>
+    <text x="630" y="194" class="metric-value" font-size="18" fill="#10b981">{{active_sensors}}</text>
+  </g>
+
+  <!-- KPI Metric Cards Section -->
+  <g id="kpi-metrics">
+    <text x="30" y="240" class="section-header">Key Metrics</text>
+
+    <!-- Temperature Card -->
+    <g id="metric-temperature">
+      <rect x="30" y="250" width="175" height="85" class="card-blue" rx="6"/>
+      <text x="45" y="268" class="metric-title">Avg Temperature</text>
+      <text x="45" y="298" class="metric-value">{{avg_temperature}}</text>
+      <text x="45" y="315" class="metric-unit">°C</text>
+      <text x="45" y="328" class="table-small">Range: {{temp_min}}°C - {{temp_max}}°C</text>
+    </g>
+
+    <!-- Noise Level Card -->
+    <g id="metric-noise">
+      <rect x="218" y="250" width="175" height="85" class="card-orange" rx="6"/>
+      <text x="233" y="268" class="metric-title">Peak Noise Level</text>
+      <text x="233" y="298" class="metric-value">{{peak_noise}}</text>
+      <text x="233" y="315" class="metric-unit">dB</text>
+      <text x="233" y="328" class="table-small">Avg: {{avg_noise}} dB</text>
+    </g>
+
+    <!-- Power Consumption Card -->
+    <g id="metric-power">
+      <rect x="406" y="250" width="175" height="85" class="card-green" rx="6"/>
+      <text x="421" y="268" class="metric-title">Total Consumption</text>
+      <text x="421" y="298" class="metric-value">{{total_power}}</text>
+      <text x="421" y="315" class="metric-unit">kWh</text>
+      <text x="421" y="328" class="table-small">Peak: {{peak_power}} A</text>
+    </g>
+
+    <!-- Additional Metric Card (Flexible) -->
+    <g id="metric-custom">
+      <rect x="594" y="250" width="170" height="85" class="card" rx="6"/>
+      <text x="609" y="268" class="metric-title">{{custom_metric_name}}</text>
+      <text x="609" y="298" class="metric-value">{{custom_metric_value}}</text>
+      <text x="609" y="315" class="metric-unit">{{custom_metric_unit}}</text>
+    </g>
+  </g>
+
+  <!-- Sensor Overview Table -->
+  <g id="sensor-table">
+    <text x="30" y="370" class="section-header">Sensor Overview</text>
+
+    <!-- Table Header -->
+    <rect x="30" y="380" width="734" height="30" fill="#f9fafb"/>
+    <text x="45" y="399" class="table-header">Sensor Name</text>
+    <text x="240" y="399" class="table-header">Type</text>
+    <text x="360" y="399" class="table-header">Location</text>
+    <text x="540" y="399" class="table-header">Latest Reading</text>
+    <text x="680" y="399" class="table-header">Status</text>
+
+    <line x1="30" y1="410" x2="764" y2="410" class="divider"/>
+
+    <!-- Table Rows (Dynamic Content - Placeholder for up to 12 sensors) -->
+    <g id="sensor-rows">
+      <!-- Row 1 Example -->
+      <rect x="30" y="410" width="734" height="28" fill="#ffffff"/>
+      <text x="45" y="428" class="table-text">{{sensor_1_name}}</text>
+      <text x="240" y="428" class="table-small">{{sensor_1_type}}</text>
+      <text x="360" y="428" class="table-small">{{sensor_1_location}}</text>
+      <text x="540" y="428" class="table-text">{{sensor_1_value}} {{sensor_1_unit}}</text>
+      <circle cx="697" cy="424" r="4" fill="{{sensor_1_status_color}}"/>
+
+      <line x1="30" y1="438" x2="764" y2="438" class="divider"/>
+
+      <!-- Row 2 -->
+      <rect x="30" y="438" width="734" height="28" fill="#fafafa"/>
+      <text x="45" y="456" class="table-text">{{sensor_2_name}}</text>
+      <text x="240" y="456" class="table-small">{{sensor_2_type}}</text>
+      <text x="360" y="456" class="table-small">{{sensor_2_location}}</text>
+      <text x="540" y="456" class="table-text">{{sensor_2_value}} {{sensor_2_unit}}</text>
+      <circle cx="697" cy="452" r="4" fill="{{sensor_2_status_color}}"/>
+
+      <line x1="30" y1="466" x2="764" y2="466" class="divider"/>
+
+      <!-- Additional rows follow same pattern... -->
+      <!-- Rows 3-12 can be added dynamically -->
+      <text x="397" y="500" class="table-small" text-anchor="middle" fill="#9ca3af">
+        [Additional sensor rows will be dynamically generated]
+      </text>
+    </g>
+  </g>
+
+  <!-- Trend Analysis / Chart Section -->
+  <g id="chart-section">
+    <text x="30" y="720" class="section-header">Trend Analysis</text>
+
+    <rect x="30" y="730" width="734" height="280" class="card" rx="6"/>
+
+    <!-- Chart Type Selector Placeholder -->
+    <g id="chart-legend">
+      <text x="50" y="750" class="table-small">
+        <tspan fill="#3b82f6">■</tspan> Temperature
+      </text>
+      <text x="150" y="750" class="table-small">
+        <tspan fill="#f97316">■</tspan> Noise
+      </text>
+      <text x="230" y="750" class="table-small">
+        <tspan fill="#10b981">■</tspan> Power
+      </text>
+    </g>
+
+    <!-- Chart Placeholder -->
+    <foreignObject x="40" y="760" width="714" height="240">
+      <div xmlns="http://www.w3.org/1999/xhtml" id="chart-container" style="width:100%; height:100%;">
+        <canvas id="time-series-chart"></canvas>
+      </div>
+    </foreignObject>
+
+    <text x="397" y="890" class="table-small" text-anchor="middle" fill="#9ca3af">
+      [Time series data visualization - hourly/daily trends]
+    </text>
+  </g>
+
+  <!-- ========================================= -->
+  <!-- FOOTER SECTION (Customizable) -->
+  <!-- ========================================= -->
+  <g id="footer">
+    <line x1="30" y1="1050" x2="764" y2="1050" stroke="#C7AB81" stroke-width="2"/>
+    <rect y="1058" width="794" height="65" fill="{{footer_bg}}"/>
+    <text x="40" y="1090" fill="{{footer_text_color}}" font-size="12" font-family="Inter, Arial, sans-serif">
+      {{footer_text}}
+    </text>
+    <text x="754" y="1090" fill="{{footer_date_color}}" font-size="12" font-family="Inter, Arial, sans-serif" text-anchor="end">
+      {{generation_date}}
+    </text>
+  </g>
+</svg>
