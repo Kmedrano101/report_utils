@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Capa_1" data-name="Capa 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 594.64 786.64">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #c2a278;
+        stroke-miterlimit: 10;
+        stroke-width: 2px;
+      }
+
+      .cls-2 {
+        fill: #202020;
+      }
+    </style>
+  </defs>
+  <rect class="cls-2" width="594.64" height="87.68"/>
+  <line class="cls-1" x1="38.95" y1="784.36" x2="551.95" y2="785.64"/>
+  <image width="3508" height="2480" transform="translate(43.01 12.37) scale(.03)" xlink:href="LOGO MADISON i.png"/>
+</svg>

@@ -9,6 +9,8 @@ import reportController from '../controllers/reportController.js';
 const router = express.Router();
 
 // Report generation endpoints
+router.post('/generate-pdf', reportController.generatePDFFromHTML.bind(reportController));
+router.post('/test-template', reportController.generateTestTemplateReport.bind(reportController));
 router.post('/iot-summary', reportController.generateIoTSummaryReport.bind(reportController));
 router.post('/sensor-detailed', reportController.generateSensorDetailedReport.bind(reportController));
 router.post('/building', reportController.generateBuildingReport.bind(reportController));

@@ -16,6 +16,26 @@ class SvgTemplateService {
   constructor() {
     this.templateCache = new Map();
     this.templateBasePath = join(__dirname, '../templates/svg');
+    this.layoutTemplates = {
+      portrait: {
+        template: 'madison_vertical.svg',
+        positions: {
+          title: { x: 297.32, y: 60, fontSize: 32, anchor: 'middle', fill: '#ffffff', fontWeight: 600 },
+          subtitle: { x: 297.32, y: 95, fontSize: 18, anchor: 'middle', fill: '#d1d5db', fontWeight: 400 },
+          footerText: { x: 60, y: 760, fontSize: 16, anchor: 'start', fill: '#202020', fontWeight: 500 },
+          footerDate: { x: 534, y: 760, fontSize: 16, anchor: 'end', fill: '#202020', fontWeight: 500 }
+        }
+      },
+      landscape: {
+        template: 'madison_horizontal.svg',
+        positions: {
+          title: { x: 420.95, y: 85, fontSize: 34, anchor: 'middle', fill: '#ffffff', fontWeight: 600 },
+          subtitle: { x: 420.95, y: 125, fontSize: 20, anchor: 'middle', fill: '#d1d5db', fontWeight: 400 },
+          footerText: { x: 80, y: 560, fontSize: 16, anchor: 'start', fill: '#202020', fontWeight: 500 },
+          footerDate: { x: 780, y: 560, fontSize: 16, anchor: 'end', fill: '#202020', fontWeight: 500 }
+        }
+      }
+    };
   }
 
   /**
@@ -98,6 +118,173 @@ class SvgTemplateService {
     });
 
     return svgRows;
+  }
+
+  /**
+   * Generate report using report_test.svg template
+   * @param {Object} reportData - Report data
+   * @returns {Promise<string>} Processed SVG
+   */
+  async generateTestReport(reportData) {
+    try {
+      let template = await this.loadTemplate('report_test.svg');
+
+      const {
+        title = 'IoT Sensor Summary Report',
+        subtitle = 'Real-time monitoring and analytics',
+        startDate,
+        endDate,
+        sensors = [],
+        kpis = [],
+        footerText = 'Madison - IoT Report'
+      } = reportData;
+
+      // Replace placeholders in the template
+      const data = {
+        reportTitle: title,
+        reportSubtitle: subtitle,
+        footerText: footerText,
+        generationDate: format(new Date(), 'MMM dd, yyyy HH:mm')
+      };
+
+      // Replace all placeholders
+      template = this.replacePlaceholders(template, data);
+
+      // Add subtitle text overlay if not already in template
+      // Insert before closing </svg> tag
+      const subtitleOverlay = `
+        <text x="105" y="40"
+              text-anchor="middle"
+              font-family="Arial, sans-serif"
+              font-size="6"
+              fill="#666666">
+          ${this.escapeXml(subtitle)}
+        </text>
+        <text x="10" y="290"
+              font-family="Arial, sans-serif"
+              font-size="4"
+              fill="#333333">
+          ${this.escapeXml(footerText)}
+        </text>
+        <text x="200" y="290"
+              text-anchor="end"
+              font-family="Arial, sans-serif"
+              font-size="4"
+              fill="#333333">
+          ${data.generationDate}
+        </text>
+      `;
+
+      template = template.replace('</svg>', `${subtitleOverlay}</svg>`);
+
+      logger.info('Generated test report SVG using report_test.svg template', {
+        sensors: sensors.length,
+        kpis: kpis.length,
+        title,
+        subtitle
+      });
+
+      return template;
+    } catch (error) {
+      logger.error('Error generating test report', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Generate simple layout preview using Madison base templates
+   * @param {Object} options - Preview options
+   * @returns {Promise<string>} Processed SVG
+   */
+  async generateLayoutPreview(options = {}) {
+    const {
+      layout = 'portrait',
+      templateName = null,
+      title = 'IoT Sensor Summary Report',
+      subtitle = 'Real-time monitoring and analytics',
+      footerText = 'Madison - IoT Report'
+    } = options;
+
+    const normalizedLayout = layout === 'landscape' ? 'landscape' : 'portrait';
+    let layoutConfig = this.layoutTemplates[normalizedLayout];
+
+    if (templateName) {
+      const matchedConfig = Object.values(this.layoutTemplates).find(cfg => cfg.template === templateName);
+      if (!matchedConfig) {
+        throw new Error(`Unsupported template for layout preview: ${templateName}`);
+      }
+      layoutConfig = matchedConfig;
+    }
+
+    let template = await this.loadTemplate(layoutConfig.template);
+    const timestamp = format(new Date(), 'MMM dd, yyyy HH:mm');
+    const overlayParts = [];
+
+    const { positions } = layoutConfig;
+    const fontFamily = 'Inter, Arial, sans-serif';
+
+    if (title) {
+      const pos = positions.title;
+      overlayParts.push(`
+        <text x="${pos.x}" y="${pos.y}"
+              text-anchor="${pos.anchor}"
+              font-family="${fontFamily}"
+              font-size="${pos.fontSize}"
+              font-weight="${pos.fontWeight}"
+              fill="${pos.fill}">
+          ${this.escapeXml(title)}
+        </text>
+      `);
+    }
+
+    if (subtitle) {
+      const pos = positions.subtitle;
+      overlayParts.push(`
+        <text x="${pos.x}" y="${pos.y}"
+              text-anchor="${pos.anchor}"
+              font-family="${fontFamily}"
+              font-size="${pos.fontSize}"
+              font-weight="${pos.fontWeight}"
+              fill="${pos.fill}">
+          ${this.escapeXml(subtitle)}
+        </text>
+      `);
+    }
+
+    if (footerText) {
+      const pos = positions.footerText;
+      overlayParts.push(`
+        <text x="${pos.x}" y="${pos.y}"
+              text-anchor="${pos.anchor}"
+              font-family="${fontFamily}"
+              font-size="${pos.fontSize}"
+              font-weight="${pos.fontWeight}"
+              fill="${pos.fill}">
+          ${this.escapeXml(footerText)}
+        </text>
+      `);
+    }
+
+    const footerDatePos = positions.footerDate;
+    overlayParts.push(`
+      <text x="${footerDatePos.x}" y="${footerDatePos.y}"
+            text-anchor="${footerDatePos.anchor}"
+            font-family="${fontFamily}"
+            font-size="${footerDatePos.fontSize}"
+            font-weight="${footerDatePos.fontWeight}"
+            fill="${footerDatePos.fill}">
+        ${this.escapeXml(timestamp)}
+      </text>
+    `);
+
+    const overlayGroup = `
+      <g id="layout-preview-overlay">
+        ${overlayParts.join('\n')}
+      </g>
+    `;
+
+    template = template.replace('</svg>', `${overlayGroup}</svg>`);
+    return template;
   }
 
   /**

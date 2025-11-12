@@ -1,0 +1,369 @@
+/**
+ * PDF Typography Module - Text styles and font configurations
+ * Configurable typography for professional PDF reports
+ */
+
+/* ==================== Font Families ==================== */
+
+:root {
+    /* Default font stacks */
+    --pdf-font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --pdf-font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --pdf-font-mono: 'Courier New', Courier, monospace;
+
+    /* Font sizes */
+    --pdf-text-xs: 0.75rem;      /* 12px */
+    --pdf-text-sm: 0.875rem;     /* 14px */
+    --pdf-text-base: 1rem;       /* 16px */
+    --pdf-text-lg: 1.125rem;     /* 18px */
+    --pdf-text-xl: 1.25rem;      /* 20px */
+    --pdf-text-2xl: 1.5rem;      /* 24px */
+    --pdf-text-3xl: 1.875rem;    /* 30px */
+    --pdf-text-4xl: 2.25rem;     /* 36px */
+    --pdf-text-5xl: 3rem;        /* 48px */
+
+    /* Line heights */
+    --pdf-leading-none: 1;
+    --pdf-leading-tight: 1.25;
+    --pdf-leading-snug: 1.375;
+    --pdf-leading-normal: 1.5;
+    --pdf-leading-relaxed: 1.625;
+    --pdf-leading-loose: 2;
+
+    /* Font weights */
+    --pdf-font-thin: 100;
+    --pdf-font-light: 300;
+    --pdf-font-normal: 400;
+    --pdf-font-medium: 500;
+    --pdf-font-semibold: 600;
+    --pdf-font-bold: 700;
+    --pdf-font-extrabold: 800;
+    --pdf-font-black: 900;
+}
+
+/* ==================== Base Typography ==================== */
+
+.pdf-container {
+    font-family: var(--pdf-font-primary);
+    font-size: var(--pdf-text-base);
+    line-height: var(--pdf-leading-normal);
+    color: var(--pdf-text-primary);
+}
+
+/* ==================== Headings ==================== */
+
+.pdf-h1,
+.pdf-heading-1 {
+    font-family: var(--pdf-font-heading);
+    font-size: var(--pdf-text-4xl);
+    font-weight: var(--pdf-font-bold);
+    line-height: var(--pdf-leading-tight);
+    color: var(--pdf-text-primary);
+    margin-bottom: 1.5rem;
+}
+
+.pdf-h2,
+.pdf-heading-2 {
+    font-family: var(--pdf-font-heading);
+    font-size: var(--pdf-text-3xl);
+    font-weight: var(--pdf-font-bold);
+    line-height: var(--pdf-leading-tight);
+    color: var(--pdf-text-primary);
+    margin-bottom: 1.25rem;
+}
+
+.pdf-h3,
+.pdf-heading-3 {
+    font-family: var(--pdf-font-heading);
+    font-size: var(--pdf-text-2xl);
+    font-weight: var(--pdf-font-semibold);
+    line-height: var(--pdf-leading-snug);
+    color: var(--pdf-text-primary);
+    margin-bottom: 1rem;
+}
+
+.pdf-h4,
+.pdf-heading-4 {
+    font-family: var(--pdf-font-heading);
+    font-size: var(--pdf-text-xl);
+    font-weight: var(--pdf-font-semibold);
+    line-height: var(--pdf-leading-snug);
+    color: var(--pdf-text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.pdf-h5,
+.pdf-heading-5 {
+    font-family: var(--pdf-font-heading);
+    font-size: var(--pdf-text-lg);
+    font-weight: var(--pdf-font-medium);
+    line-height: var(--pdf-leading-normal);
+    color: var(--pdf-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.pdf-h6,
+.pdf-heading-6 {
+    font-family: var(--pdf-font-heading);
+    font-size: var(--pdf-text-base);
+    font-weight: var(--pdf-font-medium);
+    line-height: var(--pdf-leading-normal);
+    color: var(--pdf-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+/* Heading with colored accent */
+.pdf-heading-accent {
+    color: var(--pdf-primary);
+}
+
+.pdf-heading-underline {
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--pdf-primary);
+}
+
+/* ==================== Body Text ==================== */
+
+.pdf-text {
+    font-size: var(--pdf-text-base);
+    line-height: var(--pdf-leading-normal);
+    color: var(--pdf-text-primary);
+}
+
+.pdf-text-lg {
+    font-size: var(--pdf-text-lg);
+    line-height: var(--pdf-leading-relaxed);
+}
+
+.pdf-text-sm {
+    font-size: var(--pdf-text-sm);
+    line-height: var(--pdf-leading-normal);
+}
+
+.pdf-text-xs {
+    font-size: var(--pdf-text-xs);
+    line-height: var(--pdf-leading-normal);
+}
+
+/* ==================== Paragraphs ==================== */
+
+.pdf-paragraph {
+    margin-bottom: 1rem;
+    line-height: var(--pdf-leading-relaxed);
+}
+
+.pdf-paragraph-tight {
+    margin-bottom: 0.5rem;
+    line-height: var(--pdf-leading-normal);
+}
+
+.pdf-paragraph-loose {
+    margin-bottom: 1.5rem;
+    line-height: var(--pdf-leading-loose);
+}
+
+/* ==================== Text Styles ==================== */
+
+.pdf-text-bold {
+    font-weight: var(--pdf-font-bold);
+}
+
+.pdf-text-semibold {
+    font-weight: var(--pdf-font-semibold);
+}
+
+.pdf-text-medium {
+    font-weight: var(--pdf-font-medium);
+}
+
+.pdf-text-normal {
+    font-weight: var(--pdf-font-normal);
+}
+
+.pdf-text-light {
+    font-weight: var(--pdf-font-light);
+}
+
+/* ==================== Text Alignment ==================== */
+
+.pdf-text-left { text-align: left; }
+.pdf-text-center { text-align: center; }
+.pdf-text-right { text-align: right; }
+.pdf-text-justify { text-align: justify; }
+
+/* ==================== Text Transform ==================== */
+
+.pdf-text-uppercase { text-transform: uppercase; }
+.pdf-text-lowercase { text-transform: lowercase; }
+.pdf-text-capitalize { text-transform: capitalize; }
+
+/* ==================== Text Decoration ==================== */
+
+.pdf-text-underline { text-decoration: underline; }
+.pdf-text-line-through { text-decoration: line-through; }
+.pdf-text-no-underline { text-decoration: none; }
+
+/* ==================== Labels & Tags ==================== */
+
+.pdf-label {
+    font-size: var(--pdf-text-sm);
+    font-weight: var(--pdf-font-semibold);
+    color: var(--pdf-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.pdf-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: var(--pdf-text-xs);
+    font-weight: var(--pdf-font-medium);
+    border-radius: 9999px;
+    background: var(--pdf-bg-accent);
+    color: var(--pdf-primary);
+}
+
+.pdf-badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    font-size: var(--pdf-text-xs);
+    font-weight: var(--pdf-font-semibold);
+    border-radius: 0.25rem;
+    background: var(--pdf-primary);
+    color: var(--pdf-text-inverse);
+}
+
+/* ==================== Lists ==================== */
+
+.pdf-list {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.pdf-list-item {
+    margin-bottom: 0.5rem;
+    line-height: var(--pdf-leading-relaxed);
+}
+
+.pdf-list-ordered {
+    list-style-type: decimal;
+}
+
+.pdf-list-unordered {
+    list-style-type: disc;
+}
+
+.pdf-list-none {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+/* ==================== Quotes ==================== */
+
+.pdf-quote {
+    border-left: 4px solid var(--pdf-primary);
+    padding-left: 1.5rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: var(--pdf-text-secondary);
+}
+
+.pdf-blockquote {
+    border-left: 4px solid var(--pdf-primary);
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    background: var(--pdf-bg-accent);
+    font-style: italic;
+}
+
+/* ==================== Code & Monospace ==================== */
+
+.pdf-code {
+    font-family: var(--pdf-font-mono);
+    font-size: 0.9em;
+    background: var(--pdf-bg-secondary);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    color: var(--pdf-primary);
+}
+
+.pdf-code-block {
+    font-family: var(--pdf-font-mono);
+    font-size: var(--pdf-text-sm);
+    background: var(--pdf-bg-secondary);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid var(--pdf-border);
+}
+
+/* ==================== Emphasis ==================== */
+
+.pdf-emphasis {
+    font-style: italic;
+    color: var(--pdf-text-secondary);
+}
+
+.pdf-strong {
+    font-weight: var(--pdf-font-bold);
+    color: var(--pdf-text-primary);
+}
+
+.pdf-highlight {
+    background: var(--pdf-bg-accent);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+}
+
+/* ==================== Links (for HTML reports) ==================== */
+
+.pdf-link {
+    color: var(--pdf-primary);
+    text-decoration: underline;
+}
+
+.pdf-link:hover {
+    color: var(--pdf-primary-dark);
+}
+
+/* ==================== Metadata Text ==================== */
+
+.pdf-meta {
+    font-size: var(--pdf-text-sm);
+    color: var(--pdf-text-muted);
+    font-weight: var(--pdf-font-normal);
+}
+
+.pdf-meta-label {
+    font-weight: var(--pdf-font-semibold);
+    color: var(--pdf-text-secondary);
+}
+
+/* ==================== Title Variations ==================== */
+
+.pdf-title-main {
+    font-size: var(--pdf-text-5xl);
+    font-weight: var(--pdf-font-bold);
+    line-height: var(--pdf-leading-tight);
+    color: var(--pdf-primary);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.pdf-title-section {
+    font-size: var(--pdf-text-2xl);
+    font-weight: var(--pdf-font-semibold);
+    color: var(--pdf-primary);
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--pdf-primary);
+    margin-bottom: 1.5rem;
+}
+
+.pdf-subtitle {
+    font-size: var(--pdf-text-xl);
+    font-weight: var(--pdf-font-normal);
+    color: var(--pdf-text-secondary);
+    margin-bottom: 1rem;
+}

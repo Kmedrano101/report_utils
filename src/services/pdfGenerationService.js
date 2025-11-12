@@ -109,6 +109,7 @@ class PdfGenerationService {
         // Generate PDF
         const pdfOptions = {
           format: options.format || 'A4',
+          landscape: options.landscape || false,
           printBackground: true,
           preferCSSPageSize: false,
           margin: options.margin || {

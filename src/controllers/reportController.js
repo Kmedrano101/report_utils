@@ -12,6 +12,143 @@ import { parseISO, subDays } from 'date-fns';
 
 class ReportController {
   /**
+   * Generate PDF from HTML
+   * POST /api/reports/generate-pdf
+   */
+  async generatePDFFromHTML(req, res) {
+    const startTime = Date.now();
+
+    try {
+      const { html, options = {} } = req.body;
+
+      if (!html) {
+        return res.status(400).json({
+          success: false,
+          error: 'HTML content is required'
+        });
+      }
+
+      logger.info('Generating PDF from HTML', { optionsProvided: !!options });
+
+      // Generate PDF
+      const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(html, options);
+
+      // Log generation to database
+      await this.logReportGeneration({
+        template_id: null,
+        report_name: 'Custom PDF Report',
+        parameters: { customTemplate: true },
+        file_size_kb: Math.round(pdfBuffer.length / 1024),
+        generation_time_ms: Date.now() - startTime,
+        status: 'generated'
+      });
+
+      // Send PDF
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="report-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer, 'binary');
+
+    } catch (error) {
+      logger.error('Error generating PDF from HTML', { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Generate Test Template report (using report_test.svg)
+   * POST /api/reports/test-template
+   */
+  async generateTestTemplateReport(req, res) {
+    const startTime = Date.now();
+
+    try {
+      const {
+        reportTitle = 'IoT Sensor Summary Report',
+        reportSubtitle = 'Real-time monitoring and analytics',
+        footerText = 'Madison - IoT Report',
+        layout = 'portrait',
+        pageSize = 'a4',
+        templateName = null,
+        format = 'pdf'
+      } = req.body;
+
+      const normalizedLayout = layout === 'landscape' ? 'landscape' : 'portrait';
+      logger.info('Generating template preview report', {
+        format,
+        layout: normalizedLayout,
+        template: templateName || 'auto'
+      });
+      let resolvedTemplate = templateName;
+      let svgContent;
+
+      if (!resolvedTemplate || resolvedTemplate === 'report_test.svg') {
+        resolvedTemplate = 'report_test.svg';
+        svgContent = await svgTemplateService.generateTestReport({
+          title: reportTitle,
+          subtitle: reportSubtitle,
+          footerText
+        });
+      } else {
+        svgContent = await svgTemplateService.generateLayoutPreview({
+          layout: normalizedLayout,
+          templateName: resolvedTemplate,
+          title: reportTitle,
+          subtitle: reportSubtitle,
+          footerText
+        });
+      }
+
+      // Wrap in HTML
+      const htmlContent = svgTemplateService.generateHtmlWithSvg(svgContent);
+
+      // Return format
+      if (format === 'html') {
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(htmlContent);
+      }
+
+      const pdfFormat = this.getPdfFormat(pageSize);
+
+      // Generate PDF
+      const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(htmlContent, {
+        format: pdfFormat,
+        landscape: normalizedLayout === 'landscape'
+      });
+
+      // Log generation to database
+      await this.logReportGeneration({
+        template_id: null,
+        report_name: 'Template Preview Report',
+        parameters: {
+          layout: normalizedLayout,
+          pageSize: pdfFormat,
+          template: resolvedTemplate
+        },
+        file_size_kb: Math.round(pdfBuffer.length / 1024),
+        generation_time_ms: Date.now() - startTime,
+        status: 'generated'
+      });
+
+      // Send PDF
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="test-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer, 'binary');
+
+    } catch (error) {
+      logger.error('Error generating test template report', { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
    * Generate IoT summary report
    * POST /api/reports/iot-summary
    */
@@ -246,6 +383,25 @@ class ReportController {
         error: error.message
       });
     }
+  }
+
+  /**
+   * Normalize requested page size to Puppeteer format
+   * @private
+   */
+  getPdfFormat(pageSize = 'a4') {
+    const sizeMap = {
+      a4: 'A4',
+      letter: 'Letter',
+      legal: 'Legal'
+    };
+
+    if (typeof pageSize === 'string') {
+      const normalized = pageSize.toLowerCase();
+      return sizeMap[normalized] || 'A4';
+    }
+
+    return 'A4';
   }
 
   /**

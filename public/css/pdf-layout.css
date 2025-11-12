@@ -1,0 +1,359 @@
+/**
+ * PDF Layout Module - Configurable layouts for PDF reports
+ * Supports vertical (portrait) and horizontal (landscape) orientations
+ */
+
+/* ==================== Page Layouts ==================== */
+
+/* Base PDF container */
+.pdf-container {
+    width: 100%;
+    background: #ffffff;
+    color: var(--pdf-text-primary);
+}
+
+.pdf-page {
+    background: #ffffff;
+    border: 2px solid #000000;
+    box-sizing: border-box;
+}
+
+/* Content wrapper ensures footer spacing */
+.pdf-content {
+    padding-bottom: 140px;
+}
+
+/* Portrait Layout (Vertical) - Default */
+.pdf-layout-portrait {
+    max-width: 210mm; /* A4 width */
+    margin: 0 auto;
+    padding: 20mm;
+}
+
+.pdf-layout-portrait .pdf-page {
+    min-height: 297mm; /* A4 height */
+    page-break-after: always;
+    position: relative;
+}
+
+/* Landscape Layout (Horizontal) */
+.pdf-layout-landscape {
+    max-width: 297mm; /* A4 landscape width */
+    margin: 0 auto;
+    padding: 15mm 20mm;
+}
+
+.pdf-layout-landscape .pdf-page {
+    min-height: 210mm; /* A4 landscape height */
+    page-break-after: always;
+    position: relative;
+}
+
+/* Letter size (US) - Portrait */
+.pdf-layout-letter-portrait {
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 1in;
+}
+
+.pdf-layout-letter-portrait .pdf-page {
+    min-height: 11in;
+    page-break-after: always;
+}
+
+/* Letter size (US) - Landscape */
+.pdf-layout-letter-landscape {
+    max-width: 11in;
+    margin: 0 auto;
+    padding: 0.75in 1in;
+}
+
+.pdf-layout-letter-landscape .pdf-page {
+    min-height: 8.5in;
+    page-break-after: always;
+}
+
+/* ==================== Grid Systems ==================== */
+
+/* Flexible Grid - Works for both orientations */
+.pdf-grid {
+    display: grid;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* 2 Column Grid */
+.pdf-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* 3 Column Grid */
+.pdf-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* 4 Column Grid (better for landscape) */
+.pdf-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Responsive grids based on orientation */
+.pdf-layout-portrait .pdf-grid-auto {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.pdf-layout-landscape .pdf-grid-auto {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* ==================== Sections ==================== */
+
+.pdf-section {
+    margin-bottom: 2rem;
+    page-break-inside: avoid;
+}
+
+.pdf-section-full {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.pdf-section-half {
+    width: 48%;
+    display: inline-block;
+    vertical-align: top;
+    margin-bottom: 2rem;
+}
+
+.pdf-section-third {
+    width: 31%;
+    display: inline-block;
+    vertical-align: top;
+    margin-bottom: 2rem;
+}
+
+/* Spacing between inline sections */
+.pdf-section-half:not(:last-child),
+.pdf-section-third:not(:last-child) {
+    margin-right: 4%;
+}
+
+/* ==================== Header Layouts ==================== */
+
+.pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #000000;
+    color: #ffffff;
+    padding: 2rem 2.5rem;
+    margin: -20mm -20mm 2rem -20mm;
+    min-height: 120px;
+}
+
+.pdf-header-content {
+    flex: 1;
+    margin-left: 2rem;
+}
+
+.pdf-header-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.pdf-header-subtitle {
+    font-size: 1.125rem;
+    color: #cccccc;
+    margin: 0.5rem 0 0 0;
+    font-weight: 400;
+}
+
+.pdf-header-logo {
+    max-width: 195px;
+    max-height: 104px;
+    margin-right: 0;
+    flex-shrink: 0;
+}
+
+.pdf-header-centered {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--pdf-primary);
+}
+
+.pdf-header-info {
+    text-align: right;
+}
+
+.pdf-header-centered .pdf-header-info {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+/* ==================== Footer Layouts ==================== */
+
+.pdf-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0 -20mm -20mm -20mm;
+    padding: 0.75rem 2.5rem 1.5rem 2.5rem;
+    border-top: 2px solid #000000;
+    font-size: 0.875rem;
+    color: var(--pdf-text-primary);
+    background: #ffffff;
+}
+
+.pdf-footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+}
+
+.pdf-footer-left {
+    font-weight: 500;
+    color: var(--pdf-text-primary);
+}
+
+.pdf-footer-right {
+    color: var(--pdf-text-secondary);
+    font-size: 0.875rem;
+}
+
+.pdf-footer-centered {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--pdf-border);
+    font-size: 0.875rem;
+    color: var(--pdf-text-muted);
+}
+
+/* ==================== Content Blocks ==================== */
+
+.pdf-block {
+    background: var(--pdf-bg-secondary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--pdf-border);
+}
+
+.pdf-block-bordered {
+    border: 2px solid var(--pdf-primary);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.pdf-block-highlight {
+    background: var(--pdf-bg-accent);
+    border-left: 4px solid var(--pdf-primary);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ==================== Flex Layouts ==================== */
+
+.pdf-flex {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.pdf-flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pdf-flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pdf-flex-start {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.pdf-flex-end {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.pdf-flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pdf-flex-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* ==================== Spacing Utilities ==================== */
+
+.pdf-mb-1 { margin-bottom: 0.5rem; }
+.pdf-mb-2 { margin-bottom: 1rem; }
+.pdf-mb-3 { margin-bottom: 1.5rem; }
+.pdf-mb-4 { margin-bottom: 2rem; }
+.pdf-mb-5 { margin-bottom: 2.5rem; }
+
+.pdf-mt-1 { margin-top: 0.5rem; }
+.pdf-mt-2 { margin-top: 1rem; }
+.pdf-mt-3 { margin-top: 1.5rem; }
+.pdf-mt-4 { margin-top: 2rem; }
+.pdf-mt-5 { margin-top: 2.5rem; }
+
+.pdf-p-1 { padding: 0.5rem; }
+.pdf-p-2 { padding: 1rem; }
+.pdf-p-3 { padding: 1.5rem; }
+.pdf-p-4 { padding: 2rem; }
+
+/* ==================== Width Utilities ==================== */
+
+.pdf-w-full { width: 100%; }
+.pdf-w-half { width: 50%; }
+.pdf-w-third { width: 33.333%; }
+.pdf-w-quarter { width: 25%; }
+
+/* ==================== Print Optimizations ==================== */
+
+@media print {
+    .pdf-page {
+        page-break-after: always;
+    }
+
+    .pdf-section,
+    .pdf-block,
+    .pdf-card {
+        page-break-inside: avoid;
+    }
+
+    /* Force orientation for print */
+    @page portrait {
+        size: A4 portrait;
+    }
+
+    @page landscape {
+        size: A4 landscape;
+    }
+
+    .pdf-layout-portrait {
+        page: portrait;
+    }
+
+    .pdf-layout-landscape {
+        page: landscape;
+    }
+}

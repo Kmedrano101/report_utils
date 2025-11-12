@@ -5,24 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoT Report Utils - Configuration</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .tab-active { @apply border-blue-500 text-blue-600; }
-        .tab-inactive { @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300; }
-        .status-dot { @apply h-3 w-3 rounded-full; }
-        .status-healthy { @apply bg-green-500; }
-        .status-unhealthy { @apply bg-red-500; }
-        .status-unknown { @apply bg-gray-400; }
-        .dark .dark\:bg-gray-800 { background-color: #1f2937; }
-        .dark .dark\:bg-gray-900 { background-color: #111827; }
-        .dark .dark\:text-white { color: #fff; }
-        .dark .dark\:text-gray-300 { color: #d1d5db; }
-        .dark .dark\:text-gray-400 { color: #9ca3af; }
-        .dark .dark\:border-gray-700 { border-color: #374151; }
-        .dark .dark\:hover\:bg-gray-600:hover { background-color: #4b5563; }
-        .dark .dark\:bg-gray-700 { background-color: #374151; }
-        .dark .dark\:hover\:bg-gray-600:hover { background-color: #4b5563; }
-    </style>
+    <link rel="stylesheet" href="/css/styles.css">
+    <!-- PDF Template Modules -->
+    <link rel="stylesheet" href="/css/pdf-colors.css">
+    <link rel="stylesheet" href="/css/pdf-layout.css">
+    <link rel="stylesheet" href="/css/pdf-typography.css">
+    <link rel="stylesheet" href="/css/pdf-components.css">
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
@@ -143,13 +137,50 @@
                 </div>
             </div>
 
-            <!-- Sensors Overview -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    <i class="fas fa-microchip mr-2"></i>Sensors Overview
-                </h3>
-                <div id="sensorsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Sensors will be loaded here -->
+            <!-- Second Row - External Services Status -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Prometheus Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Prometheus</h3>
+                        <i class="fas fa-fire text-2xl text-orange-600"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Connection</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="prometheus-status">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Metrics</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="prometheus-metrics">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Last Scrape</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="prometheus-scrape">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VictoriaMetrics Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">VictoriaMetrics</h3>
+                        <i class="fas fa-chart-area text-2xl text-indigo-600"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Connection</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="victoria-status">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Query Engine</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="victoria-query">MetricsQL</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Storage</span>
+                            <span class="text-sm font-medium dark:text-gray-300" id="victoria-storage">-</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -187,8 +218,7 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Connection Profile</label>
                     <div class="flex space-x-2">
                         <select id="dbProfile" class="flex-1 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="default">Default (Built-in)</option>
-                            <option value="external">External Database</option>
+                            <option value="default">Default (Built-in TimescaleDB)</option>
                             <option value="custom">Custom Configuration</option>
                         </select>
                         <button onclick="loadProfile()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
@@ -243,7 +273,7 @@
                         </div>
                     </div>
 
-                    <div class="flex space-x-4 pt-4">
+                    <div class="flex space-x-4 pt-6 mt-4">
                         <button type="button" onclick="testConnection()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                             <i class="fas fa-plug mr-2"></i>Test Connection
                         </button>
@@ -286,6 +316,70 @@
         </div>
 
         <div id="content-reports" class="tab-content hidden">
+            <!-- PDF Template Configuration -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                    <i class="fas fa-palette mr-2"></i>Template Configuration
+                </h3>
+
+                <div class="space-y-4">
+                    <!-- Title and Subtitle -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Report Title</label>
+                            <input type="text" id="pdfTitle" placeholder="IoT Sensor Summary Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Main title displayed on report header</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Report Subtitle</label>
+                            <input type="text" id="pdfSubtitle" placeholder="Real-time monitoring and analytics" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Subtitle displayed below the title</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Page Orientation -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Orientation</label>
+                            <select id="pdfLayout" onchange="updatePDFLayout()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="portrait">Portrait (Vertical)</option>
+                                <option value="landscape">Landscape (Horizontal)</option>
+                            </select>
+                        </div>
+
+                        <!-- Page Size -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Size</label>
+                            <select id="pdfPageSize" onchange="updatePDFPageSize()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="a4">A4 (210 x 297 mm)</option>
+                                <option value="letter">Letter (8.5 x 11 in)</option>
+                                <option value="legal">Legal (8.5 x 14 in)</option>
+                            </select>
+                        </div>
+
+                        <!-- Footer Text -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Footer Text</label>
+                            <input type="text" id="pdfFooterText" placeholder="Madison - IoT Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Appears on the left side of footer</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex gap-4">
+                    <button type="button" onclick="previewPDFTemplate()" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                        <i class="fas fa-eye mr-2"></i>Preview Template
+                    </button>
+                    <button type="button" onclick="savePDFConfig()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        <i class="fas fa-save mr-2"></i>Save Configuration
+                    </button>
+                    <button type="button" onclick="resetPDFConfig()" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                        <i class="fas fa-undo mr-2"></i>Reset
+                    </button>
+                </div>
+            </div>
+
             <!-- Reports Tab -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
@@ -297,6 +391,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Type</label>
                             <select id="reportType" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="test-template">Test Template (report_test.svg)</option>
                                 <option value="iot-summary">IoT Summary Report</option>
                                 <option value="sensor-detailed">Sensor Detailed Report</option>
                                 <option value="building">Building Report</option>
@@ -403,6 +498,11 @@
         </div>
     </footer>
 
+    <!-- PDF Generator Modules -->
+    <script src="/js/pdf-utils.js"></script>
+    <script src="/js/pdf-config.js"></script>
+    <script src="/js/pdf-template-engine.js"></script>
+    <script src="/js/pdf-generator.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>

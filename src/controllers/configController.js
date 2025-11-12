@@ -15,7 +15,15 @@ class ConfigController {
     try {
       const config = req.body;
 
+      logger.info('Test connection request received', {
+        host: config?.host,
+        port: config?.port,
+        database: config?.database,
+        user: config?.user
+      });
+
       if (!config.host || !config.database || !config.user) {
+        logger.warn('Missing required fields for connection test');
         return res.status(400).json({
           success: false,
           error: 'Missing required fields: host, database, user'
@@ -24,12 +32,14 @@ class ConfigController {
 
       const result = await configService.testConnection(config);
 
+      logger.info('Connection test result', { success: result.success });
+
       res.json(result);
     } catch (error) {
-      logger.error('Connection test error', { error: error.message });
+      logger.error('Connection test error', { error: error.message, stack: error.stack });
       res.status(500).json({
         success: false,
-        error: error.message
+        error: error.message || String(error) || 'Unknown error'
       });
     }
   }

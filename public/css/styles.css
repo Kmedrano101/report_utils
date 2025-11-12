@@ -1,0 +1,126 @@
+/* Global styles for IoT Report Utils */
+:root {
+    color-scheme: light;
+    --page-bg: #f9fafb;
+    --card-bg: #ffffff;
+    --muted: #6b7280;
+    --primary: #2563eb;
+}
+
+body {
+    background-color: var(--page-bg);
+    color: #111827;
+}
+
+html.dark body {
+    color-scheme: dark;
+    background-color: #020617;
+    color: #f8fafc;
+}
+
+/* Tab controls */
+.tab-active {
+    border-bottom: 2px solid var(--primary);
+    color: var(--primary);
+}
+
+.tab-inactive {
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    transition: color 150ms ease, border-color 150ms ease;
+}
+
+.tab-inactive:hover {
+    color: #374151;
+    border-color: #e5e7eb;
+}
+
+html.dark .tab-inactive {
+    color: #94a3b8;
+}
+
+html.dark .tab-inactive:hover {
+    color: #f8fafc;
+    border-color: #475569;
+}
+
+/* Status indicators */
+.status-dot {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+}
+
+.status-healthy {
+    background-color: #22c55e;
+}
+
+.status-unhealthy {
+    background-color: #ef4444;
+}
+
+.status-unknown {
+    background-color: #9ca3af;
+}
+
+/* Card + surface adjustments for dark mode */
+html.dark .bg-white {
+    background-color: #111827 !important;
+    color: #f8fafc;
+}
+
+html.dark .text-gray-500,
+html.dark .text-gray-600 {
+    color: #c7d2fe !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-gray-800,
+html.dark .text-gray-900 {
+    color: #f1f5f9 !important;
+}
+
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+    border-color: #1f2937 !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+    background-color: #0f172a;
+    border-color: #1e293b;
+    color: #f8fafc;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #94a3b8;
+}
+
+/* Utility panels that rely on hover bg */
+html.dark .hover\:bg-gray-50:hover {
+    background-color: #1f2937;
+}
+
+html.dark pre {
+    background-color: #0f172a;
+    color: #c7d2fe;
+}
+
+/* Notifications */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+}

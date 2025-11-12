@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # TimescaleDB - PostgreSQL with TimescaleDB extension for time-series data
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: madison_iot_db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: madison_iot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TIMESCALEDB_TELEMETRY: 'off'
+    volumes:
+      # Persistent data storage
+      - timescaledb_data:/var/lib/postgresql/data
+      # Initialization scripts
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      # Excel data file for import
+      - ../src/datos_iot_madison.xlsx:/data/datos_iot_madison.xlsx:ro
+      # Import script
+      - ./db/import_data.py:/scripts/import_data.py:ro
+    networks:
+      - madison_iot_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d madison_iot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=8MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+
+  # PgAdmin - Web-based PostgreSQL administration tool
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: madison_iot_pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@madison.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - madison_iot_network
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+  # Data Importer - One-time container to import Excel data
+  data_importer:
+    image: python:3.11-slim
+    container_name: madison_iot_importer
+    restart: "no"
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_NAME: madison_iot
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    volumes:
+      - ./db/import_data.py:/app/import_data.py:ro
+      - ../src/datos_iot_madison.xlsx:/data/datos_iot_madison.xlsx:ro
+    networks:
+      - madison_iot_network
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    working_dir: /app
+    command: >
+      bash -c "
+      echo 'Installing dependencies...' &&
+      pip install --quiet pandas openpyxl psycopg2-binary &&
+      echo 'Starting data import...' &&
+      python import_data.py --excel-file /data/datos_iot_madison.xlsx --batch-size 5000
+      "
+
+volumes:
+  timescaledb_data:
+    name: madison_iot_db_data
+  pgadmin_data:
+    name: madison_iot_pgadmin_data
+
+networks:
+  madison_iot_network:
+    name: madison_iot_network
+    driver: bridge

@@ -126,13 +126,15 @@ class ConfigService {
       };
     } catch (error) {
       logger.error('Connection test failed', {
-        error: error.message,
-        host: config.host
+        error: error.message || String(error),
+        code: error.code,
+        host: config.host,
+        stack: error.stack
       });
 
       return {
         success: false,
-        error: error.message
+        error: error.message || error.code || String(error) || 'Connection failed'
       };
     }
   }

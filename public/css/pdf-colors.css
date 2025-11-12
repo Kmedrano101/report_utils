@@ -1,0 +1,231 @@
+/**
+ * PDF Colors Module - Configurable color themes for PDF reports
+ * Define color palettes and themes that can be applied to PDF templates
+ */
+
+/* ==================== Color Variables ==================== */
+
+/* Professional Blue Theme (Default) */
+:root[data-pdf-theme="professional-blue"],
+.pdf-theme-professional-blue {
+    --pdf-primary: #2563eb;
+    --pdf-primary-dark: #1e40af;
+    --pdf-primary-light: #60a5fa;
+    --pdf-secondary: #64748b;
+    --pdf-secondary-dark: #475569;
+    --pdf-secondary-light: #94a3b8;
+    --pdf-accent: #0ea5e9;
+    --pdf-success: #10b981;
+    --pdf-warning: #f59e0b;
+    --pdf-danger: #ef4444;
+    --pdf-info: #3b82f6;
+
+    --pdf-bg-primary: #ffffff;
+    --pdf-bg-secondary: #f8fafc;
+    --pdf-bg-accent: #eff6ff;
+
+    --pdf-text-primary: #0f172a;
+    --pdf-text-secondary: #475569;
+    --pdf-text-muted: #64748b;
+    --pdf-text-inverse: #ffffff;
+
+    --pdf-border: #e2e8f0;
+    --pdf-border-light: #f1f5f9;
+    --pdf-shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Corporate Green Theme */
+:root[data-pdf-theme="corporate-green"],
+.pdf-theme-corporate-green {
+    --pdf-primary: #059669;
+    --pdf-primary-dark: #047857;
+    --pdf-primary-light: #34d399;
+    --pdf-secondary: #6b7280;
+    --pdf-secondary-dark: #4b5563;
+    --pdf-secondary-light: #9ca3af;
+    --pdf-accent: #10b981;
+    --pdf-success: #22c55e;
+    --pdf-warning: #f59e0b;
+    --pdf-danger: #ef4444;
+    --pdf-info: #14b8a6;
+
+    --pdf-bg-primary: #ffffff;
+    --pdf-bg-secondary: #f9fafb;
+    --pdf-bg-accent: #ecfdf5;
+
+    --pdf-text-primary: #111827;
+    --pdf-text-secondary: #4b5563;
+    --pdf-text-muted: #6b7280;
+    --pdf-text-inverse: #ffffff;
+
+    --pdf-border: #d1d5db;
+    --pdf-border-light: #e5e7eb;
+    --pdf-shadow: rgba(0, 0, 0, 0.08);
+}
+
+/* Modern Purple Theme */
+:root[data-pdf-theme="modern-purple"],
+.pdf-theme-modern-purple {
+    --pdf-primary: #7c3aed;
+    --pdf-primary-dark: #6d28d9;
+    --pdf-primary-light: #a78bfa;
+    --pdf-secondary: #64748b;
+    --pdf-secondary-dark: #475569;
+    --pdf-secondary-light: #94a3b8;
+    --pdf-accent: #8b5cf6;
+    --pdf-success: #10b981;
+    --pdf-warning: #f59e0b;
+    --pdf-danger: #ef4444;
+    --pdf-info: #6366f1;
+
+    --pdf-bg-primary: #ffffff;
+    --pdf-bg-secondary: #faf5ff;
+    --pdf-bg-accent: #f5f3ff;
+
+    --pdf-text-primary: #1e1b4b;
+    --pdf-text-secondary: #4c1d95;
+    --pdf-text-muted: #6b7280;
+    --pdf-text-inverse: #ffffff;
+
+    --pdf-border: #e9d5ff;
+    --pdf-border-light: #f3e8ff;
+    --pdf-shadow: rgba(124, 58, 237, 0.1);
+}
+
+/* Tech Orange Theme */
+:root[data-pdf-theme="tech-orange"],
+.pdf-theme-tech-orange {
+    --pdf-primary: #ea580c;
+    --pdf-primary-dark: #c2410c;
+    --pdf-primary-light: #fb923c;
+    --pdf-secondary: #64748b;
+    --pdf-secondary-dark: #475569;
+    --pdf-secondary-light: #94a3b8;
+    --pdf-accent: #f97316;
+    --pdf-success: #10b981;
+    --pdf-warning: #fbbf24;
+    --pdf-danger: #dc2626;
+    --pdf-info: #06b6d4;
+
+    --pdf-bg-primary: #ffffff;
+    --pdf-bg-secondary: #fffbeb;
+    --pdf-bg-accent: #ffedd5;
+
+    --pdf-text-primary: #292524;
+    --pdf-text-secondary: #57534e;
+    --pdf-text-muted: #78716c;
+    --pdf-text-inverse: #ffffff;
+
+    --pdf-border: #fed7aa;
+    --pdf-border-light: #ffedd5;
+    --pdf-shadow: rgba(234, 88, 12, 0.1);
+}
+
+/* Monochrome Theme */
+:root[data-pdf-theme="monochrome"],
+.pdf-theme-monochrome {
+    --pdf-primary: #18181b;
+    --pdf-primary-dark: #09090b;
+    --pdf-primary-light: #52525b;
+    --pdf-secondary: #71717a;
+    --pdf-secondary-dark: #52525b;
+    --pdf-secondary-light: #a1a1aa;
+    --pdf-accent: #27272a;
+    --pdf-success: #737373;
+    --pdf-warning: #525252;
+    --pdf-danger: #404040;
+    --pdf-info: #737373;
+
+    --pdf-bg-primary: #ffffff;
+    --pdf-bg-secondary: #fafafa;
+    --pdf-bg-accent: #f4f4f5;
+
+    --pdf-text-primary: #09090b;
+    --pdf-text-secondary: #3f3f46;
+    --pdf-text-muted: #71717a;
+    --pdf-text-inverse: #ffffff;
+
+    --pdf-border: #e4e4e7;
+    --pdf-border-light: #f4f4f5;
+    --pdf-shadow: rgba(0, 0, 0, 0.06);
+}
+
+/* Dark Theme */
+:root[data-pdf-theme="dark"],
+.pdf-theme-dark {
+    --pdf-primary: #3b82f6;
+    --pdf-primary-dark: #2563eb;
+    --pdf-primary-light: #60a5fa;
+    --pdf-secondary: #94a3b8;
+    --pdf-secondary-dark: #64748b;
+    --pdf-secondary-light: #cbd5e1;
+    --pdf-accent: #0ea5e9;
+    --pdf-success: #22c55e;
+    --pdf-warning: #fbbf24;
+    --pdf-danger: #f87171;
+    --pdf-info: #60a5fa;
+
+    --pdf-bg-primary: #0f172a;
+    --pdf-bg-secondary: #1e293b;
+    --pdf-bg-accent: #334155;
+
+    --pdf-text-primary: #f8fafc;
+    --pdf-text-secondary: #cbd5e1;
+    --pdf-text-muted: #94a3b8;
+    --pdf-text-inverse: #0f172a;
+
+    --pdf-border: #334155;
+    --pdf-border-light: #475569;
+    --pdf-shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== Color Utility Classes ==================== */
+
+/* Background Colors */
+.pdf-bg-primary { background-color: var(--pdf-bg-primary); }
+.pdf-bg-secondary { background-color: var(--pdf-bg-secondary); }
+.pdf-bg-accent { background-color: var(--pdf-bg-accent); }
+
+/* Text Colors */
+.pdf-text-primary { color: var(--pdf-text-primary); }
+.pdf-text-secondary { color: var(--pdf-text-secondary); }
+.pdf-text-muted { color: var(--pdf-text-muted); }
+.pdf-text-inverse { color: var(--pdf-text-inverse); }
+
+/* Brand Colors */
+.pdf-text-brand { color: var(--pdf-primary); }
+.pdf-bg-brand { background-color: var(--pdf-primary); }
+.pdf-border-brand { border-color: var(--pdf-primary); }
+
+/* Status Colors */
+.pdf-text-success { color: var(--pdf-success); }
+.pdf-text-warning { color: var(--pdf-warning); }
+.pdf-text-danger { color: var(--pdf-danger); }
+.pdf-text-info { color: var(--pdf-info); }
+
+.pdf-bg-success { background-color: var(--pdf-success); }
+.pdf-bg-warning { background-color: var(--pdf-warning); }
+.pdf-bg-danger { background-color: var(--pdf-danger); }
+.pdf-bg-info { background-color: var(--pdf-info); }
+
+/* Border Colors */
+.pdf-border { border-color: var(--pdf-border); }
+.pdf-border-light { border-color: var(--pdf-border-light); }
+
+/* Gradients */
+.pdf-gradient-primary {
+    background: linear-gradient(135deg, var(--pdf-primary) 0%, var(--pdf-primary-dark) 100%);
+}
+
+.pdf-gradient-accent {
+    background: linear-gradient(135deg, var(--pdf-accent) 0%, var(--pdf-primary) 100%);
+}
+
+/* ==================== Chart Colors ==================== */
+
+.pdf-chart-color-1 { color: var(--pdf-primary); }
+.pdf-chart-color-2 { color: var(--pdf-accent); }
+.pdf-chart-color-3 { color: var(--pdf-success); }
+.pdf-chart-color-4 { color: var(--pdf-warning); }
+.pdf-chart-color-5 { color: var(--pdf-info); }
+.pdf-chart-color-6 { color: var(--pdf-secondary); }

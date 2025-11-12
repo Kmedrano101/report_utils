@@ -22,9 +22,10 @@ async function initApp() {
 
     // Load initial data
     await checkHealth();
-    await loadSensors();
     await loadDashboard();
+    await checkExternalServices();
     initTheme();
+    loadPDFConfig();
 }
 
 // Tab Management
@@ -46,7 +47,9 @@ function showTab(tabName) {
     // Load tab-specific data
     if (tabName === 'reports') {
         loadRecentReports();
+        loadSensors(); // Load sensors for the checkboxes
     } else if (tabName === 'database') {
+        loadExternalServicesConfig();
         loadCurrentConfig();
     }
 }
@@ -121,39 +124,97 @@ async function loadDashboard() {
     }
 }
 
-// Sensors
+// External Services Status
+async function checkExternalServices() {
+    await checkPrometheus();
+    await checkVictoriaMetrics();
+}
+
+// Check Prometheus status
+async function checkPrometheus() {
+    try {
+        const prometheusUrl = localStorage.getItem('prometheusUrl') || 'http://localhost:9090';
+        const response = await fetch(`${prometheusUrl}/api/v1/status/config`, {
+            method: 'GET',
+            mode: 'cors'
+        }).catch(() => null);
+
+        if (response && response.ok) {
+            document.getElementById('prometheus-status').innerHTML =
+                '<span class="text-green-600">✓ Connected</span>';
+
+            // Get metrics count
+            const metricsResponse = await fetch(`${prometheusUrl}/api/v1/label/__name__/values`).catch(() => null);
+            if (metricsResponse && metricsResponse.ok) {
+                const metricsData = await metricsResponse.json();
+                const count = metricsData.data ? metricsData.data.length : 0;
+                document.getElementById('prometheus-metrics').textContent = count;
+            } else {
+                document.getElementById('prometheus-metrics').textContent = 'N/A';
+            }
+
+            document.getElementById('prometheus-scrape').textContent = new Date().toLocaleTimeString();
+        } else {
+            document.getElementById('prometheus-status').innerHTML =
+                '<span class="text-yellow-600">⚠ Not configured</span>';
+            document.getElementById('prometheus-metrics').textContent = '-';
+            document.getElementById('prometheus-scrape').textContent = '-';
+        }
+    } catch (error) {
+        console.error('Failed to check Prometheus:', error);
+        document.getElementById('prometheus-status').innerHTML =
+            '<span class="text-red-600">✗ Disconnected</span>';
+        document.getElementById('prometheus-metrics').textContent = '-';
+        document.getElementById('prometheus-scrape').textContent = '-';
+    }
+}
+
+// Check VictoriaMetrics status
+async function checkVictoriaMetrics() {
+    try {
+        const victoriaUrl = localStorage.getItem('victoriaUrl') || 'http://localhost:8428';
+        const response = await fetch(`${victoriaUrl}/api/v1/status/tsdb`, {
+            method: 'GET',
+            mode: 'cors'
+        }).catch(() => null);
+
+        if (response && response.ok) {
+            const data = await response.json();
+            document.getElementById('victoria-status').innerHTML =
+                '<span class="text-green-600">✓ Connected</span>';
+
+            // Get storage info
+            if (data.data && data.data.seriesCountByMetricName) {
+                const totalSeries = Object.values(data.data.seriesCountByMetricName).reduce((a, b) => a + b, 0);
+                document.getElementById('victoria-storage').textContent = `${totalSeries.toLocaleString()} series`;
+            } else {
+                document.getElementById('victoria-storage').textContent = 'Active';
+            }
+        } else {
+            document.getElementById('victoria-status').innerHTML =
+                '<span class="text-yellow-600">⚠ Not configured</span>';
+            document.getElementById('victoria-storage').textContent = '-';
+        }
+    } catch (error) {
+        console.error('Failed to check VictoriaMetrics:', error);
+        document.getElementById('victoria-status').innerHTML =
+            '<span class="text-red-600">✗ Disconnected</span>';
+        document.getElementById('victoria-storage').textContent = '-';
+    }
+}
+
+// Sensors (for report generation)
 async function loadSensors() {
     try {
         const response = await fetch(`${API_BASE}/api/sensors`);
         const data = await response.json();
 
         if (data.success) {
-            updateSensorsGrid(data.data);
             updateSensorCheckboxes(data.data);
         }
     } catch (error) {
         console.error('Failed to load sensors:', error);
     }
-}
-
-function updateSensorsGrid(sensors) {
-    const grid = document.getElementById('sensorsGrid');
-    if (!sensors || sensors.length === 0) {
-        grid.innerHTML = '<p class="text-gray-500 col-span-3">No sensors configured</p>';
-        return;
-    }
-
-    grid.innerHTML = sensors.slice(0, 6).map(sensor => `
-        <div class="border rounded-lg p-4 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-900">${sensor.name}</span>
-                <span class="status-dot ${sensor.is_active ? 'status-healthy' : 'status-unhealthy'}"></span>
-            </div>
-            <div class="text-xs text-gray-500 mb-2">${sensor.sensor_type} (${sensor.unit})</div>
-            <div class="text-lg font-bold text-blue-600">${sensor.latest_value || 'N/A'}</div>
-            <div class="text-xs text-gray-400">${sensor.location || 'Unknown'}</div>
-        </div>
-    `).join('');
 }
 
 function updateSensorCheckboxes(sensors) {
@@ -173,13 +234,50 @@ function updateSensorCheckboxes(sensors) {
 
 // Database Configuration
 function loadCurrentConfig() {
-    // Load from environment or default values
-    document.getElementById('dbHost').value = 'timescaledb';
-    document.getElementById('dbPort').value = '5432';
-    document.getElementById('dbName').value = 'iot_reports';
+    // Prefer saved profile when available
+    const saved = localStorage.getItem('dbConfig');
+    if (saved) {
+        try {
+            const config = JSON.parse(saved);
+            document.getElementById('dbHost').value = config.host || 'localhost';
+            document.getElementById('dbPort').value = config.port || '5433';
+            document.getElementById('dbName').value = config.database || 'madison_iot';
+            document.getElementById('dbUser').value = config.user || 'postgres';
+            document.getElementById('dbPassword').value = config.password || 'postgres';
+            document.getElementById('dbPoolMin').value = config.poolMin || '2';
+            document.getElementById('dbPoolMax').value = config.poolMax || '10';
+            loadExternalServicesConfig();
+            return;
+        } catch (error) {
+            console.warn('Failed to parse saved DB config', error);
+        }
+    }
+
+    // Fall back to Madison test database defaults
+    document.getElementById('dbHost').value = 'localhost';
+    document.getElementById('dbPort').value = '5433';
+    document.getElementById('dbName').value = 'madison_iot';
     document.getElementById('dbUser').value = 'postgres';
+    if (document.getElementById('dbPassword')) {
+        document.getElementById('dbPassword').value = 'postgres';
+    }
     document.getElementById('dbPoolMin').value = '2';
     document.getElementById('dbPoolMax').value = '10';
+
+    // Load external services config
+    loadExternalServicesConfig();
+}
+
+// Load Prometheus/VictoriaMetrics URLs from localStorage
+function loadExternalServicesConfig() {
+    const prometheusUrl = localStorage.getItem('prometheusUrl') || 'http://localhost:9090';
+    const victoriaUrl = localStorage.getItem('victoriaUrl') || 'http://localhost:8428';
+
+    const prometheusInput = document.getElementById('prometheusUrl');
+    const victoriaInput = document.getElementById('victoriaUrl');
+
+    if (prometheusInput) prometheusInput.value = prometheusUrl;
+    if (victoriaInput) victoriaInput.value = victoriaUrl;
 }
 
 async function loadProfile() {
@@ -187,8 +285,18 @@ async function loadProfile() {
 
     if (profile === 'default') {
         loadCurrentConfig();
-    } else if (profile === 'external') {
-        // Clear form for external config
+    } else if (profile === 'prometheus') {
+        // Load Prometheus/VictoriaMetrics config
+        const prometheusUrl = localStorage.getItem('prometheusUrl') || 'http://localhost:9090';
+        const victoriaUrl = localStorage.getItem('victoriaUrl') || 'http://localhost:8428';
+
+        document.getElementById('prometheusUrl').value = prometheusUrl;
+        document.getElementById('victoriaUrl').value = victoriaUrl;
+
+        showNotification('Prometheus/VictoriaMetrics profile loaded', 'success');
+        return;
+    } else if (profile === 'custom') {
+        // Clear form for custom config
         document.getElementById('dbHost').value = '';
         document.getElementById('dbPort').value = '5432';
         document.getElementById('dbName').value = '';
@@ -200,19 +308,30 @@ async function loadProfile() {
 }
 
 async function saveProfile() {
+    const profile = document.getElementById('dbProfile').value;
+
+    // Save Prometheus/VictoriaMetrics URLs
+    const prometheusUrl = document.getElementById('prometheusUrl').value;
+    const victoriaUrl = document.getElementById('victoriaUrl').value;
+    if (prometheusUrl) localStorage.setItem('prometheusUrl', prometheusUrl);
+    if (victoriaUrl) localStorage.setItem('victoriaUrl', victoriaUrl);
+
     const config = {
-        profile: document.getElementById('dbProfile').value,
+        profile: profile,
         host: document.getElementById('dbHost').value,
-        port: parseInt(document.getElementById('dbPort').value),
+        port: parseInt(document.getElementById('dbPort').value) || 5432,
         database: document.getElementById('dbName').value,
         user: document.getElementById('dbUser').value,
+        password: document.getElementById('dbPassword').value,
         ssl: document.getElementById('dbSSL').value,
-        poolMin: parseInt(document.getElementById('dbPoolMin').value),
-        poolMax: parseInt(document.getElementById('dbPoolMax').value),
+        poolMin: parseInt(document.getElementById('dbPoolMin').value) || 2,
+        poolMax: parseInt(document.getElementById('dbPoolMax').value) || 10,
+        prometheusUrl: prometheusUrl,
+        victoriaUrl: victoriaUrl,
         schema: {
-            sensors: document.getElementById('tableSensors').value || 'iot.sensors',
-            readings: document.getElementById('tableReadings').value || 'iot.sensor_readings',
-            sensorTypes: document.getElementById('tableSensorTypes').value || 'iot.sensor_types'
+            sensors: document.getElementById('tableSensors')?.value || 'iot.sensors',
+            readings: document.getElementById('tableReadings')?.value || 'iot.sensor_readings',
+            sensorTypes: document.getElementById('tableSensorTypes')?.value || 'iot.sensor_types'
         }
     };
 
@@ -306,8 +425,11 @@ async function testConnection() {
 
 async function applyConfig() {
     await saveProfile();
-    showNotification('Configuration applied. Restart the service for changes to take effect.', 'info');
+    // Refresh dashboard database status so the user sees the applied config
+    await checkHealth();
+    showNotification('Configuration applied and dashboard updated. Restart the service for changes to fully take effect.', 'success');
 }
+
 
 async function detectSchema() {
     showNotification('Auto-detecting schema...', 'info');
@@ -367,7 +489,22 @@ async function generateReport() {
             format: format
         };
 
-        if (reportType === 'iot-summary') {
+        if (reportType === 'test-template') {
+            url += 'test-template';
+
+            // Get configuration values
+            const config = window.pdfConfig.getConfig();
+            body.reportTitle = config.reportTitle || document.getElementById('pdfTitle')?.value || 'IoT Sensor Summary Report';
+            body.reportSubtitle = config.reportSubtitle || document.getElementById('pdfSubtitle')?.value || 'Real-time monitoring and analytics';
+            body.footerText = config.footer?.text || document.getElementById('pdfFooterText')?.value || 'Madison - IoT Report';
+            body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'portrait';
+            body.pageSize = config.pageSize || document.getElementById('pdfPageSize')?.value || 'a4';
+            body.templateName = body.layout === 'landscape' ? 'madison_horizontal.svg' : 'madison_vertical.svg';
+
+            if (selectedSensors.length > 0) {
+                body.sensorIds = selectedSensors;
+            }
+        } else if (reportType === 'iot-summary') {
             url += 'iot-summary';
             if (selectedSensors.length > 0) {
                 body.sensorIds = selectedSensors;
@@ -394,7 +531,8 @@ async function generateReport() {
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = `iot-report-${new Date().toISOString().split('T')[0]}.pdf`;
+                const reportName = reportType === 'test-template' ? 'test-report' : 'iot-report';
+                a.download = `${reportName}-${new Date().toISOString().split('T')[0]}.pdf`;
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
@@ -505,17 +643,6 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Add fade-in animation style
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fade-in {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in { animation: fade-in 0.3s ease-out; }
-`;
-document.head.appendChild(style);
-
 // Theme Toggle
 function initTheme() {
     const themeToggleBtn = document.getElementById('theme-toggle');
@@ -541,4 +668,215 @@ function initTheme() {
         localStorage.setItem('theme', newTheme);
         applyTheme(newTheme);
     });
+}
+
+// ==================== PDF Template Configuration ====================
+
+/**
+ * Load PDF configuration into UI
+ */
+function loadPDFConfig() {
+    const config = window.pdfConfig.getConfig();
+
+    // Set UI values
+    document.getElementById('pdfTitle').value = config.reportTitle || 'IoT Sensor Summary Report';
+    document.getElementById('pdfSubtitle').value = config.reportSubtitle || 'Real-time monitoring and analytics';
+    document.getElementById('pdfLayout').value = config.layout || 'portrait';
+    document.getElementById('pdfPageSize').value = config.pageSize || 'a4';
+    document.getElementById('pdfFooterText').value = config.footer?.text || 'Madison - IoT Report';
+}
+
+/**
+ * Update PDF layout
+ */
+function updatePDFLayout() {
+    const layout = document.getElementById('pdfLayout').value;
+    window.pdfGenerator.updateConfig({ layout });
+    showNotification(`Layout changed to ${layout}`, 'success');
+}
+
+/**
+ * Update PDF page size
+ */
+function updatePDFPageSize() {
+    const pageSize = document.getElementById('pdfPageSize').value;
+    window.pdfGenerator.updateConfig({ pageSize });
+    showNotification(`Page size changed to ${pageSize.toUpperCase()}`, 'success');
+}
+
+/**
+ * Preview PDF template - Generate actual PDF
+ */
+async function previewPDFTemplate() {
+    showNotification('Generating PDF preview...', 'info');
+
+    try {
+        // Get configuration values from form
+        const title = document.getElementById('pdfTitle').value || 'IoT Sensor Summary Report';
+        const subtitle = document.getElementById('pdfSubtitle').value || 'Real-time monitoring and analytics';
+        const footerText = document.getElementById('pdfFooterText').value || 'Madison - IoT Report';
+        const layout = document.getElementById('pdfLayout').value || 'portrait';
+        const pageSize = document.getElementById('pdfPageSize').value || 'a4';
+        const templateName = layout === 'landscape' ? 'madison_horizontal.svg' : 'madison_vertical.svg';
+
+        // Call API to generate test template report
+        const url = `${API_BASE}/api/reports/test-template`;
+        const body = {
+            format: 'pdf',
+            reportTitle: title,
+            reportSubtitle: subtitle,
+            footerText: footerText,
+            layout,
+            pageSize,
+            templateName
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+            // Get PDF blob
+            const blob = await response.blob();
+
+            // Create object URL and open in new tab
+            const pdfUrl = window.URL.createObjectURL(blob);
+            const previewWindow = window.open(pdfUrl, '_blank');
+
+            if (previewWindow) {
+                showNotification('PDF preview opened in new tab', 'success');
+
+                // Clean up object URL after window is loaded
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(pdfUrl);
+                }, 1000);
+            } else {
+                // If popup blocked, offer download instead
+                const a = document.createElement('a');
+                a.href = pdfUrl;
+                a.download = `template-preview-${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(pdfUrl);
+
+                showNotification('Preview downloaded (popup blocked)', 'warning');
+            }
+        } else {
+            const error = await response.json();
+            showNotification(`Preview failed: ${error.error || 'Unknown error'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Preview error:', error);
+        showNotification(`Error generating preview: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Save PDF configuration
+ */
+function savePDFConfig() {
+    const title = document.getElementById('pdfTitle').value;
+    const subtitle = document.getElementById('pdfSubtitle').value;
+    const layout = document.getElementById('pdfLayout').value;
+    const pageSize = document.getElementById('pdfPageSize').value;
+    const footerText = document.getElementById('pdfFooterText').value;
+
+    window.pdfGenerator.updateConfig({
+        reportTitle: title || 'IoT Sensor Summary Report',
+        reportSubtitle: subtitle || 'Real-time monitoring and analytics',
+        layout,
+        pageSize,
+        footer: {
+            text: footerText || 'Madison - IoT Report'
+        },
+        logo: {
+            enabled: false,
+            url: '/images/logo_madison.png'
+        }
+    });
+
+    showNotification('PDF configuration saved successfully!', 'success');
+}
+
+/**
+ * Reset PDF configuration to defaults
+ */
+function resetPDFConfig() {
+    if (confirm('Are you sure you want to reset to default configuration?')) {
+        window.pdfConfig.resetToDefault();
+        loadPDFConfig();
+        showNotification('Configuration reset to defaults', 'success');
+    }
+}
+
+/**
+ * Enhanced report generation with new PDF generator
+ */
+async function generateReportWithTemplate() {
+    const reportType = document.getElementById('reportType').value;
+    const format = document.getElementById('reportFormat').value;
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+
+    if (!startDate || !endDate) {
+        showNotification('Please select both start and end dates', 'error');
+        return;
+    }
+
+    // Get selected sensors
+    const selectedSensors = Array.from(document.querySelectorAll('.sensor-checkbox:checked'))
+        .map(cb => cb.value);
+
+    const progressDiv = document.getElementById('reportProgress');
+    progressDiv.classList.remove('hidden');
+
+    try {
+        // Fetch data from API
+        let apiUrl = `${API_BASE}/api/reports/${reportType}`;
+        const body = {
+            startDate: startDate + 'T00:00:00Z',
+            endDate: endDate + 'T23:59:59Z',
+            format: format
+        };
+
+        if (selectedSensors.length > 0) {
+            body.sensorIds = selectedSensors;
+        }
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+
+            // Use new PDF generator
+            const result = await window.pdfGenerator.generate({
+                template: reportType,
+                data: data.data || data,
+                format: format,
+                filename: `report-${reportType}-${PDFUtils.formatDate(new Date(), 'iso')}.${format}`
+            });
+
+            if (result.success) {
+                showNotification('Report generated successfully!', 'success');
+                await loadRecentReports();
+            } else {
+                showNotification(`Failed to generate report: ${result.error}`, 'error');
+            }
+        } else {
+            const error = await response.json();
+            showNotification(`Failed to fetch data: ${error.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Report generation error:', error);
+        showNotification(`Error: ${error.message}`, 'error');
+    } finally {
+        progressDiv.classList.add('hidden');
+    }
 }

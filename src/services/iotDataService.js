@@ -88,10 +88,11 @@ class IotDataService {
         FROM iot.sensors s
         JOIN iot.sensor_types st ON s.sensor_type_id = st.id
         LEFT JOIN iot.latest_sensor_readings lr ON s.id = lr.sensor_id
-        WHERE s.id = $1 OR s.sensor_code = $1
+        WHERE s.sensor_code = $1
+          OR (s.id = CASE WHEN $1 ~ '^[0-9]+$' THEN $1::integer ELSE NULL END)
       `;
 
-      const result = await database.query(query, [identifier]);
+      const result = await database.query(query, [String(identifier)]);
 
       if (result.rows.length === 0) {
         throw new Error(`Sensor not found: ${identifier}`);
@@ -120,6 +121,8 @@ class IotDataService {
       let query;
       const params = [sensorId, start, end];
 
+      const sensorIdParam = String(sensorId);
+
       if (aggregation === 'raw') {
         query = `
           SELECT
@@ -128,7 +131,7 @@ class IotDataService {
             quality
           FROM iot.sensor_readings sr
           JOIN iot.sensors s ON sr.sensor_id = s.id
-          WHERE (s.id = $1 OR s.sensor_code = $1)
+          WHERE (s.sensor_code = $1 OR (s.id = CASE WHEN $1 ~ '^[0-9]+$' THEN $1::integer ELSE NULL END))
             AND time BETWEEN $2 AND $3
           ORDER BY time ASC
         `;
@@ -143,7 +146,7 @@ class IotDataService {
             avg_quality as quality
           FROM iot.sensor_readings_hourly srh
           JOIN iot.sensors s ON srh.sensor_id = s.id
-          WHERE (s.id = $1 OR s.sensor_code = $1)
+          WHERE (s.sensor_code = $1 OR (s.id = CASE WHEN $1 ~ '^[0-9]+$' THEN $1::integer ELSE NULL END))
             AND bucket BETWEEN $2 AND $3
           ORDER BY bucket ASC
         `;
@@ -158,7 +161,7 @@ class IotDataService {
             stddev_value
           FROM iot.sensor_readings_daily srd
           JOIN iot.sensors s ON srd.sensor_id = s.id
-          WHERE (s.id = $1 OR s.sensor_code = $1)
+          WHERE (s.sensor_code = $1 OR (s.id = CASE WHEN $1 ~ '^[0-9]+$' THEN $1::integer ELSE NULL END))
             AND bucket BETWEEN $2 AND $3
           ORDER BY bucket ASC
         `;
@@ -166,6 +169,7 @@ class IotDataService {
         throw new Error(`Invalid aggregation level: ${aggregation}`);
       }
 
+      params[0] = sensorIdParam;
       const result = await database.query(query, params);
       return result.rows;
     } catch (error) {
@@ -199,11 +203,11 @@ class IotDataService {
           MAX(time) as last_reading
         FROM iot.sensor_readings sr
         JOIN iot.sensors s ON sr.sensor_id = s.id
-        WHERE (s.id = $1 OR s.sensor_code = $1)
+        WHERE (s.sensor_code = $1 OR (s.id = CASE WHEN $1 ~ '^[0-9]+$' THEN $1::integer ELSE NULL END))
           AND time BETWEEN $2 AND $3
       `;
 
-      const result = await database.query(query, [sensorId, start, end]);
+      const result = await database.query(query, [String(sensorId), start, end]);
       return result.rows[0];
     } catch (error) {
       logger.error('Error calculating sensor statistics', { error: error.message, sensorId });
