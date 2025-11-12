@@ -111,7 +111,7 @@ class PdfGenerationService {
           format: options.format || 'A4',
           landscape: options.landscape || false,
           printBackground: true,
-          preferCSSPageSize: false,
+          preferCSSPageSize: true,
           margin: options.margin || {
             top: '0mm',
             right: '0mm',

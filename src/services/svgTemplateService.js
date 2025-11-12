@@ -494,12 +494,33 @@ class SvgTemplateService {
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #fafafa; }
-    .svg-container { width: ${width}; height: ${height}; margin: 0 auto; background: white; }
+    html, body {
+      width: ${width};
+      height: ${height};
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background: white;
+    }
+    .svg-container {
+      width: ${width};
+      height: ${height};
+      margin: 0;
+      padding: 0;
+      background: white;
+      display: block;
+      overflow: hidden;
+    }
+    .svg-container svg {
+      display: block;
+      width: ${width};
+      height: ${height};
+    }
     #chart-container { width: 100%; height: 100%; }
-    @media print {
-      body { background: white; }
-      @page { size: ${pageSize} ${isLandscape ? 'landscape' : 'portrait'}; margin: 0; }
+    @page {
+      size: ${pageSize} ${isLandscape ? 'landscape' : 'portrait'};
+      margin: 0;
     }
   </style>
 </head>
