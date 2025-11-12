@@ -338,7 +338,37 @@
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color Theme</label>
+                            <select id="pdfTheme" onchange="applyPDFTheme()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="professional-blue">Professional Blue</option>
+                                <option value="corporate-green">Corporate Green</option>
+                                <option value="modern-purple">Modern Purple</option>
+                                <option value="tech-orange">Tech Orange</option>
+                                <option value="monochrome">Monochrome</option>
+                                <option value="dark">Dark Mode</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Controls header/footer palette</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo URL (optional)</label>
+                            <input type="text" id="pdfLogoUrl" placeholder="https://example.com/logo.png" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Displayed inside the circular accent</p>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Preview Output -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview Output</label>
+                            <select id="pdfPreviewMode" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="pdf">PDF (accurate sizing)</option>
+                                <option value="svg">SVG (quick layout)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Switch between PDF or SVG preview</p>
+                        </div>
                         <!-- Page Orientation -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Orientation</label>
@@ -363,6 +393,15 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Footer Text</label>
                             <input type="text" id="pdfFooterText" placeholder="Madison - IoT Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Appears on the left side of footer</p>
+                        </div>
+                        <!-- Template Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SVG Template</label>
+                            <select id="pdfTemplateName" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="auto">Auto (match orientation)</option>
+                                <option disabled>Loading templates...</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Templates are loaded automatically from the templates directory</p>
                         </div>
                     </div>
                 </div>

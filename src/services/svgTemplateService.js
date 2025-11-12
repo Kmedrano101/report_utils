@@ -18,7 +18,7 @@ class SvgTemplateService {
     this.templateBasePath = join(__dirname, '../templates/svg');
     this.layoutTemplates = {
       portrait: {
-        template: 'madison_vertical.svg',
+        template: 'template_vertical.svg',
         positions: {
           title: { x: 297.32, y: 60, fontSize: 32, anchor: 'middle', fill: '#ffffff', fontWeight: 600 },
           subtitle: { x: 297.32, y: 95, fontSize: 18, anchor: 'middle', fill: '#d1d5db', fontWeight: 400 },
@@ -27,13 +27,69 @@ class SvgTemplateService {
         }
       },
       landscape: {
-        template: 'madison_horizontal.svg',
+        template: 'template_horizontal.svg',
         positions: {
           title: { x: 420.95, y: 85, fontSize: 34, anchor: 'middle', fill: '#ffffff', fontWeight: 600 },
           subtitle: { x: 420.95, y: 125, fontSize: 20, anchor: 'middle', fill: '#d1d5db', fontWeight: 400 },
           footerText: { x: 80, y: 560, fontSize: 16, anchor: 'start', fill: '#202020', fontWeight: 500 },
           footerDate: { x: 780, y: 560, fontSize: 16, anchor: 'end', fill: '#202020', fontWeight: 500 }
         }
+      }
+    };
+    this.themePalettes = {
+      'professional-blue': {
+        header: '#0F172A',
+        footer: '#0F172A',
+        accent: '#2563EB',
+        headerText: '#C7AB81',
+        headerSubtitle: '#E5D4BA',
+        footerText: '#FFFFFF',
+        footerDate: '#E2E8F0'
+      },
+      'corporate-green': {
+        header: '#064E3B',
+        footer: '#064E3B',
+        accent: '#10B981',
+        headerText: '#ECFDF5',
+        headerSubtitle: '#A7F3D0',
+        footerText: '#ECFDF5',
+        footerDate: '#A7F3D0'
+      },
+      'modern-purple': {
+        header: '#312E81',
+        footer: '#312E81',
+        accent: '#8B5CF6',
+        headerText: '#F5F3FF',
+        headerSubtitle: '#DDD6FE',
+        footerText: '#F5F3FF',
+        footerDate: '#DDD6FE'
+      },
+      'tech-orange': {
+        header: '#431407',
+        footer: '#431407',
+        accent: '#F97316',
+        headerText: '#FFEDD5',
+        headerSubtitle: '#FED7AA',
+        footerText: '#FFEDD5',
+        footerDate: '#FED7AA'
+      },
+      'monochrome': {
+        header: '#111827',
+        footer: '#111827',
+        accent: '#4B5563',
+        headerText: '#F9FAFB',
+        headerSubtitle: '#D1D5DB',
+        footerText: '#F9FAFB',
+        footerDate: '#D1D5DB'
+      },
+      dark: {
+        header: '#0B1120',
+        footer: '#0B1120',
+        accent: '#38BDF8',
+        headerText: '#E0F2FE',
+        headerSubtitle: '#BAE6FD',
+        footerText: '#E0F2FE',
+        footerDate: '#BAE6FD'
       }
     };
   }
@@ -66,6 +122,56 @@ class SvgTemplateService {
       logger.error('Error loading SVG template', { error: error.message, templateName });
       throw new Error(`Failed to load template: ${templateName}`);
     }
+  }
+
+  /**
+   * Get palette colors for a theme
+   * @param {string} theme
+   * @returns {Object} palette colors
+   */
+  getThemePalette(theme = 'professional-blue') {
+    return this.themePalettes[theme] || this.themePalettes['professional-blue'];
+  }
+
+  /**
+   * Generate final layout SVG with header/footer text from config
+   * @param {Object} options
+   * @returns {Promise<string>}
+   */
+  async generateFinalTemplateLayout(options = {}) {
+    const {
+      title = 'IoT Report',
+      subtitle = 'Environmental & Energy Insights',
+      footerText = 'Madison - IoT Report Suite',
+      logoUrl = '',
+      theme = 'professional-blue',
+      layout = 'portrait'
+    } = options;
+
+    const palette = {
+      ...this.getThemePalette(theme),
+      headerText: '#C7AB81',
+      headerSubtitle: '#E5D4BA'
+    };
+    const templateName = layout === 'landscape' ? 'template_horizontal.svg' : 'template_vertical.svg';
+    const template = await this.loadTemplate(templateName);
+
+    const placeholders = {
+      header_title: title,
+      header_subtitle: subtitle,
+      footer_text: footerText,
+      generation_date: format(new Date(), 'MMM dd, yyyy HH:mm'),
+      header_bg: palette.header,
+      footer_bg: palette.footer,
+      accent_color: palette.accent,
+      header_text_color: palette.headerText,
+      header_subtitle_color: palette.headerSubtitle,
+      footer_text_color: palette.footerText,
+      footer_date_color: palette.footerDate,
+      logo_url: logoUrl || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+    };
+
+    return this.replacePlaceholders(template, placeholders);
   }
 
   /**
@@ -367,7 +473,17 @@ class SvgTemplateService {
    * @param {Object} chartData - Chart data for Chart.js
    * @returns {string} Complete HTML document
    */
-  generateHtmlWithSvg(svgContent, chartData = null) {
+  generateHtmlWithSvg(svgContent, chartData = null, options = {}) {
+    const pageSize = (options.pageSize || 'A4').toUpperCase();
+    const isLandscape = options.layout === 'landscape';
+    const dimensions = {
+      A4: { portrait: { width: '210mm', height: '297mm' }, landscape: { width: '297mm', height: '210mm' } },
+      LETTER: { portrait: { width: '216mm', height: '279mm' }, landscape: { width: '279mm', height: '216mm' } },
+      LEGAL: { portrait: { width: '216mm', height: '356mm' }, landscape: { width: '356mm', height: '216mm' } }
+    };
+    const size = dimensions[pageSize] || dimensions.A4;
+    const { width, height } = isLandscape ? size.landscape : size.portrait;
+
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -379,11 +495,11 @@ class SvgTemplateService {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #fafafa; }
-    .svg-container { width: 210mm; margin: 0 auto; background: white; }
+    .svg-container { width: ${width}; height: ${height}; margin: 0 auto; background: white; }
     #chart-container { width: 100%; height: 100%; }
     @media print {
       body { background: white; }
-      @page { size: A4; margin: 0; }
+      @page { size: ${pageSize} ${isLandscape ? 'landscape' : 'portrait'}; margin: 0; }
     }
   </style>
 </head>

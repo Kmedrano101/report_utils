@@ -3,7 +3,7 @@
 ## ✅ Logo Changed Successfully
 
 ### New Logo File
-- **Path**: `/images/logo_madison.png`
+- **Path**: `/images/logo.png`
 - **Format**: PNG (RGBA)
 - **Dimensions**: 400 x 179 pixels
 - **Size**: 49 KB
@@ -44,14 +44,14 @@
    ```javascript
    logo: {
        enabled: true,
-       url: '/images/logo_madison.png',
+       url: '/images/logo.png',
        position: 'left'
    }
    ```
 
 2. **`public/index.html`**
    - Updated placeholder text
-   - Changed from `/images/logo.png` to `/images/logo_madison.png`
+   - Changed from `/images/logo.png` to `/images/logo.png`
 
 ### Documentation Files
 3. **`IMPLEMENTATION_SUMMARY.md`**
@@ -73,7 +73,7 @@
 4. Verify:
    - [ ] Logo appears on LEFT side of black header
    - [ ] Logo is larger (195px max width)
-   - [ ] Logo is `logo_madison.png`
+   - [ ] Logo is `logo.png`
    - [ ] Title/subtitle appear to right of logo
 
 ### Full Test
@@ -86,14 +86,14 @@
 
 ### Via UI
 1. Go to Reports tab → Template Configuration
-2. Logo URL field shows: `/images/logo_madison.png`
+2. Logo URL field shows: `/images/logo.png`
 3. This is now the default
 
 ### Via Code
 ```javascript
 // Current default (automatically applied)
 window.pdfConfig.getConfig().logo.url
-// Returns: '/images/logo_madison.png'
+// Returns: '/images/logo.png'
 
 // To change logo
 window.pdfGenerator.updateConfig({
@@ -113,7 +113,7 @@ window.pdfGenerator.updateConfig({
 
 ## Logo Specifications
 
-### Current Logo (logo_madison.png)
+### Current Logo (logo.png)
 - Source: 400 x 179 pixels (2.23:1 ratio)
 - Displayed: Max 195 x 104 pixels
 - Scaling: Maintains aspect ratio
@@ -151,5 +151,5 @@ Or edit `pdf-config.js` directly.
 ---
 
 **Updated**: January 11, 2025
-**Logo File**: logo_madison.png
+**Logo File**: logo.png
 **Status**: ✅ Active and Configured

@@ -11,7 +11,7 @@ A complete, modular PDF template system with custom Madison styling has been suc
 - ✅ **White text** for title and subtitle
 - ✅ **Logo positioned on left side** of header (30% larger)
 - ✅ **Title and subtitle** on right side
-- ✅ Madison logo automatically included (`/images/logo_madison.png`)
+- ✅ Madison logo automatically included (`/images/logo.png`)
 
 ### Content Area
 - ✅ **Pure white background** (#FFFFFF) for entire page
@@ -34,7 +34,7 @@ A complete, modular PDF template system with custom Madison styling has been suc
 │
 ├── public/
 │   ├── images/
-│   │   └── logo_madison.png        # Madison logo (PNG, 400x179px, 49KB)
+│   │   └── logo.png        # Madison logo (PNG, 400x179px, 49KB)
 │   │
 │   ├── css/
 │   │   ├── styles.css              # Original styles
@@ -155,7 +155,7 @@ window.pdfGenerator.updateConfig({
 | Page Orientation | Portrait or Landscape | Portrait |
 | Page Size | A4, Letter, or Legal | A4 |
 | Footer Text | Left side footer text | "Madison - IoT Report" |
-| Logo URL | Path to logo image | "/images/logo_madison.png" |
+| Logo URL | Path to logo image | "/images/logo.png" |
 
 ### Via JavaScript
 
@@ -169,7 +169,7 @@ const config = {
     },
     logo: {
         enabled: true,
-        url: '/images/logo_madison.png'
+        url: '/images/logo.png'
     }
 };
 
@@ -209,7 +209,7 @@ window.pdfGenerator.updateConfig(config);
     },
     logo: {
         enabled: true,
-        url: '/images/logo_madison.png'
+        url: '/images/logo.png'
     }
 }
 ```
@@ -225,7 +225,7 @@ window.pdfGenerator.updateConfig(config);
 - Position: Left side of header
 
 ### Current Logo
-- File: `/public/images/logo_madison.png`
+- File: `/public/images/logo.png`
 - Automatically included in templates
 - Position: Left side of header
 
@@ -253,7 +253,7 @@ window.pdfGenerator.updateConfig({
         text: 'Madison - Building A Monitoring'
     },
     logo: {
-        url: '/images/logo_madison.png'
+        url: '/images/logo.png'
     },
     theme: 'corporate-green',
     layout: 'landscape'

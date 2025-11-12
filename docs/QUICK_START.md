@@ -31,7 +31,7 @@ Your PDF reports now feature a professional Madison-branded layout:
 ### 2. Customize (Optional)
 In the Template Configuration section:
 - **Footer Text**: Change "Madison - IoT Report" to your project name
-- **Logo URL**: Use `/images/logo_madison.png` (already configured)
+- **Logo URL**: Use `/images/logo.png` (already configured)
 - **Color Theme**: Select from 6 professional themes
 - **Orientation**: Choose Portrait or Landscape
 
@@ -74,7 +74,7 @@ Click **"Save Configuration"** when done.
 - `app.js` - Updated with PDF configuration functions
 
 **Assets:**
-- `/public/images/logo_madison.png` - Madison logo
+- `/public/images/logo.png` - Madison logo
 
 **Updated:**
 - `/public/index.html` - Added Template Configuration UI
@@ -116,7 +116,7 @@ window.pdfGenerator.updateConfig({ layout: 'landscape' });
     },
     logo: {
         enabled: true,
-        url: '/images/logo_madison.png'
+        url: '/images/logo.png'
     }
 }
 ```

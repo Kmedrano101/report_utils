@@ -9,6 +9,15 @@ import pdfGenerationService from '../services/pdfGenerationService.js';
 import database from '../config/database.js';
 import logger from '../utils/logger.js';
 import { parseISO, subDays } from 'date-fns';
+import { readdir } from 'fs/promises';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const isMissingRelationError = error =>
+  error?.code === '42P01' || /relation .* does not exist/i.test(error?.message || '');
 
 class ReportController {
   /**
@@ -330,17 +339,138 @@ class ReportController {
    */
   async getTemplates(req, res) {
     try {
-      const result = await database.query(`
-        SELECT * FROM reports.templates ORDER BY name
-      `);
+      // Read SVG files from templates directory
+      const templatesPath = join(__dirname, '../templates/svg');
+      const files = await readdir(templatesPath);
+
+      // Filter only .svg files
+      const svgTemplates = files
+        .filter(file => file.endsWith('.svg'))
+        .map(file => ({
+          filename: file,
+          name: file.replace('.svg', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          description: this.getTemplateDescription(file)
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
       res.json({
         success: true,
-        data: result.rows
+        data: svgTemplates
       });
 
     } catch (error) {
       logger.error('Error fetching templates', { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Preview final SVG template with current configuration
+   * POST /api/reports/layout-preview
+   */
+  async previewLayoutTemplate(req, res) {
+    try {
+      const {
+        headerTitle = 'IoT Report',
+        headerSubtitle = 'Environmental & Energy Insights',
+        footerText = 'Madison - IoT Report Suite',
+        logoUrl = '',
+        theme = 'professional-blue',
+        layout = 'portrait',
+        pageSize = 'a4'
+      } = req.body;
+
+      const svg = await svgTemplateService.generateFinalTemplateLayout({
+        title: headerTitle,
+        subtitle: headerSubtitle,
+        footerText,
+        logoUrl,
+        theme,
+        layout
+      });
+
+      const html = svgTemplateService.generateHtmlWithSvg(svg, null, {
+        layout,
+        pageSize: pageSize.toUpperCase()
+      });
+
+      res.json({
+        success: true,
+        html
+      });
+    } catch (error) {
+      logger.error('Error generating layout preview', { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Generate PDF/HTML using final template layout
+   * POST /api/reports/final-template
+   */
+  async generateFinalTemplateReport(req, res) {
+    const startTime = Date.now();
+
+    try {
+      const {
+        headerTitle = 'IoT Report',
+        headerSubtitle = 'Environmental & Energy Insights',
+        footerText = 'Madison - IoT Report Suite',
+        logoUrl = '',
+        theme = 'professional-blue',
+        format = 'pdf',
+        layout = 'portrait',
+        pageSize = 'a4'
+      } = req.body;
+
+      const svg = await svgTemplateService.generateFinalTemplateLayout({
+        title: headerTitle,
+        subtitle: headerSubtitle,
+        footerText,
+        logoUrl,
+        theme,
+        layout
+      });
+
+      const normalizedPage = pageSize?.toUpperCase() || 'A4';
+      const html = svgTemplateService.generateHtmlWithSvg(svg, null, {
+        layout,
+        pageSize: normalizedPage
+      });
+
+      if (format === 'html') {
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(html);
+      }
+
+      const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(html, {
+        format: normalizedPage,
+        landscape: layout === 'landscape',
+        printBackground: true,
+        margin: { top: 0, right: 0, bottom: 0, left: 0 }
+      });
+
+      await this.logReportGeneration({
+        template_id: null,
+        report_name: 'Final Layout Preview',
+        parameters: { headerTitle, headerSubtitle, theme, layout },
+        file_size_kb: Math.round(pdfBuffer.length / 1024),
+        generation_time_ms: Date.now() - startTime,
+        status: 'generated'
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="template-preview.pdf"');
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer, 'binary');
+    } catch (error) {
+      logger.error('Error generating final template report', { error: error.message });
       res.status(500).json({
         success: false,
         error: error.message
@@ -377,6 +507,18 @@ class ReportController {
       });
 
     } catch (error) {
+      if (isMissingRelationError(error)) {
+        logger.warn('Report history tables unavailable, returning empty list');
+        return res.json({
+          success: true,
+          data: [],
+          pagination: {
+            limit: parseInt(req.query.limit || 50),
+            offset: parseInt(req.query.offset || 0),
+            total: 0
+          }
+        });
+      }
       logger.error('Error fetching report history', { error: error.message });
       res.status(500).json({
         success: false,
@@ -426,6 +568,24 @@ class ReportController {
       logger.error('Error logging report generation', { error: error.message });
       // Don't throw - logging failure shouldn't break report generation
     }
+  }
+
+  /**
+   * Get template description based on filename
+   * @param {string} filename - Template filename
+   * @returns {string} Template description
+   */
+  getTemplateDescription(filename) {
+    const descriptions = {
+      'template_vertical.svg': 'Template Vertical (Portrait)',
+      'template_horizontal.svg': 'Template Horizontal (Landscape)',
+      'madison_vertical.svg': 'Madison Portrait',
+      'madison_horizontal.svg': 'Madison Landscape',
+      'report_test.svg': 'Classic Data Layout',
+      'iot-summary-report.svg': 'IoT Summary Report'
+    };
+
+    return descriptions[filename] || 'SVG Template';
   }
 }
 

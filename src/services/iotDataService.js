@@ -7,6 +7,9 @@ import database from '../config/database.js';
 import logger from '../utils/logger.js';
 import { format, parseISO, subDays } from 'date-fns';
 
+const isMissingRelationError = error =>
+  error?.code === '42P01' || /relation .* does not exist/i.test(error?.message || '');
+
 class IotDataService {
   /**
    * Get all sensors with optional filtering
@@ -63,6 +66,10 @@ class IotDataService {
       const result = await database.query(query, params);
       return result.rows;
     } catch (error) {
+      if (isMissingRelationError(error)) {
+        logger.warn('Sensors tables not available, returning empty list', { filters });
+        return [];
+      }
       logger.error('Error fetching sensors', { error: error.message, filters });
       throw error;
     }
@@ -173,6 +180,10 @@ class IotDataService {
       const result = await database.query(query, params);
       return result.rows;
     } catch (error) {
+      if (isMissingRelationError(error)) {
+        logger.warn('Sensor readings tables not available, returning empty list', { sensorId, aggregation });
+        return [];
+      }
       logger.error('Error fetching sensor readings', { error: error.message, sensorId, startDate, endDate });
       throw error;
     }

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width='297mm' height='210mm' viewBox="0 0 297 210">
+  <rect width="297" height="210" fill="#FFFFFF"/>
+
+  <!-- Header -->
+  <rect width="297" height="48" fill="{{header_bg}}"/>
+  <rect width="297" height="2" y="48" fill="{{header_bg}}"/>
+  <image href="{{logo_url}}" x="16" y="4" width="42" height="42" preserveAspectRatio="xMidYMid meet"/>
+  <text x="80" y="22" fill="{{header_text_color}}" font-size="8" font-family="Inter, Arial, sans-serif" font-weight="600">
+    {{header_title}}
+  </text>
+  <text x="80" y="32" fill="{{header_subtitle_color}}" font-size="6" font-family="Inter, Arial, sans-serif">
+    {{header_subtitle}}
+  </text>
+
+  <!-- Content placeholder -->
+  <rect x="20" y="64" width="257" height="126" fill="none" stroke="#E2E8F0" stroke-dasharray="6 6" stroke-width="1.2"/>
+  <text x="148.5" y="128" fill="#94A3B8" font-size="8" font-family="Inter, Arial, sans-serif" text-anchor="middle">Content Area</text>
+  <rect x="20" y="178" width="257" height="1.5" fill="#C7AB81"/>
+
+  <!-- Footer -->
+  <rect y="182" width="297" height="18" fill="{{footer_bg}}"/>
+  <text x="18" y="192" fill="{{footer_text_color}}" font-size="4" font-family="Inter, Arial, sans-serif">
+    {{footer_text}}
+  </text>
+  <text x="279" y="192" fill="{{footer_date_color}}" font-size="4" font-family="Inter, Arial, sans-serif" text-anchor="end">
+    {{generation_date}}
+  </text>
+</svg>

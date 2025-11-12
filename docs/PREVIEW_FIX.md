@@ -8,7 +8,7 @@ When using `window.open()` and `document.write()` to create a preview window, re
 
 ### Problems Identified
 1. **CSS Files**: Using relative paths like `/css/pdf-colors.css`
-2. **Logo Image**: Using relative path like `/images/logo_madison.png`
+2. **Logo Image**: Using relative path like `/images/logo.png`
 3. **Result**: Missing styles and broken images in preview window
 
 ## Solution
@@ -107,8 +107,8 @@ href="${origin}/css/pdf-colors.css"
 // Resolves to: http://localhost:3000/css/pdf-colors.css
 
 // Logo image
-src="${origin}/images/logo_madison.png"
-// Resolves to: http://localhost:3000/images/logo_madison.png
+src="${origin}/images/logo.png"
+// Resolves to: http://localhost:3000/images/logo.png
 ```
 
 ### Smart URL Handling

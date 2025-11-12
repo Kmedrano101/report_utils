@@ -43,7 +43,7 @@ reportTitle: title || 'IoT Sensor Summary Report',
 reportSubtitle: subtitle || 'Real-time monitoring and analytics',
 
 // Logo disabled:
-logo: { enabled: false, url: '/images/logo_madison.png' }
+logo: { enabled: false, url: '/images/logo.png' }
 ```
 
 **`previewPDFTemplate()`** - Lines 729-743
@@ -80,7 +80,7 @@ this.defaultConfig = {
     },
     logo: {
         enabled: false,                              // CHANGED: Disabled by default
-        url: '/images/logo_madison.png',
+        url: '/images/logo.png',
         position: 'left'
     }
 }

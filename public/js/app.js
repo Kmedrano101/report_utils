@@ -24,6 +24,7 @@ async function initApp() {
     await checkHealth();
     await loadDashboard();
     await checkExternalServices();
+    await loadTemplates();
     initTheme();
     loadPDFConfig();
 }
@@ -200,6 +201,34 @@ async function checkVictoriaMetrics() {
         document.getElementById('victoria-status').innerHTML =
             '<span class="text-red-600">✗ Disconnected</span>';
         document.getElementById('victoria-storage').textContent = '-';
+    }
+}
+
+// Load available SVG templates
+async function loadTemplates() {
+    try {
+        const response = await fetch(`${API_BASE}/api/reports/templates`);
+        const data = await response.json();
+
+        if (data.success && data.data) {
+            const select = document.getElementById('pdfTemplateName');
+            if (!select) return;
+
+            // Clear existing options (except 'auto')
+            select.innerHTML = '<option value="auto">Auto (match orientation)</option>';
+
+            // Add templates from the API
+            data.data.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.filename;
+                option.textContent = `${template.description} (${template.filename})`;
+                select.appendChild(option);
+            });
+
+            console.log(`Loaded ${data.data.length} SVG templates`);
+        }
+    } catch (error) {
+        console.error('Failed to load templates:', error);
     }
 }
 
@@ -499,7 +528,8 @@ async function generateReport() {
             body.footerText = config.footer?.text || document.getElementById('pdfFooterText')?.value || 'Madison - IoT Report';
             body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'portrait';
             body.pageSize = config.pageSize || document.getElementById('pdfPageSize')?.value || 'a4';
-            body.templateName = body.layout === 'landscape' ? 'madison_horizontal.svg' : 'madison_vertical.svg';
+            const templateSelection = config.templateName || document.getElementById('pdfTemplateName')?.value || 'auto';
+            body.templateName = templateSelection === 'auto' ? resolveTemplateName(body.layout) : templateSelection;
 
             if (selectedSensors.length > 0) {
                 body.sensorIds = selectedSensors;
@@ -678,12 +708,15 @@ function initTheme() {
 function loadPDFConfig() {
     const config = window.pdfConfig.getConfig();
 
-    // Set UI values
     document.getElementById('pdfTitle').value = config.reportTitle || 'IoT Sensor Summary Report';
     document.getElementById('pdfSubtitle').value = config.reportSubtitle || 'Real-time monitoring and analytics';
+    document.getElementById('pdfTheme').value = config.theme || 'professional-blue';
     document.getElementById('pdfLayout').value = config.layout || 'portrait';
     document.getElementById('pdfPageSize').value = config.pageSize || 'a4';
     document.getElementById('pdfFooterText').value = config.footer?.text || 'Madison - IoT Report';
+    document.getElementById('pdfLogoUrl').value = config.logo?.url || '';
+    document.getElementById('pdfTemplateName').value = config.templateName || 'auto';
+    document.getElementById('pdfPreviewMode').value = config.previewMode || 'pdf';
 }
 
 /**
@@ -705,55 +738,70 @@ function updatePDFPageSize() {
 }
 
 /**
- * Preview PDF template - Generate actual PDF
+ * Resolve template name based on user selection and layout fallback
+ */
+function resolveTemplateName(layout) {
+    const selection = document.getElementById('pdfTemplateName')?.value || 'auto';
+    if (selection === 'auto') {
+        return (layout === 'landscape') ? 'template_horizontal.svg' : 'template_vertical.svg';
+    }
+    return selection;
+}
+
+/**
+ * Preview template layout using SVG base design
  */
 async function previewPDFTemplate() {
-    showNotification('Generating PDF preview...', 'info');
+    const mode = document.getElementById('pdfPreviewMode').value || 'pdf';
+    showNotification(`Generating ${mode.toUpperCase()} preview...`, 'info');
+
+    const config = window.pdfConfig.getConfig();
+    const payload = {
+        headerTitle: document.getElementById('pdfTitle').value || config.reportTitle || 'IoT Report',
+        headerSubtitle: document.getElementById('pdfSubtitle').value || config.reportSubtitle || 'Environmental Monitoring',
+        footerText: document.getElementById('pdfFooterText').value || config.footer?.text || 'Madison - IoT Report Suite',
+        logoUrl: resolveAssetUrl(document.getElementById('pdfLogoUrl').value || config.logo?.url || '/images/logo.png'),
+        theme: document.getElementById('pdfTheme').value || config.theme || 'professional-blue',
+        layout: document.getElementById('pdfLayout').value || config.layout || 'portrait',
+        pageSize: document.getElementById('pdfPageSize').value || config.pageSize || 'a4',
+        format: mode
+    };
 
     try {
-        // Get configuration values from form
-        const title = document.getElementById('pdfTitle').value || 'IoT Sensor Summary Report';
-        const subtitle = document.getElementById('pdfSubtitle').value || 'Real-time monitoring and analytics';
-        const footerText = document.getElementById('pdfFooterText').value || 'Madison - IoT Report';
-        const layout = document.getElementById('pdfLayout').value || 'portrait';
-        const pageSize = document.getElementById('pdfPageSize').value || 'a4';
-        const templateName = layout === 'landscape' ? 'madison_horizontal.svg' : 'madison_vertical.svg';
-
-        // Call API to generate test template report
-        const url = `${API_BASE}/api/reports/test-template`;
-        const body = {
-            format: 'pdf',
-            reportTitle: title,
-            reportSubtitle: subtitle,
-            footerText: footerText,
-            layout,
-            pageSize,
-            templateName
-        };
-
-        const response = await fetch(url, {
+        const endpoint = mode === 'svg'
+            ? `${API_BASE}/api/reports/layout-preview`
+            : `${API_BASE}/api/reports/final-template`;
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify(payload)
         });
 
-        if (response.ok) {
-            // Get PDF blob
-            const blob = await response.blob();
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            showNotification(`Preview failed: ${error.error || 'Unknown error'}`, 'error');
+            return;
+        }
 
-            // Create object URL and open in new tab
+        if (mode === 'svg') {
+            const data = await response.json();
+            if (data.success) {
+                const previewWindow = window.open('', '_blank');
+                previewWindow.document.write(data.html);
+                previewWindow.document.close();
+                showNotification('SVG preview opened in new window', 'success');
+            } else {
+                showNotification(`Preview failed: ${data.error || 'Unknown error'}`, 'error');
+            }
+        } else {
+            const blob = await response.blob();
             const pdfUrl = window.URL.createObjectURL(blob);
             const previewWindow = window.open(pdfUrl, '_blank');
 
             if (previewWindow) {
                 showNotification('PDF preview opened in new tab', 'success');
-
-                // Clean up object URL after window is loaded
-                setTimeout(() => {
-                    window.URL.revokeObjectURL(pdfUrl);
-                }, 1000);
+                setTimeout(() => window.URL.revokeObjectURL(pdfUrl), 1500);
             } else {
-                // If popup blocked, offer download instead
                 const a = document.createElement('a');
                 a.href = pdfUrl;
                 a.download = `template-preview-${new Date().toISOString().split('T')[0]}.pdf`;
@@ -761,12 +809,8 @@ async function previewPDFTemplate() {
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(pdfUrl);
-
                 showNotification('Preview downloaded (popup blocked)', 'warning');
             }
-        } else {
-            const error = await response.json();
-            showNotification(`Preview failed: ${error.error || 'Unknown error'}`, 'error');
         }
     } catch (error) {
         console.error('Preview error:', error);
@@ -780,21 +824,28 @@ async function previewPDFTemplate() {
 function savePDFConfig() {
     const title = document.getElementById('pdfTitle').value;
     const subtitle = document.getElementById('pdfSubtitle').value;
+    const theme = document.getElementById('pdfTheme').value;
     const layout = document.getElementById('pdfLayout').value;
     const pageSize = document.getElementById('pdfPageSize').value;
     const footerText = document.getElementById('pdfFooterText').value;
+    const logoUrl = document.getElementById('pdfLogoUrl').value;
+    const templateName = document.getElementById('pdfTemplateName').value;
+    const previewMode = document.getElementById('pdfPreviewMode').value;
 
     window.pdfGenerator.updateConfig({
         reportTitle: title || 'IoT Sensor Summary Report',
         reportSubtitle: subtitle || 'Real-time monitoring and analytics',
+        theme,
         layout,
         pageSize,
         footer: {
             text: footerText || 'Madison - IoT Report'
         },
+        templateName,
+        previewMode,
         logo: {
-            enabled: false,
-            url: '/images/logo_madison.png'
+            enabled: !!logoUrl,
+            url: logoUrl || '/images/logo.png'
         }
     });
 
@@ -879,4 +930,16 @@ async function generateReportWithTemplate() {
     } finally {
         progressDiv.classList.add('hidden');
     }
+}
+function resolveAssetUrl(path) {
+    if (!path) return '';
+    const trimmed = path.trim();
+    if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('data:')) {
+        return trimmed;
+    }
+    const origin = window.location.origin;
+    if (trimmed.startsWith('/')) {
+        return `${origin}${trimmed}`;
+    }
+    return `${origin}/${trimmed}`;
 }

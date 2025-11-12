@@ -14,6 +14,8 @@ router.post('/test-template', reportController.generateTestTemplateReport.bind(r
 router.post('/iot-summary', reportController.generateIoTSummaryReport.bind(reportController));
 router.post('/sensor-detailed', reportController.generateSensorDetailedReport.bind(reportController));
 router.post('/building', reportController.generateBuildingReport.bind(reportController));
+router.post('/layout-preview', reportController.previewLayoutTemplate.bind(reportController));
+router.post('/final-template', reportController.generateFinalTemplateReport.bind(reportController));
 
 // Report management endpoints
 router.get('/templates', reportController.getTemplates.bind(reportController));

@@ -11,6 +11,8 @@ class PDFConfig {
             theme: 'professional-blue',
             layout: 'portrait',
             pageSize: 'a4',
+            templateName: 'auto',
+            previewMode: 'pdf',
             orientation: 'vertical',
             margins: {
                 top: 20,
@@ -34,7 +36,7 @@ class PDFConfig {
             },
             logo: {
                 enabled: false,
-                url: '/images/logo_madison.png',
+                url: '/images/logo.png',
                 position: 'left'
             },
             typography: {
