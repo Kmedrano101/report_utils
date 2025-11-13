@@ -16,6 +16,7 @@ import pdfGenerationService from './services/pdfGenerationService.js';
 import configService from './services/configService.js';
 import logger from './utils/logger.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
+import languageMiddleware from './middleware/languageMiddleware.js';
 
 // Import routes
 import reportRoutes from './routes/reportRoutes.js';
@@ -48,7 +49,7 @@ app.use(express.static(publicPath));
 app.use(cors({
   origin: config.isDevelopment ? '*' : config.server.host,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language']
 }));
 
 // Body parsing
@@ -57,6 +58,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Compression
 app.use(compression());
+
+// Language detection
+app.use(languageMiddleware);
 
 // HTTP request logging
 if (config.isDevelopment) {

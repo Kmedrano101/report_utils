@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,8 +26,8 @@
                 <div class="flex items-center">
                     <i class="fas fa-chart-line text-blue-600 text-3xl mr-3"></i>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tidop IoT Report Utils</h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Configuration & Management</p>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white" data-i18n="header.title">Tidop IoT Report Utils</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="header.subtitle">Configuration &amp; Management</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -36,8 +36,16 @@
                         <span class="text-sm font-medium dark:text-gray-300" id="systemStatusText">Checking...</span>
                     </div>
                     <button onclick="checkHealth()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        <i class="fas fa-sync-alt mr-2"></i><span data-i18n="button.refresh">Refresh</span>
                     </button>
+                    <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-2">
+                        <span id="languageFlag" class="text-lg mr-2" aria-hidden="true">🇪🇸</span>
+                        <label for="languageSelector" class="sr-only">Language</label>
+                        <select id="languageSelector" class="bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-700 dark:text-gray-200">
+                            <option value="es">Español</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
                     <button id="theme-toggle" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">
                         <i id="theme-toggle-icon" class="fas fa-sun"></i>
                     </button>
@@ -52,16 +60,16 @@
         <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav class="-mb-px flex space-x-8">
                 <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-active border-b-2 py-4 px-1 text-sm font-medium">
-                    <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    <i class="fas fa-tachometer-alt mr-2"></i><span data-i18n="tabs.dashboard">Dashboard</span>
                 </button>
                 <button onclick="showTab('database')" id="tab-database" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
-                    <i class="fas fa-database mr-2"></i>Database Config
+                    <i class="fas fa-database mr-2"></i><span data-i18n="tabs.database">Database Config</span>
                 </button>
                 <button onclick="showTab('reports')" id="tab-reports" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
-                    <i class="fas fa-file-pdf mr-2"></i>Reports
+                    <i class="fas fa-file-pdf mr-2"></i><span data-i18n="tabs.reports">Reports</span>
                 </button>
                 <button onclick="showTab('api')" id="tab-api" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
-                    <i class="fas fa-code mr-2"></i>API Explorer
+                    <i class="fas fa-code mr-2"></i><span data-i18n="tabs.api">API Explorer</span>
                 </button>
             </nav>
         </div>
@@ -73,20 +81,20 @@
                 <!-- System Health Card -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">System Health</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="cards.systemHealth.title">System Health</h3>
                         <i class="fas fa-heartbeat text-2xl text-blue-600"></i>
                     </div>
                     <div id="healthDetails" class="space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Status</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.systemHealth.status">Status</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="health-status">Loading...</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Uptime</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.systemHealth.uptime">Uptime</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="health-uptime">-</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Memory</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.systemHealth.memory">Memory</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="health-memory">-</span>
                         </div>
                     </div>
@@ -95,20 +103,20 @@
                 <!-- Database Card -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Database</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="cards.database.title">Database</h3>
                         <i class="fas fa-database text-2xl text-green-600"></i>
                     </div>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Connection</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.database.connection">Connection</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="db-status">-</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Pool</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.database.pool">Pool</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="db-pool">-</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Type</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.database.type">Type</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="db-type">TimescaleDB</span>
                         </div>
                     </div>
@@ -117,20 +125,20 @@
                 <!-- Reports Card -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Reports</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="cards.reports.title">Reports</h3>
                         <i class="fas fa-chart-bar text-2xl text-purple-600"></i>
                     </div>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Generated</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.reports.generated">Generated</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="report-count">-</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Templates</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.reports.templates">Templates</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="template-count">-</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">PDF Engine</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.reports.pdfEngine">PDF Engine</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="pdf-status">-</span>
                         </div>
                     </div>
@@ -142,20 +150,20 @@
                 <!-- Prometheus Card -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Prometheus</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="cards.prometheus.title">Prometheus</h3>
                         <i class="fas fa-fire text-2xl text-orange-600"></i>
                     </div>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Connection</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.prometheus.connection">Connection</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="prometheus-status">-</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Metrics</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.prometheus.metrics">Metrics</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="prometheus-metrics">-</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Last Scrape</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.prometheus.lastScrape">Last Scrape</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="prometheus-scrape">-</span>
                         </div>
                     </div>
@@ -164,20 +172,20 @@
                 <!-- VictoriaMetrics Card -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">VictoriaMetrics</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="cards.victoria.title">VictoriaMetrics</h3>
                         <i class="fas fa-chart-area text-2xl text-indigo-600"></i>
                     </div>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Connection</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.victoria.connection">Connection</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="victoria-status">-</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Query Engine</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.victoria.queryEngine">Query Engine</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="victoria-query">MetricsQL</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Storage</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.victoria.storage">Storage</span>
                             <span class="text-sm font-medium dark:text-gray-300" id="victoria-storage">-</span>
                         </div>
                     </div>
@@ -187,20 +195,20 @@
             <!-- Quick Actions -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    <i class="fas fa-bolt mr-2"></i>Quick Actions
+                    <i class="fas fa-bolt mr-2"></i><span data-i18n="quickActions.title">Quick Actions</span>
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <button onclick="generateQuickReport()" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition">
                         <i class="fas fa-file-pdf text-3xl text-blue-600 mb-2"></i>
-                        <p class="text-sm font-medium dark:text-gray-300">Generate Report</p>
+                        <p class="text-sm font-medium dark:text-gray-300" data-i18n="quickActions.generateReport">Generate Report</p>
                     </button>
                     <button onclick="showTab('database')" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-gray-700 transition">
                         <i class="fas fa-cog text-3xl text-green-600 mb-2"></i>
-                        <p class="text-sm font-medium dark:text-gray-300">Configure Database</p>
+                        <p class="text-sm font-medium dark:text-gray-300" data-i18n="quickActions.configureDatabase">Configure Database</p>
                     </button>
                     <button onclick="showTab('api')" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-gray-700 transition">
                         <i class="fas fa-terminal text-3xl text-purple-600 mb-2"></i>
-                        <p class="text-sm font-medium dark:text-gray-300">API Explorer</p>
+                        <p class="text-sm font-medium dark:text-gray-300" data-i18n="quickActions.apiExplorer">API Explorer</p>
                     </button>
                 </div>
             </div>
@@ -210,22 +218,22 @@
             <!-- Database Configuration Tab -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                    <i class="fas fa-database mr-2"></i>Database Configuration
+                    <i class="fas fa-database mr-2"></i><span data-i18n="database.config.title">Database Configuration</span>
                 </h3>
 
                 <!-- Connection Profiles -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Connection Profile</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="database.config.profileLabel">Connection Profile</label>
                     <div class="flex space-x-2">
                         <select id="dbProfile" class="flex-1 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="default">Default (Built-in TimescaleDB)</option>
-                            <option value="custom">Custom Configuration</option>
+                            <option value="default" data-i18n="database.config.profileDefault">Default (Built-in TimescaleDB)</option>
+                            <option value="custom" data-i18n="database.config.profileCustom">Custom Configuration</option>
                         </select>
                         <button onclick="loadProfile()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                            <i class="fas fa-upload mr-2"></i>Load
+                            <i class="fas fa-upload mr-2"></i><span data-i18n="button.load">Load</span>
                         </button>
                         <button onclick="saveProfile()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                            <i class="fas fa-save mr-2"></i>Save
+                            <i class="fas fa-save mr-2"></i><span data-i18n="button.save">Save</span>
                         </button>
                     </div>
                 </div>
@@ -233,52 +241,52 @@
                 <form id="dbConfigForm" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Host</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.config.host">Host</label>
                             <input type="text" id="dbHost" placeholder="localhost" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Port</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.config.port">Port</label>
                             <input type="number" id="dbPort" placeholder="5432" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Database Name</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.config.databaseName">Database Name</label>
                             <input type="text" id="dbName" placeholder="iot_reports" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.config.username">Username</label>
                             <input type="text" id="dbUser" placeholder="postgres" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.config.password">Password</label>
                             <input type="password" id="dbPassword" placeholder="••••••••" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SSL Mode</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.config.sslMode">SSL Mode</label>
                             <select id="dbSSL" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="disable">Disable</option>
-                                <option value="prefer">Prefer</option>
-                                <option value="require">Require</option>
+                                <option value="disable" data-i18n="database.config.sslDisable">Disable</option>
+                                <option value="prefer" data-i18n="database.config.sslPrefer">Prefer</option>
+                                <option value="require" data-i18n="database.config.sslRequire">Require</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Connection Pool Min</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.config.poolMin">Connection Pool Min</label>
                             <input type="number" id="dbPoolMin" placeholder="2" min="1" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Connection Pool Max</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.config.poolMax">Connection Pool Max</label>
                             <input type="number" id="dbPoolMax" placeholder="10" min="1" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     </div>
 
                     <div class="flex space-x-4 pt-6 mt-4">
                         <button type="button" onclick="testConnection()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                            <i class="fas fa-plug mr-2"></i>Test Connection
+                            <i class="fas fa-plug mr-2"></i><span data-i18n="button.testConnection">Test Connection</span>
                         </button>
                         <button type="button" onclick="applyConfig()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                            <i class="fas fa-check mr-2"></i>Apply Configuration
+                            <i class="fas fa-check mr-2"></i><span data-i18n="button.applyConfiguration">Apply Configuration</span>
                         </button>
                     </div>
                 </form>
@@ -291,25 +299,25 @@
             <!-- Schema Mapping -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                    <i class="fas fa-sitemap mr-2"></i>Schema Mapping
+                    <i class="fas fa-sitemap mr-2"></i><span data-i18n="database.schema.title">Schema Mapping</span>
                 </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Map your existing database schema to IoT Report Utils</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4" data-i18n="database.schema.description">Map your existing database schema to IoT Report Utils</p>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sensors Table</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.schema.sensorsTable">Sensors Table</label>
                         <input type="text" id="tableSensors" placeholder="iot.sensors" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Readings Table</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.schema.readingsTable">Readings Table</label>
                         <input type="text" id="tableReadings" placeholder="iot.sensor_readings" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sensor Types Table</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-i18n="database.schema.sensorTypesTable">Sensor Types Table</label>
                         <input type="text" id="tableSensorTypes" placeholder="iot.sensor_types" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <button onclick="detectSchema()" class="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
-                        <i class="fas fa-search mr-2"></i>Auto-Detect Schema
+                        <i class="fas fa-search mr-2"></i><span data-i18n="button.autoDetectSchema">Auto-Detect Schema</span>
                     </button>
                 </div>
             </div>
@@ -538,6 +546,7 @@
     </footer>
 
     <!-- PDF Generator Modules -->
+    <script src="/js/i18n.js"></script>
     <script src="/js/pdf-utils.js"></script>
     <script src="/js/pdf-config.js"></script>
     <script src="/js/pdf-template-engine.js"></script>

@@ -3,6 +3,26 @@
  */
 
 const API_BASE = window.location.origin;
+const LanguageManager = window.LanguageManager || null;
+
+const t = (key, fallback = '') => {
+    if (LanguageManager?.t) {
+        return LanguageManager.t(key, fallback);
+    }
+    return fallback || key;
+};
+
+function languageFetch(url, options = {}) {
+    if (LanguageManager && typeof LanguageManager.applyLanguageToRequest === 'function') {
+        return fetch(url, LanguageManager.applyLanguageToRequest(options));
+    }
+    return fetch(url, options);
+}
+
+async function languageFetchJSON(url, options = {}) {
+    const response = await languageFetch(url, options);
+    return response.json();
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,6 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initApp() {
     console.log('Initializing IoT Report Utils UI...');
+
+    if (LanguageManager?.init) {
+        LanguageManager.init();
+        LanguageManager.bindSelector(
+            document.getElementById('languageSelector'),
+            document.getElementById('languageFlag')
+        );
+    }
 
     // Set default dates
     const today = new Date();
@@ -27,6 +55,7 @@ async function initApp() {
     await loadTemplates();
     initTheme();
     loadPDFConfig();
+    updateApiExample();
 }
 
 // Tab Management
@@ -58,7 +87,7 @@ function showTab(tabName) {
 // Health Check
 async function checkHealth() {
     try {
-        const response = await fetch(`${API_BASE}/health`);
+        const response = await languageFetch(`${API_BASE}/health`);
         const data = await response.json();
 
         updateHealthUI(data);
@@ -76,30 +105,34 @@ function updateHealthUI(data) {
 
     if (data.success) {
         statusDot.className = 'status-dot status-healthy';
-        statusText.textContent = 'Online';
+        statusText.textContent = t('status.online', 'Online');
         statusText.className = 'text-sm font-medium text-green-600 dark:text-green-400';
 
         // Update health details
-        document.getElementById('health-status').textContent = 'Healthy';
+        document.getElementById('health-status').textContent = t('status.healthy', 'Healthy');
         document.getElementById('health-uptime').textContent = formatUptime(data.uptime);
         document.getElementById('health-memory').textContent = `${data.memory?.used || 0} / ${data.memory?.total || 0} MB`;
 
         // Update database status
         if (data.database) {
-            document.getElementById('db-status').textContent = data.database.healthy ? 'Connected' : 'Disconnected';
+            document.getElementById('db-status').textContent = data.database.healthy
+                ? t('status.connected', 'Connected')
+                : t('status.disconnected', 'Disconnected');
             document.getElementById('db-pool').textContent = `${data.database.poolIdle || 0} / ${data.database.poolTotal || 0}`;
         }
 
         // Update PDF service status
         if (data.pdfService) {
-            document.getElementById('pdf-status').textContent = data.pdfService.initialized ? 'Ready' : 'Initializing';
+            document.getElementById('pdf-status').textContent = data.pdfService.initialized
+                ? t('status.ready', 'Ready')
+                : t('status.initializing', 'Initializing');
         }
     } else {
         statusDot.className = 'status-dot status-unhealthy';
-        statusText.textContent = 'Offline';
+        statusText.textContent = t('status.offline', 'Offline');
         statusText.className = 'text-sm font-medium text-red-600';
 
-        document.getElementById('health-status').textContent = 'Unhealthy';
+        document.getElementById('health-status').textContent = t('status.unhealthy', 'Unhealthy');
     }
 }
 
@@ -114,11 +147,11 @@ function formatUptime(seconds) {
 async function loadDashboard() {
     try {
         // Load report count
-        const reports = await fetch(`${API_BASE}/api/reports/history?limit=10`).then(r => r.json());
+        const reports = await languageFetchJSON(`${API_BASE}/api/reports/history?limit=10`);
         document.getElementById('report-count').textContent = reports.data?.length || 0;
 
         // Load templates
-        const templates = await fetch(`${API_BASE}/api/reports/templates`).then(r => r.json());
+        const templates = await languageFetchJSON(`${API_BASE}/api/reports/templates`);
         document.getElementById('template-count').textContent = templates.data?.length || 0;
     } catch (error) {
         console.error('Failed to load dashboard:', error);
@@ -207,7 +240,7 @@ async function checkVictoriaMetrics() {
 // Load available SVG templates
 async function loadTemplates() {
     try {
-        const response = await fetch(`${API_BASE}/api/reports/templates`);
+        const response = await languageFetch(`${API_BASE}/api/reports/templates`);
         const data = await response.json();
 
         if (data.success && data.data) {
@@ -235,7 +268,7 @@ async function loadTemplates() {
 // Sensors (for report generation)
 async function loadSensors() {
     try {
-        const response = await fetch(`${API_BASE}/api/sensors`);
+        const response = await languageFetch(`${API_BASE}/api/sensors`);
         const data = await response.json();
 
         if (data.success) {
@@ -369,7 +402,7 @@ async function saveProfile() {
 
     // Also save to file if API supports it
     try {
-        const response = await fetch(`${API_BASE}/api/config/database`, {
+        const response = await languageFetch(`${API_BASE}/api/config/database`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
@@ -398,7 +431,7 @@ async function testConnection() {
     showNotification('Testing connection...', 'info');
 
     try {
-        const response = await fetch(`${API_BASE}/api/config/test-connection`, {
+        const response = await languageFetch(`${API_BASE}/api/config/test-connection`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
@@ -464,7 +497,7 @@ async function detectSchema() {
     showNotification('Auto-detecting schema...', 'info');
 
     try {
-        const response = await fetch(`${API_BASE}/api/config/detect-schema`, {
+        const response = await languageFetch(`${API_BASE}/api/config/detect-schema`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -549,7 +582,9 @@ async function generateReport() {
             body.building = 'A'; // TODO: Add building selector
         }
 
-        const response = await fetch(url, {
+        body.language = LanguageManager?.getLanguage?.() || 'es';
+
+        const response = await languageFetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -567,12 +602,12 @@ async function generateReport() {
                 a.click();
                 a.remove();
                 window.URL.revokeObjectURL(downloadUrl);
-                showNotification('Report downloaded successfully!', 'success');
+                showNotification(t('notification.reportSuccess', 'Report downloaded successfully!'), 'success');
             } else {
                 const html = await response.text();
                 const newWindow = window.open();
                 newWindow.document.write(html);
-                showNotification('Report opened in new window', 'success');
+                showNotification(t('notification.reportOpened', 'Report opened in new window'), 'success');
             }
 
             // Reload recent reports
@@ -583,7 +618,8 @@ async function generateReport() {
         }
     } catch (error) {
         console.error('Report generation error:', error);
-        showNotification(`Error: ${error.message}`, 'error');
+        const prefix = t('notification.errorPrefix', 'Error:');
+        showNotification(`${prefix} ${error.message}`, 'error');
     } finally {
         progressDiv.classList.add('hidden');
     }
@@ -596,7 +632,7 @@ async function generateQuickReport() {
 
 async function loadRecentReports() {
     try {
-        const response = await fetch(`${API_BASE}/api/reports/history?limit=10`);
+        const response = await languageFetch(`${API_BASE}/api/reports/history?limit=10`);
         const data = await response.json();
 
         const container = document.getElementById('recentReports');
@@ -627,30 +663,37 @@ async function loadRecentReports() {
 // API Explorer
 function updateApiExample() {
     const endpoint = document.getElementById('apiEndpoint').value;
-    document.getElementById('curlCommand').textContent = `curl ${API_BASE}${endpoint}`;
+    const lang = LanguageManager?.getLanguage?.() || 'es';
+    document.getElementById('curlCommand').textContent = `curl -H "Accept-Language: ${lang}" ${API_BASE}${endpoint}`;
 }
 
 async function testEndpoint() {
     const endpoint = document.getElementById('apiEndpoint').value;
     const responseDiv = document.getElementById('apiResponse');
 
-    responseDiv.textContent = 'Loading...';
+    responseDiv.textContent = t('status.loading', 'Loading...');
 
     try {
-        const response = await fetch(`${API_BASE}${endpoint}`);
+        const response = await languageFetch(`${API_BASE}${endpoint}`);
         const data = await response.json();
         responseDiv.textContent = JSON.stringify(data, null, 2);
     } catch (error) {
-        responseDiv.textContent = `Error: ${error.message}`;
+        const prefix = t('notification.errorPrefix', 'Error:');
+        responseDiv.textContent = `${prefix} ${error.message}`;
     }
 }
 
 function copyCurl() {
     const command = document.getElementById('curlCommand').textContent;
     navigator.clipboard.writeText(command).then(() => {
-        showNotification('Copied to clipboard!', 'success');
+        showNotification(t('notification.copied', 'Copied to clipboard!'), 'success');
     });
 }
+
+window.addEventListener('languagechange', () => {
+    updateApiExample();
+    checkHealth(); // Refresh health status to apply new translations
+});
 
 // Notifications
 function showNotification(message, type = 'info') {
@@ -768,10 +811,12 @@ async function previewPDFTemplate() {
     };
 
     try {
+        payload.language = LanguageManager?.getLanguage?.() || 'es';
+
         const endpoint = mode === 'svg'
             ? `${API_BASE}/api/reports/layout-preview`
             : `${API_BASE}/api/reports/final-template`;
-        const response = await fetch(endpoint, {
+        const response = await languageFetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -787,9 +832,10 @@ async function previewPDFTemplate() {
             const data = await response.json();
             if (data.success) {
                 // Wrap the HTML with centering styles for better preview
+                const previewLang = LanguageManager?.getLanguage?.() || 'es';
                 const centeredHtml = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${previewLang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -940,7 +986,9 @@ async function generateReportWithTemplate() {
             body.sensorIds = selectedSensors;
         }
 
-        const response = await fetch(apiUrl, {
+        body.language = LanguageManager?.getLanguage?.() || 'es';
+
+        const response = await languageFetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -969,7 +1017,8 @@ async function generateReportWithTemplate() {
         }
     } catch (error) {
         console.error('Report generation error:', error);
-        showNotification(`Error: ${error.message}`, 'error');
+        const prefix = t('notification.errorPrefix', 'Error:');
+        showNotification(`${prefix} ${error.message}`, 'error');
     } finally {
         progressDiv.classList.add('hidden');
     }

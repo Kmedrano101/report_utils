@@ -46,6 +46,7 @@ class PDFGenerator {
             format = 'pdf',
             download = true
         } = options;
+        const activeLanguage = window.LanguageManager?.getLanguage?.() || 'es';
 
         try {
             // Get current configuration
@@ -62,7 +63,8 @@ class PDFGenerator {
                 theme: config.theme,
                 footerText: config.footer.text || 'Madison - IoT Report',
                 logoUrl: logoUrl,
-                date: new Date()
+                date: new Date(),
+                language: activeLanguage
             };
 
             // Render HTML from template
@@ -84,7 +86,7 @@ class PDFGenerator {
             }
 
             // For PDF, send to backend API
-            const pdfBlob = await this.generatePDFFromHTML(styledHTML, config);
+            const pdfBlob = await this.generatePDFFromHTML(styledHTML, config, activeLanguage);
 
             if (download) {
                 this.downloadPDF(pdfBlob, filename);
@@ -112,6 +114,7 @@ class PDFGenerator {
      */
     applyConfiguration(html, config) {
         const cssVars = this.config.getCSSVariables();
+        const htmlLang = window.LanguageManager?.getLanguage?.() || 'es';
         const origin = window.location.origin;
 
         const styleBlock = `
@@ -125,7 +128,7 @@ class PDFGenerator {
         // Wrap HTML with full page structure using absolute URLs
         const fullHTML = `
         <!DOCTYPE html>
-        <html lang="en" data-pdf-theme="${config.theme}">
+        <html lang="${htmlLang}" data-pdf-theme="${config.theme}">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -149,21 +152,31 @@ class PDFGenerator {
      * Generate PDF from HTML via backend API
      * @private
      */
-    async generatePDFFromHTML(html, config) {
-        const response = await fetch('/api/reports/generate-pdf', {
+    async generatePDFFromHTML(html, config, languageOverride) {
+        const selectedLanguage = languageOverride || window.LanguageManager?.getLanguage?.() || 'es';
+        const payload = {
+            html,
+            options: {
+                format: config.pageSize || 'A4',
+                landscape: config.layout === 'landscape',
+                margin: config.margins || { top: 20, right: 20, bottom: 20, left: 20 }
+            },
+            language: selectedLanguage
+        };
+
+        let requestOptions = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                html,
-                options: {
-                    format: config.pageSize || 'A4',
-                    landscape: config.layout === 'landscape',
-                    margin: config.margins || { top: 20, right: 20, bottom: 20, left: 20 }
-                }
-            })
-        });
+            body: JSON.stringify(payload)
+        };
+
+        if (window.LanguageManager?.applyLanguageToRequest) {
+            requestOptions = window.LanguageManager.applyLanguageToRequest(requestOptions);
+        }
+
+        const response = await fetch('/api/reports/generate-pdf', requestOptions);
 
         if (!response.ok) {
             throw new Error('PDF generation failed on server');
