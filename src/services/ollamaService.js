@@ -1,6 +1,6 @@
 /**
  * Ollama Service
- * Client for interacting with Ollama API (Llama 3.1 8B and SQLCoder 7B)
+ * Client for interacting with Ollama API (Llama 3.1 8B and Qwen2.5-Coder 7B)
  */
 
 import config from '../config/index.js';
@@ -67,7 +67,7 @@ class OllamaService {
 
   /**
    * Pull a model from Ollama registry
-   * @param {string} modelName - Model name (e.g., 'llama3.1:8b', 'sqlcoder:7b')
+   * @param {string} modelName - Model name (e.g., 'llama3.1:8b', 'qwen2.5-coder:7b')
    * @returns {Promise<void>}
    */
   async pullModel(modelName) {

@@ -1,11 +1,13 @@
 services:
-  # PostgreSQL with TimescaleDB extension for time-series IoT data
+  # PostgreSQL with TimescaleDB extension for metadata and relational data
+  # Note: Time-series sensor data is now stored in VictoriaMetrics
+  # This database stores: sensor metadata, report history, user configs
   timescaledb:
     image: timescale/timescaledb:latest-pg16
     container_name: iot-timescaledb
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-iot_reports}
+      POSTGRES_DB: ${DB_NAME:-madison_iot}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       TIMESCALEDB_TELEMETRY: 'off'
@@ -21,6 +23,8 @@ services:
       retries: 5
     networks:
       - iot-network
+    profiles:
+      - metadata  # Optional: Use '--profile metadata' to include metadata storage
 
   # IoT Report Generation Service
   report-service:
@@ -34,9 +38,10 @@ services:
       SERVER_PORT: ${SERVER_PORT:-3000}
       DB_HOST: timescaledb
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-iot_reports}
+      DB_NAME: ${DB_NAME:-madison_iot}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      VICTORIA_METRICS_URL: http://victoriametrics:8428
       PUPPETEER_HEADLESS: 'true'
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
       LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -48,7 +53,7 @@ services:
       - report_output:/app/reports
       - logs:/app/logs
     depends_on:
-      timescaledb:
+      victoriametrics:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
@@ -56,6 +61,35 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - iot-network
+
+  # VictoriaMetrics - Primary time-series database for IoT sensor data
+  # Stores: battery_voltage_mv, clamp_current_amperes, temperature_celsius,
+  #         humidity_percent, light_lux, movement, noise_avg_db, noise_peak_db
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:latest
+    container_name: iot-victoriametrics
+    restart: unless-stopped
+    ports:
+      - "8428:8428"  # HTTP API
+      - "8089:8089"  # InfluxDB line protocol
+      - "2003:2003"  # Graphite plaintext
+      - "4242:4242"  # OpenTSDB
+    volumes:
+      - victoria_data:/victoria-metrics-data
+    command:
+      - '--storageDataPath=/victoria-metrics-data'
+      - '--httpListenAddr=:8428'
+      - '--retentionPeriod=12'  # Keep data for 12 months
+      - '--maxLabelsPerTimeseries=50'
+      - '--search.maxQueryDuration=300s'
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 -O /dev/null http://127.0.0.1:8428/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - iot-network
 
@@ -96,6 +130,8 @@ services:
 volumes:
   timescale_data:
     name: iot_timescale_data
+  victoria_data:
+    name: iot_victoria_data
   ollama_models:
     name: iot_ollama_models
   pgadmin_data:

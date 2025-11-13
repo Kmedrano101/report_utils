@@ -127,6 +127,14 @@ class Database {
    * @returns {Promise<Object>} Health status
    */
   async healthCheck() {
+    if (!this.isConnected || !this.pool) {
+      return {
+        healthy: false,
+        error: 'Database not connected',
+        status: 'disconnected'
+      };
+    }
+
     try {
       const result = await this.query('SELECT 1 as alive, NOW() as timestamp');
       return {

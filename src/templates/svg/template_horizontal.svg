@@ -16,7 +16,7 @@
   <text x="148.5" y="124" fill="#94A3B8" font-size="8" font-family="Inter, Arial, sans-serif" text-anchor="middle">Content Area</text>
 
   <!-- Footer -->
-  <rect x="20" y="189" width="257" height="1.2" fill="#C7AB81"/>
+  <rect x="20" y="189" width="257" height="1.2" fill="{{footer_bg}}"/>
   <rect y="194" width="297" height="17" fill="{{footer_bg}}"/>
   <text x="18" y="204" fill="{{footer_text_color}}" font-size="4.6" font-family="Inter, Arial, sans-serif">
     {{footer_text}}

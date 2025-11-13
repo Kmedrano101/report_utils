@@ -190,7 +190,7 @@ This system is purpose-built for IoT sensor data with SVG templates, time-series
 ### Future Integration
 
 - **Ollama** - Local LLM for text-to-SQL queries (architecture ready)
-- **SQLCoder / Code Llama** - SQL generation from natural language
+- **Qwen2.5-Coder** - SQL generation from natural language
 
 ---
 
@@ -651,7 +651,7 @@ async generateMyReport(reportData) {
 | `PUPPETEER_TIMEOUT` | PDF timeout (ms) | `30000` |
 | `OLLAMA_ENABLED` | Enable Ollama | `false` |
 | `OLLAMA_HOST` | Ollama API URL | `http://localhost:11434` |
-| `OLLAMA_MODEL` | LLM model name | `sqlcoder` |
+| `OLLAMA_MODEL` | LLM model name | `qwen2.5-coder:7b` |
 | `LOG_LEVEL` | Logging level | `info` |
 
 ### Docker Compose Profiles
@@ -780,7 +780,7 @@ POST /api/query/natural
 }
 
 // System will:
-// 1. Send to Ollama with SQLCoder model
+// 1. Send to Ollama with Qwen2.5-Coder model
 // 2. Generate SQL query
 // 3. Execute against database
 // 4. Return results with generated SQL

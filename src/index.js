@@ -23,6 +23,7 @@ import reportRoutes from './routes/reportRoutes.js';
 import sensorRoutes from './routes/sensorRoutes.js';
 import kpiRoutes from './routes/kpiRoutes.js';
 import configRoutes from './routes/configRoutes.js';
+import metricsRoutes from './routes/metricsRoutes.js';
 
 // Get current directory for static files
 const __filename = fileURLToPath(import.meta.url);
@@ -90,7 +91,8 @@ app.get('/health', async (req, res) => {
     const dbHealth = await database.healthCheck();
     const pdfHealth = await pdfGenerationService.healthCheck();
 
-    const status = dbHealth.healthy && pdfHealth.healthy ? 200 : 503;
+    // Service is healthy if PDF service works, database is optional
+    const status = pdfHealth.healthy ? 200 : 503;
 
     res.status(status).json({
       success: status === 200,
@@ -134,6 +136,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/sensors', sensorRoutes);
 app.use('/api/kpis', kpiRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/metrics', metricsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
@@ -156,9 +159,16 @@ async function startServer() {
     await configService.loadConfigurations();
     logger.info('Configuration service initialized');
 
-    // Connect to database
-    await database.connect();
-    logger.info('Database connection established');
+    // Connect to database (optional - continue if fails)
+    try {
+      await database.connect();
+      logger.info('Database connection established');
+    } catch (error) {
+      logger.warn('Database connection failed - continuing without database', {
+        error: error.message
+      });
+      logger.info('Application will run with limited functionality (no database)');
+    }
 
     // Initialize PDF generation service
     await pdfGenerationService.initialize();

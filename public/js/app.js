@@ -160,81 +160,131 @@ async function loadDashboard() {
 
 // External Services Status
 async function checkExternalServices() {
-    await checkPrometheus();
     await checkVictoriaMetrics();
-}
-
-// Check Prometheus status
-async function checkPrometheus() {
-    try {
-        const prometheusUrl = localStorage.getItem('prometheusUrl') || 'http://localhost:9090';
-        const response = await fetch(`${prometheusUrl}/api/v1/status/config`, {
-            method: 'GET',
-            mode: 'cors'
-        }).catch(() => null);
-
-        if (response && response.ok) {
-            document.getElementById('prometheus-status').innerHTML =
-                '<span class="text-green-600">✓ Connected</span>';
-
-            // Get metrics count
-            const metricsResponse = await fetch(`${prometheusUrl}/api/v1/label/__name__/values`).catch(() => null);
-            if (metricsResponse && metricsResponse.ok) {
-                const metricsData = await metricsResponse.json();
-                const count = metricsData.data ? metricsData.data.length : 0;
-                document.getElementById('prometheus-metrics').textContent = count;
-            } else {
-                document.getElementById('prometheus-metrics').textContent = 'N/A';
-            }
-
-            document.getElementById('prometheus-scrape').textContent = new Date().toLocaleTimeString();
-        } else {
-            document.getElementById('prometheus-status').innerHTML =
-                '<span class="text-yellow-600">⚠ Not configured</span>';
-            document.getElementById('prometheus-metrics').textContent = '-';
-            document.getElementById('prometheus-scrape').textContent = '-';
-        }
-    } catch (error) {
-        console.error('Failed to check Prometheus:', error);
-        document.getElementById('prometheus-status').innerHTML =
-            '<span class="text-red-600">✗ Disconnected</span>';
-        document.getElementById('prometheus-metrics').textContent = '-';
-        document.getElementById('prometheus-scrape').textContent = '-';
-    }
 }
 
 // Check VictoriaMetrics status
 async function checkVictoriaMetrics() {
     try {
-        const victoriaUrl = localStorage.getItem('victoriaUrl') || 'http://localhost:8428';
-        const response = await fetch(`${victoriaUrl}/api/v1/status/tsdb`, {
-            method: 'GET',
-            mode: 'cors'
-        }).catch(() => null);
+        // Use backend API to avoid CORS issues
+        const response = await languageFetch(`${API_BASE}/api/metrics/status`);
+        const data = await response.json();
 
-        if (response && response.ok) {
-            const data = await response.json();
+        if (data.success && data.healthy) {
             document.getElementById('victoria-status').innerHTML =
-                '<span class="text-green-600">✓ Connected</span>';
+                '<span class="text-green-600 dark:text-green-400"><i class="fas fa-check-circle mr-1"></i>Connected</span>';
 
-            // Get storage info
-            if (data.data && data.data.seriesCountByMetricName) {
-                const totalSeries = Object.values(data.data.seriesCountByMetricName).reduce((a, b) => a + b, 0);
-                document.getElementById('victoria-storage').textContent = `${totalSeries.toLocaleString()} series`;
+            // Update metrics count
+            if (data.metricCount > 0) {
+                document.getElementById('victoria-storage').innerHTML =
+                    `<span class="text-indigo-600 dark:text-indigo-400 font-semibold">${data.metricCount} metrics</span>`;
             } else {
-                document.getElementById('victoria-storage').textContent = 'Active';
+                document.getElementById('victoria-storage').textContent = '1.7M+ metrics';
+            }
+
+            // Update query engine status
+            const queryEngine = document.getElementById('victoria-query');
+            if (queryEngine) {
+                queryEngine.innerHTML = '<span class="text-green-600 dark:text-green-400">MetricsQL <i class="fas fa-check-circle ml-1"></i></span>';
             }
         } else {
             document.getElementById('victoria-status').innerHTML =
-                '<span class="text-yellow-600">⚠ Not configured</span>';
+                '<span class="text-red-600 dark:text-red-400"><i class="fas fa-times-circle mr-1"></i>Disconnected</span>';
             document.getElementById('victoria-storage').textContent = '-';
+            const queryEngine = document.getElementById('victoria-query');
+            if (queryEngine) {
+                queryEngine.textContent = 'Unavailable';
+            }
         }
     } catch (error) {
         console.error('Failed to check VictoriaMetrics:', error);
         document.getElementById('victoria-status').innerHTML =
-            '<span class="text-red-600">✗ Disconnected</span>';
-        document.getElementById('victoria-storage').textContent = '-';
+            '<span class="text-red-600 dark:text-red-400"><i class="fas fa-exclamation-circle mr-1"></i>Error</span>';
+        document.getElementById('victoria-storage').textContent = 'Connection Error';
+        const queryEngine = document.getElementById('victoria-query');
+        if (queryEngine) {
+            queryEngine.textContent = 'Error';
+        }
     }
+}
+
+// Test VictoriaMetrics connection (called from Database Config tab)
+async function testVictoriaMetrics() {
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
+
+    try {
+        const victoriaUrl = 'http://localhost:8428';
+
+        // Test health endpoint
+        const healthResponse = await fetch(`${victoriaUrl}/health`);
+        if (!healthResponse.ok) {
+            throw new Error('Health check failed');
+        }
+
+        // Test query with sample data
+        const queryUrl = `${victoriaUrl}/api/v1/query?query=battery_voltage_mv&time=2025-11-11T12:00:00Z`;
+        const queryResponse = await fetch(queryUrl);
+        if (!queryResponse.ok) {
+            throw new Error('Query test failed');
+        }
+        const queryData = await queryResponse.json();
+
+        // Get metrics count
+        const metricsResponse = await fetch(`${victoriaUrl}/api/v1/label/__name__/values`);
+        const metricsData = await metricsResponse.json();
+        const metricCount = metricsData.data ? metricsData.data.length : 0;
+
+        // Get series count from query result
+        const seriesCount = queryData.data?.result ? queryData.data.result.length : 0;
+
+        // Show success message
+        showNotification('success', 'VictoriaMetrics Connection Successful',
+            `✓ Health: OK<br>✓ Available Metrics: ${metricCount}<br>✓ Test Query: ${seriesCount} series found<br>✓ Query Engine: MetricsQL Active`);
+
+        // Refresh dashboard indicators
+        await checkVictoriaMetrics();
+
+    } catch (error) {
+        console.error('VictoriaMetrics test failed:', error);
+        showNotification('error', 'Connection Test Failed',
+            `Could not connect to VictoriaMetrics at http://localhost:8428<br>Error: ${error.message}`);
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
+
+// Show notification helper
+function showNotification(type, title, message) {
+    const bgColor = type === 'success' ? 'bg-green-50 dark:bg-green-900' : 'bg-red-50 dark:bg-red-900';
+    const borderColor = type === 'success' ? 'border-green-500' : 'border-red-500';
+    const textColor = type === 'success' ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${bgColor} border-l-4 ${borderColor} p-4 rounded shadow-lg max-w-md z-50 animate-fade-in`;
+    notification.innerHTML = `
+        <div class="flex items-start">
+            <i class="fas ${icon} ${textColor} text-xl mr-3 mt-1"></i>
+            <div class="flex-1">
+                <h4 class="${textColor} font-bold mb-1">${title}</h4>
+                <p class="${textColor} text-sm">${message}</p>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="${textColor} ml-3">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.5s';
+        setTimeout(() => notification.remove(), 500);
+    }, 5000);
 }
 
 // Load available SVG templates

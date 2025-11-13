@@ -588,7 +588,7 @@ const pdf = await generatePdfFromHtml(html);
                │
 ┌──────────────▼─────────────────────────┐
 │         Ollama Service                  │
-│  Model: SQLCoder / Code Llama          │
+│  Model: Qwen2.5-Coder          │
 │  Prompt: Schema + Question → SQL       │
 └──────────────┬─────────────────────────┘
                │

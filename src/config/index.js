@@ -37,7 +37,7 @@ const envSchema = Joi.object({
   // Ollama (optional)
   OLLAMA_ENABLED: Joi.string().valid('true', 'false').default('false'),
   OLLAMA_HOST: Joi.string().uri().default('http://localhost:11434'),
-  OLLAMA_MODEL: Joi.string().default('sqlcoder'),
+  OLLAMA_MODEL: Joi.string().default('qwen2.5-coder:7b'),
 
   // Report settings
   REPORT_TIMEOUT: Joi.number().min(1000).default(60000),

@@ -1,4 +1,4 @@
-# Text-to-SQL Architecture (Llama 3.1 8B + SQLCoder 7B)
+# Text-to-SQL Architecture (Llama 3.1 8B + Qwen2.5-Coder 7B)
 
 This document captures the dual-model strategy for turning natural-language questions into safe SQL for the `madison_iot` database.
 
@@ -9,7 +9,7 @@ This document captures the dual-model strategy for turning natural-language ques
    - Normalizes phrasing, corrects sensor/table names using the schema.  
    - Returns JSON `{ status, llm_query, issues[] }`.  
    - If `status !== "ok"`, show `issues` to the user (e.g., “Sensor ‘temp-10’ not found; did you mean ‘TEMP_01’?”).
-3. **SQLCoder 7B** (only when status is `ok`)  
+3. **Qwen2.5-Coder 7B** (only when status is `ok`)  
    - Receives the cleaned `llm_query` plus a trimmed schema context.  
    - Outputs a single SELECT statement (with optional natural-language summary).  
 4. **Validator**  
@@ -23,7 +23,7 @@ This document captures the dual-model strategy for turning natural-language ques
 
 - `docs/db_context.md` (~6.8 KB ≈ 1.7k tokens) contains the authoritative schema summary.  
 - Llama 3.1 8B has an 8k context window, so you can paste the entire file alongside the user query.  
-- SQLCoder 7B has a smaller window (~4k tokens); provide only the relevant portions:
+- Qwen2.5-Coder 7B has a large 32k context window; provide only the relevant portions:
   1. Table summaries for `iot.sensors` and whichever readings/aggregate tables Llama referenced.
   2. Key views (`iot.latest_readings`, hourly aggregates) only when hinted (e.g., “latest”, “per hour”).
   3. Connection hints: timestamps are `TIMESTAMPTZ`, use UTC, units (°C, %, lux, dB, amps, mV).
@@ -48,7 +48,7 @@ TASKS:
     }
 ```
 
-### SQLCoder 7B – SQL Generation
+### Qwen2.5-Coder 7B – SQL Generation
 ```
 SYSTEM: Generate a single PostgreSQL/Timescale SELECT. Use only the objects listed below.
 CONTEXT: <subset of schema relevant to the llm_query>
@@ -88,7 +88,7 @@ SSL      : disabled
 2. **Implement Query Sherpa Service**  
    - Wrap Llama in an API that enforces the `{ status, llm_query, issues }` contract.
 3. **Build SQL Stage + Validator**  
-   - Wire SQLCoder, AST validation, and read-only execution flow.
+   - Wire Qwen2.5-Coder, AST validation, and read-only execution flow.
 4. **Surface UX Feedback**  
    - Integrate clarification responses into the UI (suggested sensors/tables, spelling fixes).
 5. **Logging & Monitoring**  

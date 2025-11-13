@@ -1,6 +1,6 @@
 # Database Context for Text-to-SQL
 
-Prepared for SQL-focused LLMs (e.g., SQLCoder via Ollama) so natural-language queries can be translated into safe, accurate SQL against the `madison_iot` database.
+Prepared for SQL-focused LLMs (e.g., Qwen2.5-Coder via Ollama) so natural-language queries can be translated into safe, accurate SQL against the `madison_iot` database.
 
 ## Connection Profile
 
