@@ -38,57 +38,57 @@ class SvgTemplateService {
     };
     this.themePalettes = {
       'professional-blue': {
-        header: '#0F172A',
+        header: '#0F172A',        // Dark slate blue
         footer: '#0F172A',
         accent: '#2563EB',
-        headerText: '#C7AB81',
-        headerSubtitle: '#E5D4BA',
-        footerText: '#FFFFFF',
-        footerDate: '#E2E8F0'
+        headerText: '#C7AB81',    // Gold - works great with white logo
+        headerSubtitle: '#E5D4BA', // Light gold
+        footerText: '#FFFFFF',    // White for high contrast
+        footerDate: '#C7AB81'     // Gold accent
       },
       'corporate-green': {
-        header: '#064E3B',
+        header: '#064E3B',        // Dark emerald green
         footer: '#064E3B',
         accent: '#10B981',
-        headerText: '#ECFDF5',
-        headerSubtitle: '#A7F3D0',
-        footerText: '#ECFDF5',
-        footerDate: '#A7F3D0'
+        headerText: '#FFFFFF',    // White for crisp contrast
+        headerSubtitle: '#6EE7B7', // Light green
+        footerText: '#FFFFFF',
+        footerDate: '#6EE7B7'
       },
       'modern-purple': {
-        header: '#312E81',
-        footer: '#312E81',
+        header: '#4C1D95',        // Deep purple
+        footer: '#4C1D95',
         accent: '#8B5CF6',
-        headerText: '#F5F3FF',
-        headerSubtitle: '#DDD6FE',
-        footerText: '#F5F3FF',
-        footerDate: '#DDD6FE'
+        headerText: '#FFFFFF',    // White for clarity
+        headerSubtitle: '#C4B5FD', // Light purple
+        footerText: '#FFFFFF',
+        footerDate: '#C4B5FD'
       },
       'tech-orange': {
-        header: '#431407',
-        footer: '#431407',
+        header: '#7C2D12',        // Deep orange-brown
+        footer: '#7C2D12',
         accent: '#F97316',
-        headerText: '#FFEDD5',
-        headerSubtitle: '#FED7AA',
-        footerText: '#FFEDD5',
+        headerText: '#FFFFFF',    // White for maximum contrast
+        headerSubtitle: '#FED7AA', // Peach
+        footerText: '#FFFFFF',
         footerDate: '#FED7AA'
       },
       'monochrome': {
-        header: '#111827',
-        footer: '#111827',
-        accent: '#4B5563',
-        headerText: '#F9FAFB',
-        headerSubtitle: '#D1D5DB',
-        footerText: '#F9FAFB',
-        footerDate: '#D1D5DB'
+        header: '#18181B',        // Almost black
+        footer: '#18181B',
+        accent: '#71717A',
+        headerText: '#FFFFFF',    // Pure white
+        headerSubtitle: '#D4D4D8', // Light gray
+        footerText: '#FFFFFF',
+        footerDate: '#D4D4D8'
       },
-      dark: {
-        header: '#0B1120',
-        footer: '#0B1120',
+      'dark': {
+        header: '#0F172A',        // Same as professional-blue for consistency
+        footer: '#0F172A',
         accent: '#38BDF8',
-        headerText: '#E0F2FE',
-        headerSubtitle: '#BAE6FD',
-        footerText: '#E0F2FE',
+        headerText: '#E0F2FE',    // Light blue
+        headerSubtitle: '#BAE6FD', // Sky blue
+        footerText: '#FFFFFF',
         footerDate: '#BAE6FD'
       }
     };
@@ -148,11 +148,7 @@ class SvgTemplateService {
       layout = 'portrait'
     } = options;
 
-    const palette = {
-      ...this.getThemePalette(theme),
-      headerText: '#C7AB81',
-      headerSubtitle: '#E5D4BA'
-    };
+    const palette = this.getThemePalette(theme);
     const templateName = layout === 'landscape' ? 'template_horizontal.svg' : 'template_vertical.svg';
     const template = await this.loadTemplate(templateName);
 

@@ -786,8 +786,51 @@ async function previewPDFTemplate() {
         if (mode === 'svg') {
             const data = await response.json();
             if (data.success) {
+                // Wrap the HTML with centering styles for better preview
+                const centeredHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Template Preview</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: auto;
+        }
+        .preview-container {
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .preview-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="preview-content">
+            ${data.html.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/i, '').replace(/<\/body>[\s\S]*?<\/html>/i, '')}
+        </div>
+    </div>
+</body>
+</html>
+`;
                 const previewWindow = window.open('', '_blank');
-                previewWindow.document.write(data.html);
+                previewWindow.document.write(centeredHtml);
                 previewWindow.document.close();
                 showNotification('SVG preview opened in new window', 'success');
             } else {

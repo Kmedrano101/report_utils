@@ -57,56 +57,56 @@ class PDFConfig {
         this.themes = {
             'professional-blue': {
                 name: 'Professional Blue',
-                description: 'Classic blue theme for corporate reports',
+                description: 'Dark slate with elegant gold accents - perfect for white logos',
                 colors: {
-                    primary: '#2563eb',
-                    secondary: '#64748b',
-                    accent: '#0ea5e9'
+                    primary: '#0F172A',
+                    secondary: '#C7AB81',
+                    accent: '#2563EB'
                 }
             },
             'corporate-green': {
                 name: 'Corporate Green',
-                description: 'Green theme for environmental reports',
+                description: 'Deep emerald green with crisp white text - ideal for environmental reports',
                 colors: {
-                    primary: '#059669',
-                    secondary: '#6b7280',
-                    accent: '#10b981'
+                    primary: '#064E3B',
+                    secondary: '#6EE7B7',
+                    accent: '#10B981'
                 }
             },
             'modern-purple': {
                 name: 'Modern Purple',
-                description: 'Contemporary purple theme',
+                description: 'Rich purple with light accents - contemporary and elegant',
                 colors: {
-                    primary: '#7c3aed',
-                    secondary: '#64748b',
-                    accent: '#8b5cf6'
+                    primary: '#4C1D95',
+                    secondary: '#C4B5FD',
+                    accent: '#8B5CF6'
                 }
             },
             'tech-orange': {
                 name: 'Tech Orange',
-                description: 'Energetic orange theme for tech reports',
+                description: 'Bold orange-brown with warm peach tones - energetic and modern',
                 colors: {
-                    primary: '#ea580c',
-                    secondary: '#64748b',
-                    accent: '#f97316'
+                    primary: '#7C2D12',
+                    secondary: '#FED7AA',
+                    accent: '#F97316'
                 }
             },
             'monochrome': {
                 name: 'Monochrome',
-                description: 'Black and white minimalist theme',
+                description: 'Classic black and white - timeless and minimalist',
                 colors: {
-                    primary: '#18181b',
-                    secondary: '#71717a',
-                    accent: '#27272a'
+                    primary: '#18181B',
+                    secondary: '#D4D4D8',
+                    accent: '#71717A'
                 }
             },
             'dark': {
                 name: 'Dark Mode',
-                description: 'Dark theme for reduced eye strain',
+                description: 'Dark slate with sky blue accents - modern and easy on the eyes',
                 colors: {
-                    primary: '#3b82f6',
-                    secondary: '#94a3b8',
-                    accent: '#0ea5e9'
+                    primary: '#0F172A',
+                    secondary: '#BAE6FD',
+                    accent: '#38BDF8'
                 }
             }
         };
