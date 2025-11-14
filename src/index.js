@@ -24,6 +24,7 @@ import sensorRoutes from './routes/sensorRoutes.js';
 import kpiRoutes from './routes/kpiRoutes.js';
 import configRoutes from './routes/configRoutes.js';
 import metricsRoutes from './routes/metricsRoutes.js';
+import externalTimeSeriesRoutes from './routes/externalTimeSeriesRoutes.js';
 
 // Get current directory for static files
 const __filename = fileURLToPath(import.meta.url);
@@ -137,6 +138,7 @@ app.use('/api/sensors', sensorRoutes);
 app.use('/api/kpis', kpiRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/metrics', metricsRoutes);
+app.use('/api/external-metrics', externalTimeSeriesRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

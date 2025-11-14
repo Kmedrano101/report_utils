@@ -45,7 +45,13 @@ const envSchema = Joi.object({
 
   // Logging
   LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').default('info'),
-  LOG_FILE: Joi.string().default('logs/app.log')
+  LOG_FILE: Joi.string().default('logs/app.log'),
+
+  // VictoriaMetrics
+  VICTORIA_METRICS_LOCAL_URL: Joi.string().uri().default('http://localhost:8428'),
+  VICTORIA_METRICS_EXTERNAL_URL: Joi.string().uri().optional(),
+  VICTORIA_METRICS_EXTERNAL_TOKEN: Joi.string().optional(),
+  VICTORIA_METRICS_DEFAULT_SOURCE: Joi.string().valid('local', 'external').default('local')
 }).unknown(true);
 
 // Validate environment variables
@@ -108,6 +114,13 @@ const config = {
   logging: {
     level: envVars.LOG_LEVEL,
     file: envVars.LOG_FILE
+  },
+
+  victoriaMetrics: {
+    localUrl: envVars.VICTORIA_METRICS_LOCAL_URL,
+    externalUrl: envVars.VICTORIA_METRICS_EXTERNAL_URL || null,
+    externalToken: envVars.VICTORIA_METRICS_EXTERNAL_TOKEN || null,
+    defaultSource: envVars.VICTORIA_METRICS_DEFAULT_SOURCE
   }
 };
 
