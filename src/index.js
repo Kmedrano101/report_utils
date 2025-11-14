@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import config from './config/index.js';
 import database from './config/database.js';
 import pdfGenerationService from './services/pdfGenerationService.js';
+import victoriaMetricsService from './services/victoriaMetricsService.js';
 import configService from './services/configService.js';
 import logger from './utils/logger.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
@@ -92,6 +93,19 @@ app.get('/health', async (req, res) => {
     const dbHealth = await database.healthCheck();
     const pdfHealth = await pdfGenerationService.healthCheck();
 
+    // Check VictoriaMetrics health (both local and external if configured)
+    let vmHealth = null;
+    try {
+      // Check external VictoriaMetrics if configured
+      if (config.victoriaMetrics.externalUrl) {
+        vmHealth = await victoriaMetricsService.checkHealth('external');
+      } else if (config.victoriaMetrics.localUrl) {
+        vmHealth = await victoriaMetricsService.checkHealth('local');
+      }
+    } catch (error) {
+      logger.warn('VictoriaMetrics health check failed', { error: error.message });
+    }
+
     // Service is healthy if PDF service works, database is optional
     const status = pdfHealth.healthy ? 200 : 503;
 
@@ -100,6 +114,7 @@ app.get('/health', async (req, res) => {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       database: dbHealth,
+      victoriaMetrics: vmHealth,
       pdfService: pdfHealth,
       memory: {
         used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),

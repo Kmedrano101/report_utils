@@ -144,7 +144,7 @@ curl 'http://localhost:8428/api/v1/query?query=sum(clamp_current_amperes)&time=2
 
 ## Migration Script
 
-Location: `/home/kmedrano/src/report_utils/migrate_to_victoriametrics.js`
+Location: `/home/kmedrano/src/report_utils/scripts/victoriametrics/migrate.js`
 
 ### Features
 - Batch processing (1000 metrics per request)
@@ -156,11 +156,11 @@ Location: `/home/kmedrano/src/report_utils/migrate_to_victoriametrics.js`
 ### Usage
 ```bash
 # Run migration
-node migrate_to_victoriametrics.js
+node scripts/victoriametrics/migrate.js
 
 # Dry run (test without importing)
 # Edit CONFIG.dryRun = true in the script
-node migrate_to_victoriametrics.js
+node scripts/victoriametrics/migrate.js
 ```
 
 ## Important Notes
@@ -255,7 +255,7 @@ docker-compose up -d victoriametrics
 sleep 10
 
 # Re-run migration
-node migrate_to_victoriametrics.js
+node scripts/victoriametrics/migrate.js
 ```
 
 ## Resources

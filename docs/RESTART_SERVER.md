@@ -69,7 +69,7 @@ Click **"Test Connection"** and you should see:
 To verify the database is working (without restarting the server), run:
 ```bash
 cd /home/kmedrano/src/report_utils
-node test-db-connection.js
+node scripts/diagnostics/dbConnectionTest.js
 ```
 
 You should see:

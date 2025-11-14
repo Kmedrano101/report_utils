@@ -314,6 +314,90 @@ class ConfigService {
       throw new Error(`Invalid JSON: ${error.message}`);
     }
   }
+
+  /**
+   * Update .env file with new values
+   */
+  async updateEnvFile(updates) {
+    try {
+      const envPath = join(__dirname, '../../.env');
+      let envContent = '';
+
+      // Read existing .env file
+      if (existsSync(envPath)) {
+        envContent = await readFile(envPath, 'utf-8');
+      }
+
+      // Update each key-value pair
+      for (const [key, value] of Object.entries(updates)) {
+        const regex = new RegExp(`^${key}=.*$`, 'm');
+        const newLine = `${key}=${value}`;
+
+        if (regex.test(envContent)) {
+          // Update existing line
+          envContent = envContent.replace(regex, newLine);
+        } else {
+          // Append new line
+          envContent += `\n${newLine}`;
+        }
+      }
+
+      // Write back to .env file
+      await writeFile(envPath, envContent, 'utf-8');
+      logger.info('Updated .env file', { keys: Object.keys(updates) });
+
+      return { success: true, updated: Object.keys(updates) };
+    } catch (error) {
+      logger.error('Failed to update .env file', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Save VictoriaMetrics configuration to .env
+   */
+  async saveVictoriaMetricsConfig(config) {
+    const updates = {
+      VICTORIA_METRICS_EXTERNAL_URL: config.url,
+      VICTORIA_METRICS_EXTERNAL_TOKEN: config.token || '',
+      VICTORIA_METRICS_DEFAULT_SOURCE: config.defaultSource || 'external'
+    };
+
+    await this.updateEnvFile(updates);
+
+    return {
+      success: true,
+      config: updates,
+      message: 'VictoriaMetrics configuration saved to .env file'
+    };
+  }
+
+  /**
+   * Update database configuration in .env
+   */
+  async updateDatabaseEnv(config) {
+    const updates = {
+      DB_HOST: config.host,
+      DB_PORT: config.port || 5432,
+      DB_NAME: config.database,
+      DB_USER: config.user,
+      DB_POOL_MIN: config.poolMin || 2,
+      DB_POOL_MAX: config.poolMax || 10
+    };
+
+    // Only include password if provided
+    if (config.password) {
+      updates.DB_PASSWORD = config.password;
+    }
+
+    await this.updateEnvFile(updates);
+
+    return {
+      success: true,
+      config: updates,
+      message: 'Database configuration saved to .env file'
+    };
+  }
 }
 
 export default new ConfigService();

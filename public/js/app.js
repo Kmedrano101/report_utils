@@ -56,6 +56,7 @@ async function initApp() {
     initTheme();
     loadPDFConfig();
     updateApiExample();
+    initDatabaseSource();
 }
 
 // Tab Management
@@ -113,12 +114,24 @@ function updateHealthUI(data) {
         document.getElementById('health-uptime').textContent = formatUptime(data.uptime);
         document.getElementById('health-memory').textContent = `${data.memory?.used || 0} / ${data.memory?.total || 0} MB`;
 
-        // Update database status
-        if (data.database) {
+        // Update database status based on selected source
+        const dbSourceToggle = document.getElementById('dbSourceToggle');
+        const isExternalVM = dbSourceToggle?.checked || false;
+
+        if (isExternalVM && data.victoriaMetrics) {
+            // Show VictoriaMetrics status
+            document.getElementById('db-status').textContent = data.victoriaMetrics.healthy
+                ? t('status.connected', 'Connected')
+                : t('status.disconnected', 'Disconnected');
+            document.getElementById('db-pool').textContent = `${data.victoriaMetrics.metricCount || 0} metrics`;
+            document.getElementById('db-type').textContent = 'VictoriaMetrics';
+        } else if (data.database) {
+            // Show TimescaleDB status
             document.getElementById('db-status').textContent = data.database.healthy
                 ? t('status.connected', 'Connected')
                 : t('status.disconnected', 'Disconnected');
             document.getElementById('db-pool').textContent = `${data.database.poolIdle || 0} / ${data.database.poolTotal || 0}`;
+            document.getElementById('db-type').textContent = 'TimescaleDB';
         }
 
         // Update PDF service status
@@ -160,102 +173,12 @@ async function loadDashboard() {
 
 // External Services Status
 async function checkExternalServices() {
-    await checkVictoriaMetrics();
+    // VictoriaMetrics UI sections removed - keeping function for compatibility
+    console.log('External services check - VictoriaMetrics UI removed');
 }
 
-// Check VictoriaMetrics status
-async function checkVictoriaMetrics() {
-    try {
-        // Use backend API to avoid CORS issues
-        const response = await languageFetch(`${API_BASE}/api/metrics/status`);
-        const data = await response.json();
-
-        if (data.success && data.healthy) {
-            document.getElementById('victoria-status').innerHTML =
-                '<span class="text-green-600 dark:text-green-400"><i class="fas fa-check-circle mr-1"></i>Connected</span>';
-
-            // Update metrics count
-            if (data.metricCount > 0) {
-                document.getElementById('victoria-storage').innerHTML =
-                    `<span class="text-indigo-600 dark:text-indigo-400 font-semibold">${data.metricCount} metrics</span>`;
-            } else {
-                document.getElementById('victoria-storage').textContent = '1.7M+ metrics';
-            }
-
-            // Update query engine status
-            const queryEngine = document.getElementById('victoria-query');
-            if (queryEngine) {
-                queryEngine.innerHTML = '<span class="text-green-600 dark:text-green-400">MetricsQL <i class="fas fa-check-circle ml-1"></i></span>';
-            }
-        } else {
-            document.getElementById('victoria-status').innerHTML =
-                '<span class="text-red-600 dark:text-red-400"><i class="fas fa-times-circle mr-1"></i>Disconnected</span>';
-            document.getElementById('victoria-storage').textContent = '-';
-            const queryEngine = document.getElementById('victoria-query');
-            if (queryEngine) {
-                queryEngine.textContent = 'Unavailable';
-            }
-        }
-    } catch (error) {
-        console.error('Failed to check VictoriaMetrics:', error);
-        document.getElementById('victoria-status').innerHTML =
-            '<span class="text-red-600 dark:text-red-400"><i class="fas fa-exclamation-circle mr-1"></i>Error</span>';
-        document.getElementById('victoria-storage').textContent = 'Connection Error';
-        const queryEngine = document.getElementById('victoria-query');
-        if (queryEngine) {
-            queryEngine.textContent = 'Error';
-        }
-    }
-}
-
-// Test VictoriaMetrics connection (called from Database Config tab)
-async function testVictoriaMetrics() {
-    const button = event.target.closest('button');
-    const originalText = button.innerHTML;
-    button.disabled = true;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
-
-    try {
-        const victoriaUrl = 'http://localhost:8428';
-
-        // Test health endpoint
-        const healthResponse = await fetch(`${victoriaUrl}/health`);
-        if (!healthResponse.ok) {
-            throw new Error('Health check failed');
-        }
-
-        // Test query with sample data
-        const queryUrl = `${victoriaUrl}/api/v1/query?query=battery_voltage_mv&time=2025-11-11T12:00:00Z`;
-        const queryResponse = await fetch(queryUrl);
-        if (!queryResponse.ok) {
-            throw new Error('Query test failed');
-        }
-        const queryData = await queryResponse.json();
-
-        // Get metrics count
-        const metricsResponse = await fetch(`${victoriaUrl}/api/v1/label/__name__/values`);
-        const metricsData = await metricsResponse.json();
-        const metricCount = metricsData.data ? metricsData.data.length : 0;
-
-        // Get series count from query result
-        const seriesCount = queryData.data?.result ? queryData.data.result.length : 0;
-
-        // Show success message
-        showNotification('success', 'VictoriaMetrics Connection Successful',
-            `✓ Health: OK<br>✓ Available Metrics: ${metricCount}<br>✓ Test Query: ${seriesCount} series found<br>✓ Query Engine: MetricsQL Active`);
-
-        // Refresh dashboard indicators
-        await checkVictoriaMetrics();
-
-    } catch (error) {
-        console.error('VictoriaMetrics test failed:', error);
-        showNotification('error', 'Connection Test Failed',
-            `Could not connect to VictoriaMetrics at http://localhost:8428<br>Error: ${error.message}`);
-    } finally {
-        button.disabled = false;
-        button.innerHTML = originalText;
-    }
-}
+// VictoriaMetrics functions removed - UI sections no longer present
+// The backend API at /api/metrics/* is still available for programmatic access
 
 // Show notification helper
 function showNotification(type, title, message) {
@@ -380,16 +303,10 @@ function loadCurrentConfig() {
     loadExternalServicesConfig();
 }
 
-// Load Prometheus/VictoriaMetrics URLs from localStorage
+// Load external services config (VictoriaMetrics/Prometheus UI removed)
 function loadExternalServicesConfig() {
-    const prometheusUrl = localStorage.getItem('prometheusUrl') || 'http://localhost:9090';
-    const victoriaUrl = localStorage.getItem('victoriaUrl') || 'http://localhost:8428';
-
-    const prometheusInput = document.getElementById('prometheusUrl');
-    const victoriaInput = document.getElementById('victoriaUrl');
-
-    if (prometheusInput) prometheusInput.value = prometheusUrl;
-    if (victoriaInput) victoriaInput.value = victoriaUrl;
+    // UI elements removed - keeping function for compatibility
+    console.log('External services config - UI sections removed');
 }
 
 async function loadProfile() {
@@ -397,16 +314,6 @@ async function loadProfile() {
 
     if (profile === 'default') {
         loadCurrentConfig();
-    } else if (profile === 'prometheus') {
-        // Load Prometheus/VictoriaMetrics config
-        const prometheusUrl = localStorage.getItem('prometheusUrl') || 'http://localhost:9090';
-        const victoriaUrl = localStorage.getItem('victoriaUrl') || 'http://localhost:8428';
-
-        document.getElementById('prometheusUrl').value = prometheusUrl;
-        document.getElementById('victoriaUrl').value = victoriaUrl;
-
-        showNotification('Prometheus/VictoriaMetrics profile loaded', 'success');
-        return;
     } else if (profile === 'custom') {
         // Clear form for custom config
         document.getElementById('dbHost').value = '';
@@ -422,12 +329,6 @@ async function loadProfile() {
 async function saveProfile() {
     const profile = document.getElementById('dbProfile').value;
 
-    // Save Prometheus/VictoriaMetrics URLs
-    const prometheusUrl = document.getElementById('prometheusUrl').value;
-    const victoriaUrl = document.getElementById('victoriaUrl').value;
-    if (prometheusUrl) localStorage.setItem('prometheusUrl', prometheusUrl);
-    if (victoriaUrl) localStorage.setItem('victoriaUrl', victoriaUrl);
-
     const config = {
         profile: profile,
         host: document.getElementById('dbHost').value,
@@ -437,14 +338,7 @@ async function saveProfile() {
         password: document.getElementById('dbPassword').value,
         ssl: document.getElementById('dbSSL').value,
         poolMin: parseInt(document.getElementById('dbPoolMin').value) || 2,
-        poolMax: parseInt(document.getElementById('dbPoolMax').value) || 10,
-        prometheusUrl: prometheusUrl,
-        victoriaUrl: victoriaUrl,
-        schema: {
-            sensors: document.getElementById('tableSensors')?.value || 'iot.sensors',
-            readings: document.getElementById('tableReadings')?.value || 'iot.sensor_readings',
-            sensorTypes: document.getElementById('tableSensorTypes')?.value || 'iot.sensor_types'
-        }
+        poolMax: parseInt(document.getElementById('dbPoolMax').value) || 10
     };
 
     // Save to localStorage
@@ -536,41 +430,290 @@ async function testConnection() {
 }
 
 async function applyConfig() {
-    await saveProfile();
-    // Refresh dashboard database status so the user sees the applied config
-    await checkHealth();
-    showNotification('Configuration applied and dashboard updated. Restart the service for changes to fully take effect.', 'success');
-}
-
-
-async function detectSchema() {
-    showNotification('Auto-detecting schema...', 'info');
-
     try {
-        const response = await languageFetch(`${API_BASE}/api/config/detect-schema`, {
+        // Get values from local database form
+        const config = {
+            host: document.getElementById('dbHost').value,
+            port: parseInt(document.getElementById('dbPort').value) || 5432,
+            database: document.getElementById('dbName').value,
+            user: document.getElementById('dbUser').value,
+            password: document.getElementById('dbPassword').value,
+            poolMin: parseInt(document.getElementById('dbPoolMin').value) || 2,
+            poolMax: parseInt(document.getElementById('dbPoolMax').value) || 10
+        };
+
+        // Validate required fields
+        if (!config.host || !config.database || !config.user) {
+            showNotification('error', 'Configuration Error', 'Please fill in all required fields: Host, Database, and User');
+            return;
+        }
+
+        // Save to backend .env file
+        const response = await languageFetch(`${API_BASE}/api/config/database-env`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                host: document.getElementById('dbHost').value,
-                port: parseInt(document.getElementById('dbPort').value),
-                database: document.getElementById('dbName').value,
-                user: document.getElementById('dbUser').value,
-                password: document.getElementById('dbPassword').value
-            })
+            body: JSON.stringify(config)
         });
 
         const data = await response.json();
 
-        if (data.success && data.schema) {
-            document.getElementById('tableSensors').value = data.schema.sensors || 'iot.sensors';
-            document.getElementById('tableReadings').value = data.schema.readings || 'iot.sensor_readings';
-            document.getElementById('tableSensorTypes').value = data.schema.sensorTypes || 'iot.sensor_types';
-            showNotification('Schema detected successfully!', 'success');
+        if (data.success) {
+            // Also save to localStorage
+            await saveProfile();
+
+            // Refresh dashboard to show updated status
+            await checkHealth();
+
+            if (data.connected) {
+                showNotification('success', 'Configuration Applied',
+                    `Database configuration saved and connection successful!<br>` +
+                    `Host: ${config.host}<br>` +
+                    `Database: ${config.database}<br>` +
+                    `Status: Connected`);
+            } else {
+                showNotification('warning', 'Configuration Saved',
+                    `Database configuration saved to .env file, but connection failed:<br>` +
+                    `${data.connectionError || 'Unknown error'}<br><br>` +
+                    `Please verify the settings and try again.`);
+            }
         } else {
-            showNotification('Could not auto-detect schema. Using defaults.', 'warning');
+            showNotification('error', 'Configuration Failed', data.error || 'Failed to save configuration');
         }
     } catch (error) {
-        showNotification('Auto-detection not available. Please configure manually.', 'warning');
+        showNotification('error', 'Configuration Error', error.message);
+    }
+}
+
+
+// Schema mapping section removed from UI
+// Function kept for compatibility but no longer used
+async function detectSchema() {
+    console.log('Schema mapping UI removed - function deprecated');
+}
+
+// Database Source Toggle Functions
+function toggleDatabaseSource() {
+    const toggle = document.getElementById('dbSourceToggle');
+    const isExternal = toggle.checked;
+
+    const localForm = document.getElementById('localDbForm');
+    const externalForm = document.getElementById('externalDbForm');
+    const selectedSource = document.getElementById('selectedDbSource');
+    const sourceType = document.getElementById('dbSourceType');
+    const statusDot = document.querySelector('#dbSourceStatus .status-dot');
+
+    if (isExternal) {
+        // Show VictoriaMetrics form
+        localForm.classList.add('hidden');
+        externalForm.classList.remove('hidden');
+        selectedSource.textContent = 'External VictoriaMetrics';
+        sourceType.textContent = 'Time-series database (MetricsQL)';
+        statusDot.classList.remove('bg-green-500');
+        statusDot.classList.add('bg-indigo-500');
+
+        // Load saved VictoriaMetrics config
+        loadVMConfig();
+    } else {
+        // Show TimescaleDB form
+        localForm.classList.remove('hidden');
+        externalForm.classList.add('hidden');
+        selectedSource.textContent = 'Local TimescaleDB';
+        sourceType.textContent = 'PostgreSQL with TimescaleDB extension';
+        statusDot.classList.remove('bg-indigo-500');
+        statusDot.classList.add('bg-green-500');
+
+        // Load current DB config
+        loadCurrentConfig();
+    }
+
+    // Save preference
+    localStorage.setItem('preferredDbSource', isExternal ? 'external' : 'local');
+
+    // Refresh dashboard to show correct database info
+    checkHealth();
+}
+
+// Load VictoriaMetrics Configuration
+function loadVMConfig() {
+    const savedConfig = localStorage.getItem('vmConfig');
+    if (savedConfig) {
+        try {
+            const config = JSON.parse(savedConfig);
+            document.getElementById('vmUrl').value = config.url || '';
+            document.getElementById('vmToken').value = config.token || '';
+            document.getElementById('vmDefaultSource').value = config.defaultSource || 'external';
+            document.getElementById('vmTimeout').value = config.timeout || 30000;
+            document.getElementById('vmRetries').value = config.retries || 3;
+            document.getElementById('vmSSL').value = config.sslVerify !== false ? 'true' : 'false';
+        } catch (error) {
+            console.error('Failed to load VM config:', error);
+        }
+    } else {
+        // Load from environment if available
+        document.getElementById('vmUrl').value = 'https://api.iot.tidop.es/v1/vm';
+        document.getElementById('vmDefaultSource').value = 'external';
+    }
+}
+
+// Save VictoriaMetrics Configuration
+async function saveVMConfig() {
+    const config = {
+        url: document.getElementById('vmUrl').value,
+        token: document.getElementById('vmToken').value,
+        defaultSource: document.getElementById('vmDefaultSource').value,
+        timeout: parseInt(document.getElementById('vmTimeout').value) || 30000,
+        retries: parseInt(document.getElementById('vmRetries').value) || 3,
+        sslVerify: document.getElementById('vmSSL').value === 'true'
+    };
+
+    // Validate URL
+    if (!config.url) {
+        showNotification('error', 'Configuration Error', 'API Endpoint URL is required');
+        return;
+    }
+
+    // Save to localStorage
+    localStorage.setItem('vmConfig', JSON.stringify(config));
+
+    // Save to backend and test connection
+    try {
+        const response = await languageFetch(`${API_BASE}/api/config/victoriametrics`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+
+        const data = await response.json();
+
+        // Refresh dashboard to show updated status
+        await checkHealth();
+
+        if (data.success && data.connected) {
+            showNotification('success', 'Configuration Applied',
+                `VictoriaMetrics configuration saved and connection successful!<br>` +
+                `URL: ${config.url}<br>` +
+                `Status: Connected`);
+        } else if (data.success) {
+            showNotification('warning', 'Configuration Saved',
+                `VictoriaMetrics configuration saved to .env file, but connection failed:<br>` +
+                `${data.connectionError || 'Unknown error'}<br><br>` +
+                `Please verify the settings and try again.`);
+        } else {
+            showNotification('warning', 'Configuration Saved Locally',
+                'Configuration saved to browser storage. Backend update not available.');
+        }
+    } catch (error) {
+        showNotification('warning', 'Configuration Saved Locally',
+            'Configuration saved to browser storage. Backend connection unavailable.');
+    }
+}
+
+// Test VictoriaMetrics Connection
+async function testVMConnection() {
+    const resultDiv = document.getElementById('vmConnectionResult');
+    resultDiv.classList.remove('hidden');
+    resultDiv.innerHTML = '<div class="flex items-center space-x-3 text-blue-600 dark:text-blue-400"><i class="fas fa-spinner fa-spin"></i><span>Testing connection...</span></div>';
+
+    const url = document.getElementById('vmUrl').value;
+    const token = document.getElementById('vmToken').value;
+
+    if (!url) {
+        resultDiv.innerHTML = '<div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-red-800 dark:text-red-200"><i class="fas fa-times-circle mr-2"></i>Please enter API Endpoint URL</div>';
+        return;
+    }
+
+    try {
+        // Test directly from frontend
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (token) {
+            headers['Authorization'] = `Basic ${token}`;
+        }
+
+        // Use a simple query to test the connection
+        const response = await fetch(`${url}/query`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                query: 'iot_sensor_reading',
+                time: new Date().toISOString()
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // VictoriaMetrics external API returns {status: "OK", result: [...]}
+        if (data.status === 'OK' || data.status === 'success') {
+            const metricCount = data.result ? data.result.length : 0;
+            resultDiv.innerHTML = `
+                <div class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                    <div class="flex items-center space-x-2 text-green-800 dark:text-green-200 mb-2">
+                        <i class="fas fa-check-circle text-xl"></i>
+                        <span class="font-semibold">Connection Successful!</span>
+                    </div>
+                    <div class="text-sm text-green-700 dark:text-green-300 space-y-1">
+                        <div>✓ Endpoint: ${url}</div>
+                        <div>✓ Status: ${data.status}</div>
+                        <div>✓ Time Series Found: ${metricCount}</div>
+                        <div>✓ Query Engine: MetricsQL Active</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-red-800 dark:text-red-200">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fas fa-times-circle text-xl"></i>
+                        <span class="font-semibold">Connection Failed</span>
+                    </div>
+                    <div class="text-sm">Status: ${data.status || 'Unknown'}</div>
+                    <div class="text-sm">${data.error || 'Unable to connect to VictoriaMetrics'}</div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-red-800 dark:text-red-200">
+                <div class="flex items-center space-x-2 mb-2">
+                    <i class="fas fa-exclamation-circle text-xl"></i>
+                    <span class="font-semibold">Connection Error</span>
+                </div>
+                <div class="text-sm">${error.message}</div>
+            </div>
+        `;
+    }
+}
+
+// Toggle VictoriaMetrics token visibility
+function toggleVmTokenVisibility() {
+    const input = document.getElementById('vmToken');
+    const icon = document.getElementById('vmTokenIcon');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Initialize database source on page load
+function initDatabaseSource() {
+    const preferredSource = localStorage.getItem('preferredDbSource');
+    const toggle = document.getElementById('dbSourceToggle');
+
+    if (preferredSource === 'external' && toggle) {
+        toggle.checked = true;
+        toggleDatabaseSource();
     }
 }
 

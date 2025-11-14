@@ -701,6 +701,15 @@ report_utils/
 │   ├── templates/svg/
 │   │   └── iot-summary-report.svg
 │   └── index.js                  # Express app entry
+├── scripts/
+│   ├── diagnostics/
+│   │   ├── dbConnectionTest.js   # Standalone DB connectivity check
+│   │   └── ollamaModelsTest.js   # Qwen/Llama smoke tests
+│   └── victoriametrics/
+│       └── migrate.js            # Historical data importer
+├── samples/
+│   └── reports/
+│       └── test-report.pdf       # Example output (generated)
 ├── docker/
 │   ├── init-db/
 │   │   ├── 01-init.sql           # Schema creation
@@ -711,6 +720,13 @@ report_utils/
 ├── .env
 └── README.md
 ```
+
+### Utility Scripts & Samples
+
+- `node scripts/diagnostics/dbConnectionTest.js` – quick sanity check for the TimescaleDB connection.
+- `node scripts/diagnostics/ollamaModelsTest.js` – exercises local Ollama models (Qwen 2.5 + Llama 3.1) if you have the AI profile enabled.
+- `node scripts/victoriametrics/migrate.js` – re-imports historical IoT metrics into VictoriaMetrics using the documented workflow.
+- `samples/reports/test-report.pdf` – output location for `docs/TEST_TEMPLATE_USAGE.md` curl example (gitignored so feel free to overwrite).
 
 ### NPM Scripts
 

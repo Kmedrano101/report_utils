@@ -179,6 +179,43 @@ class Database {
       }
     }
   }
+
+  /**
+   * Reconnect with new configuration
+   * @param {Object} newConfig - New database configuration
+   */
+  async reconnect(newConfig) {
+    try {
+      // Close existing connection
+      await this.disconnect();
+
+      // Create new pool with new configuration
+      this.pool = new Pool(newConfig);
+
+      // Test connection
+      const client = await this.pool.connect();
+      const result = await client.query('SELECT NOW() as current_time, version() as pg_version');
+      client.release();
+
+      this.isConnected = true;
+      logger.info('Database reconnected successfully', {
+        database: newConfig.database,
+        host: newConfig.host,
+        time: result.rows[0].current_time
+      });
+
+      // Setup event handlers
+      this.pool.on('error', (err) => {
+        logger.error('Unexpected database pool error', { error: err.message });
+      });
+
+      return { success: true, connected: true };
+    } catch (error) {
+      this.isConnected = false;
+      logger.error('Database reconnection failed', { error: error.message });
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 // Export singleton instance

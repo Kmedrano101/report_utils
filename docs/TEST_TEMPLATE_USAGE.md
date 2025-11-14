@@ -55,7 +55,7 @@ curl -X POST http://localhost:3000/api/reports/test-template \
     "endDate": "2025-11-12T23:59:59Z",
     "format": "pdf"
   }' \
-  --output test-report.pdf
+  --output samples/reports/test-report.pdf
 ```
 
 **Example with HTML format**:

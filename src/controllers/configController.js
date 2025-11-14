@@ -4,6 +4,8 @@
  */
 
 import configService from '../services/configService.js';
+import database from '../config/database.js';
+import victoriaMetrics from '../services/victoriaMetricsService.js';
 import logger from '../utils/logger.js';
 
 class ConfigController {
@@ -216,6 +218,134 @@ class ConfigController {
       });
     } catch (error) {
       logger.error('Import configuration error', { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Save VictoriaMetrics configuration
+   * POST /api/config/victoriametrics
+   */
+  async saveVictoriaMetricsConfig(req, res) {
+    try {
+      const { url, token, defaultSource, timeout, retries, sslVerify } = req.body;
+
+      if (!url) {
+        return res.status(400).json({
+          success: false,
+          error: 'API Endpoint URL is required'
+        });
+      }
+
+      logger.info('Saving VictoriaMetrics configuration', { url, defaultSource });
+
+      // Save to .env file
+      const result = await configService.saveVictoriaMetricsConfig({
+        url,
+        token,
+        defaultSource,
+        timeout,
+        retries,
+        sslVerify
+      });
+
+      // Update VictoriaMetrics service configuration and test connection
+      const vmConfig = { url, token, defaultSource };
+      logger.info('Attempting to update VictoriaMetrics configuration');
+      const updateResult = await victoriaMetrics.updateConfig(vmConfig);
+
+      if (updateResult.connected) {
+        logger.info('VictoriaMetrics connection successful');
+        res.json({
+          success: true,
+          message: 'VictoriaMetrics configuration saved and connection established successfully.',
+          connected: true,
+          config: result
+        });
+      } else {
+        logger.warn('VictoriaMetrics configuration saved but connection failed', { error: updateResult.error });
+        res.json({
+          success: true,
+          message: 'VictoriaMetrics configuration saved but connection failed. Check your credentials and try again.',
+          connected: false,
+          connectionError: updateResult.error,
+          config: result
+        });
+      }
+    } catch (error) {
+      logger.error('Save VictoriaMetrics config error', { error: error.message });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Update local database configuration to .env
+   * POST /api/config/database-env
+   */
+  async updateDatabaseEnv(req, res) {
+    try {
+      const { host, port, database: dbName, user, password, poolMin, poolMax } = req.body;
+
+      if (!host || !dbName || !user) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: host, database, user'
+        });
+      }
+
+      logger.info('Updating database configuration', { host, port, database: dbName, user });
+
+      // Save to .env file
+      const result = await configService.updateDatabaseEnv({
+        host,
+        port,
+        database: dbName,
+        user,
+        password,
+        poolMin,
+        poolMax
+      });
+
+      // Attempt to reconnect with new configuration
+      const dbConfig = {
+        host,
+        port: port || 5432,
+        database: dbName,
+        user,
+        password,
+        min: poolMin || 2,
+        max: poolMax || 10
+      };
+
+      logger.info('Attempting to reconnect database with new configuration');
+      const reconnectResult = await database.reconnect(dbConfig);
+
+      if (reconnectResult.success) {
+        logger.info('Database reconnected successfully');
+        res.json({
+          success: true,
+          message: 'Database configuration saved and connection established successfully.',
+          connected: true,
+          config: result
+        });
+      } else {
+        logger.warn('Database configuration saved but connection failed', { error: reconnectResult.error });
+        res.json({
+          success: true,
+          message: 'Database configuration saved but connection failed. Check your credentials and try again.',
+          connected: false,
+          connectionError: reconnectResult.error,
+          config: result
+        });
+      }
+    } catch (error) {
+      logger.error('Update database env error', { error: error.message });
       res.status(500).json({
         success: false,
         error: error.message

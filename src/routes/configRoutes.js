@@ -20,4 +20,10 @@ router.delete('/database/:name', configController.deleteConfiguration.bind(confi
 router.get('/export/:name', configController.exportConfiguration.bind(configController));
 router.post('/import', configController.importConfiguration.bind(configController));
 
+// VictoriaMetrics configuration
+router.post('/victoriametrics', configController.saveVictoriaMetricsConfig.bind(configController));
+
+// Update .env database configuration
+router.post('/database-env', configController.updateDatabaseEnv.bind(configController));
+
 export default router;
