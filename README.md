@@ -273,6 +273,30 @@ curl -X POST http://localhost:3000/api/reports/iot-summary \
 
 ---
 
+## 📚 Documentation
+
+### Sensor Mapping & Queries
+
+**NEW!** Complete guide for querying VictoriaMetrics sensors:
+
+- **[Sensor Mapping & Queries Guide](./docs/SENSOR_MAPPING_AND_QUERIES.md)** - Complete documentation with examples
+- **[Quick Reference Card](./docs/SENSOR_QUICK_REFERENCE.md)** - Fast lookup for sensor IDs and common queries
+- **[Sensor Mapping JSON](./docs/sensor-mapping.json)** - Machine-readable sensor mapping (t1-t15, s1-s2, c1-c2)
+
+**Key Features:**
+- 15 temperature sensors (t1-t15)
+- 2 sound sensors (s1-s2)
+- 2 current clamp sensors (c1-c2) with 4 clamps each
+- Complete MetricsQL query examples
+- Sample data and real query results
+
+### VictoriaMetrics
+
+- **[VictoriaMetrics Configuration](./VICTORIAMETRICS_CONFIG.md)** - Setup and configuration guide
+- **[Migration Guide](./docs/VICTORIAMETRICS_MIGRATION.md)** - Migrating from TimescaleDB
+
+---
+
 ## 📡 API Documentation
 
 ### Base URL
