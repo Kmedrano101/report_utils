@@ -64,7 +64,7 @@
   <g id="kpi-metrics">
     <text x="30" y="240" class="section-header">Key Metrics</text>
 
-    <!-- Temperature Card -->
+    <!-- 1. Temperature Card -->
     <g id="metric-temperature">
       <rect x="30" y="250" width="175" height="85" class="card-blue" rx="6"/>
       <text x="45" y="268" class="metric-title">Avg Temperature</text>
@@ -73,30 +73,31 @@
       <text x="45" y="328" class="table-small">Range: {{temp_min}}°C - {{temp_max}}°C</text>
     </g>
 
-    <!-- Noise Level Card -->
-    <g id="metric-noise">
-      <rect x="218" y="250" width="175" height="85" class="card-orange" rx="6"/>
-      <text x="233" y="268" class="metric-title">Peak Noise Level</text>
-      <text x="233" y="298" class="metric-value">{{peak_noise}}</text>
-      <text x="233" y="315" class="metric-unit">dB</text>
-      <text x="233" y="328" class="table-small">Avg: {{avg_noise}} dB</text>
+    <!-- 2. Humidity Card -->
+    <g id="metric-humidity">
+      <rect x="218" y="250" width="175" height="85" class="card-blue" rx="6"/>
+      <text x="233" y="268" class="metric-title">Avg Humidity</text>
+      <text x="233" y="298" class="metric-value">{{avg_humidity}}</text>
+      <text x="233" y="315" class="metric-unit">%</text>
+      <text x="233" y="328" class="table-small">{{humidity_min}}% - {{humidity_max}}%</text>
     </g>
 
-    <!-- Power Consumption Card -->
+    <!-- 3. Sound Level Card -->
+    <g id="metric-sound">
+      <rect x="406" y="250" width="175" height="85" class="card-orange" rx="6"/>
+      <text x="421" y="268" class="metric-title">Avg Sound Level</text>
+      <text x="421" y="298" class="metric-value">{{avg_sound}}</text>
+      <text x="421" y="315" class="metric-unit">dB</text>
+      <text x="421" y="328" class="table-small">Peak: {{peak_sound}} dB</text>
+    </g>
+
+    <!-- 4. Power Consumption Card -->
     <g id="metric-power">
-      <rect x="406" y="250" width="175" height="85" class="card-green" rx="6"/>
-      <text x="421" y="268" class="metric-title">Total Consumption</text>
-      <text x="421" y="298" class="metric-value">{{total_power}}</text>
-      <text x="421" y="315" class="metric-unit">kWh</text>
-      <text x="421" y="328" class="table-small">Peak: {{peak_power}} A</text>
-    </g>
-
-    <!-- Additional Metric Card (Flexible) -->
-    <g id="metric-custom">
-      <rect x="594" y="250" width="170" height="85" class="card" rx="6"/>
-      <text x="609" y="268" class="metric-title">{{custom_metric_name}}</text>
-      <text x="609" y="298" class="metric-value">{{custom_metric_value}}</text>
-      <text x="609" y="315" class="metric-unit">{{custom_metric_unit}}</text>
+      <rect x="594" y="250" width="170" height="85" class="card-green" rx="6"/>
+      <text x="609" y="268" class="metric-title">Total Power</text>
+      <text x="609" y="298" class="metric-value">{{total_power}}</text>
+      <text x="609" y="315" class="metric-unit">kWh</text>
+      <text x="609" y="328" class="table-small">Peak: {{peak_power}} A</text>
     </g>
   </g>
 
@@ -155,10 +156,13 @@
       <text x="50" y="750" class="table-small">
         <tspan fill="#3b82f6">■</tspan> Temperature
       </text>
-      <text x="150" y="750" class="table-small">
-        <tspan fill="#f97316">■</tspan> Noise
+      <text x="170" y="750" class="table-small">
+        <tspan fill="#3b82f6">■</tspan> Humidity
       </text>
-      <text x="230" y="750" class="table-small">
+      <text x="270" y="750" class="table-small">
+        <tspan fill="#f97316">■</tspan> Sound
+      </text>
+      <text x="360" y="750" class="table-small">
         <tspan fill="#10b981">■</tspan> Power
       </text>
     </g>
@@ -179,7 +183,7 @@
   <!-- FOOTER SECTION (Customizable) -->
   <!-- ========================================= -->
   <g id="footer">
-    <line x1="30" y1="1050" x2="764" y2="1050" stroke="#C7AB81" stroke-width="2"/>
+    <line x1="30" y1="1050" x2="764" y2="1050" stroke="{{footer_bg}}" stroke-width="2"/>
     <rect y="1058" width="794" height="65" fill="{{footer_bg}}"/>
     <text x="40" y="1090" fill="{{footer_text_color}}" font-size="12" font-family="Inter, Arial, sans-serif">
       {{footer_text}}

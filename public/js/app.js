@@ -820,7 +820,21 @@ async function generateReport() {
             format: format
         };
 
-        if (reportType === 'test-template') {
+        if (reportType === 'key-metrics') {
+            url += 'key-metrics';
+
+            // Get all configuration values from template settings
+            const config = window.pdfConfig.getConfig();
+            body.headerTitle = config.reportTitle || document.getElementById('pdfTitle')?.value || 'IoT Sensor Summary Report';
+            body.headerSubtitle = config.reportSubtitle || document.getElementById('pdfSubtitle')?.value || 'Real-time monitoring and analytics';
+            body.footerText = config.footer?.text || document.getElementById('pdfFooterText')?.value || 'Madison - IoT Report';
+            body.logoUrl = config.logo?.url || document.getElementById('pdfLogoUrl')?.value || '/images/logo_madison.png';
+            body.theme = config.theme || document.getElementById('pdfTheme')?.value || 'professional-blue';
+            body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'landscape';
+            body.pageSize = config.pageSize || document.getElementById('pdfPageSize')?.value || 'a4';
+            body.source = 'external'; // Always use external VictoriaMetrics
+
+        } else if (reportType === 'test-template') {
             url += 'test-template';
 
             // Get configuration values

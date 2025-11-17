@@ -6,10 +6,11 @@
 import iotDataService from '../services/iotDataService.js';
 import svgTemplateService from '../services/svgTemplateService.js';
 import pdfGenerationService from '../services/pdfGenerationService.js';
+import reportMetricsService from '../services/reportMetricsService.js';
 import database from '../config/database.js';
 import logger from '../utils/logger.js';
 import { parseISO, subDays } from 'date-fns';
-import { readdir } from 'fs/promises';
+import { readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -568,6 +569,423 @@ class ReportController {
       logger.error('Error logging report generation', { error: error.message });
       // Don't throw - logging failure shouldn't break report generation
     }
+  }
+
+  /**
+   * Get report metrics for given date range
+   * GET /api/reports/metrics?startDate=2025-01-01&endDate=2025-01-31&source=external
+   */
+  async getReportMetrics(req, res) {
+    try {
+      const { startDate, endDate, source = 'external' } = req.query;
+
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'startDate and endDate are required parameters'
+        });
+      }
+
+      logger.info('Fetching report metrics', { startDate, endDate, source });
+
+      const metrics = await reportMetricsService.getReportMetrics({
+        startDate,
+        endDate,
+        source
+      });
+
+      return res.json({
+        success: true,
+        data: metrics
+      });
+
+    } catch (error) {
+      logger.error('Failed to get report metrics', { error: error.message });
+      return res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Test report with metrics from last 7 days
+   * POST /api/reports/test-metrics
+   */
+  async generateMetricsTestReport(req, res) {
+    const startTime = Date.now();
+
+    try {
+      const {
+        layout = 'horizontal',
+        pageSize = 'a4',
+        format = 'pdf',
+        source = 'external'
+      } = req.body;
+
+      logger.info('Generating metrics test report', { layout, pageSize, format, source });
+
+      // Calculate date range (last 7 days)
+      const endDate = new Date().toISOString();
+      const startDate = subDays(new Date(), 7).toISOString();
+
+      // Fetch metrics from VictoriaMetrics
+      const metrics = await reportMetricsService.getReportMetrics({
+        startDate,
+        endDate,
+        source
+      });
+
+      logger.info('Metrics fetched successfully', { metrics });
+
+      // Determine which template to use
+      // Use the same templates as preview: template_horizontal.svg and template_vertical.svg
+      const normalizedLayout = layout.toLowerCase();
+      const templateName = normalizedLayout === 'horizontal'
+        ? 'template_horizontal.svg'
+        : 'template_vertical.svg';
+
+      // Prepare template data with metrics and defaults
+      // Default configuration: Professional Blue theme, Madison logo, horizontal orientation
+      const templateData = {
+        // Header (Professional Blue theme)
+        header_title: 'IoT Sensor Summary Report',
+        header_subtitle: 'Real-time monitoring and analytics',
+        header_bg: '#1e40af',        // Professional Blue
+        header_text_color: '#ffffff',
+        header_subtitle_color: '#e0e7ff',
+        logo_url: '/images/logo_madison.png',  // Madison logo
+
+        // Metrics from VictoriaMetrics
+        ...metrics,
+
+        // Building name
+        building_name: 'Madison Arena',
+
+        // Footer
+        footer_text: 'Madison - IoT Report',
+        footer_bg: '#f3f4f6',
+        footer_text_color: '#374151',
+        footer_date_color: '#6b7280',
+
+        // Additional placeholders for sensor table
+        sensor_1_name: 'Temperature Sensor T1',
+        sensor_1_type: 'temperature',
+        sensor_1_location: 'Zone A',
+        sensor_1_value: `${metrics.avg_temperature}°C`,
+        sensor_1_status_color: '#10b981',
+
+        sensor_2_name: 'Humidity Sensor T1',
+        sensor_2_type: 'humidity',
+        sensor_2_location: 'Zone A',
+        sensor_2_value: `${metrics.avg_humidity}%`,
+        sensor_2_status_color: '#10b981',
+
+        // Status info
+        last_update_time: new Date().toLocaleString('es-ES')
+      };
+
+      // Load template and replace placeholders
+      const templateContent = await svgTemplateService.loadTemplate(templateName);
+      const svgContent = svgTemplateService.replacePlaceholders(templateContent, templateData);
+
+      // Wrap in HTML
+      const htmlContent = svgTemplateService.generateHtmlWithSvg(svgContent);
+
+      // Return format
+      if (format === 'html') {
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(htmlContent);
+      }
+
+      const pdfFormat = this.getPdfFormat(pageSize);
+
+      // Generate PDF
+      const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(htmlContent, {
+        format: pdfFormat,
+        landscape: normalizedLayout === 'horizontal'
+      });
+
+      // Log generation to database
+      await this.logReportGeneration({
+        template_id: null,
+        report_name: 'Metrics Test Report',
+        parameters: {
+          layout: normalizedLayout,
+          pageSize: pdfFormat,
+          template: templateName,
+          dateRange: metrics.date_range,
+          source
+        },
+        file_size_kb: Math.round(pdfBuffer.length / 1024),
+        generation_time_ms: Date.now() - startTime,
+        status: 'generated'
+      });
+
+      // Send PDF
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="metrics-test-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer, 'binary');
+
+      logger.info('Metrics test report generated successfully', {
+        sizeKb: Math.round(pdfBuffer.length / 1024),
+        durationMs: Date.now() - startTime
+      });
+
+    } catch (error) {
+      logger.error('Error generating metrics test report', { error: error.message, stack: error.stack });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Generate key base metrics report with user-selected date range
+   * POST /api/reports/key-metrics
+   */
+  async generateKeyMetricsReport(req, res) {
+    const startTime = Date.now();
+
+    try {
+      const {
+        startDate,
+        endDate,
+        layout = 'landscape',
+        pageSize = 'a4',
+        format = 'pdf',
+        source = 'external',
+        // Template configuration from web page
+        headerTitle = 'IoT Sensor Summary Report',
+        headerSubtitle = 'Real-time monitoring and analytics',
+        footerText = 'Madison - IoT Report',
+        logoUrl = '/images/logo_madison.png',
+        theme = 'professional-blue'
+      } = req.body;
+
+      // Validate date range
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'Start date and end date are required'
+        });
+      }
+
+      logger.info('Generating key metrics report', { startDate, endDate, layout, pageSize, format, source, theme });
+
+      // Fetch metrics from VictoriaMetrics for the specified date range
+      const metrics = await reportMetricsService.getReportMetrics({
+        startDate,
+        endDate,
+        source
+      });
+
+      logger.info('Metrics fetched successfully', { metrics });
+
+      // Determine which template to use based on layout
+      // Use metrics templates that have metric placeholders
+      const normalizedLayout = layout.toLowerCase();
+      const templateName = normalizedLayout === 'landscape' || normalizedLayout === 'horizontal'
+        ? 'template_horizontal_metrics.svg'
+        : 'template_vertical_metrics.svg';
+
+      // Apply theme colors
+      const themeColors = this.getThemeColors(theme);
+
+      // Resolve logo path to base64 data URI for Puppeteer
+      const resolvedLogoUrl = await this.resolveLogoPath(logoUrl);
+
+      // Prepare template data with metrics and user configuration
+      const templateData = {
+        // Header (from template configuration)
+        header_title: headerTitle,
+        header_subtitle: headerSubtitle,
+        header_bg: themeColors.header_bg,
+        header_text_color: themeColors.header_text_color,
+        header_subtitle_color: themeColors.header_subtitle_color,
+        logo_url: resolvedLogoUrl,
+
+        // Metrics from VictoriaMetrics
+        ...metrics,
+
+        // Building name
+        building_name: 'Madison Arena',
+
+        // Footer (from template configuration)
+        footer_text: footerText,
+        footer_bg: themeColors.footer_bg,
+        footer_text_color: themeColors.footer_text_color,
+        footer_date_color: themeColors.footer_date_color,
+
+        // Additional placeholders
+        sensor_1_name: 'Temperature Sensors',
+        sensor_1_value: metrics.avg_temperature,
+        sensor_2_name: 'Humidity Sensors',
+        sensor_2_value: metrics.avg_humidity,
+        sensor_3_name: 'Sound Sensors',
+        sensor_3_value: metrics.avg_sound,
+        sensor_4_name: 'Power Sensors',
+        sensor_4_value: metrics.total_power
+      };
+
+      logger.info('Generating report with template', { templateName, layout: normalizedLayout });
+
+      // Load and process template
+      const templateContent = await svgTemplateService.loadTemplate(templateName);
+      const svgContent = svgTemplateService.replacePlaceholders(templateContent, templateData);
+
+      // Prepare HTML generation options
+      const htmlOptions = {
+        layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
+        pageSize: pageSize.toUpperCase()
+      };
+
+      if (format === 'html') {
+        const htmlContent = svgTemplateService.generateHtmlWithSvg(svgContent, null, htmlOptions);
+        return res.send(htmlContent);
+      }
+
+      // Generate PDF
+      const pdfOptions = {
+        landscape: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal',
+        pageSize: pageSize.toUpperCase()
+      };
+
+      const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(
+        svgTemplateService.generateHtmlWithSvg(svgContent, null, htmlOptions),
+        pdfOptions
+      );
+
+      const duration = Date.now() - startTime;
+      logger.info('Key metrics report generated successfully', {
+        format,
+        layout: normalizedLayout,
+        pageSize,
+        duration: `${duration}ms`,
+        size: `${(pdfBuffer.length / 1024).toFixed(2)} KB`
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="key-metrics-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer, 'binary');
+
+    } catch (error) {
+      logger.error('Failed to generate key metrics report', { error: error.message, stack: error.stack });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Resolve logo path to base64 data URI for Puppeteer
+   * @param {string} logoPath - Logo path (can be relative like /images/logo.png or absolute)
+   * @returns {Promise<string>} Base64 data URI
+   */
+  async resolveLogoPath(logoPath) {
+    if (!logoPath) return '';
+
+    // If it's already a full URL or data URI, return as is
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://') || logoPath.startsWith('data:')) {
+      return logoPath;
+    }
+
+    // If it's a relative path starting with /images/, convert to base64 data URI
+    if (logoPath.startsWith('/images/')) {
+      try {
+        const publicPath = join(__dirname, '../../public');
+        const absolutePath = join(publicPath, logoPath);
+
+        // Read the image file
+        const imageBuffer = await readFile(absolutePath);
+
+        // Determine MIME type from file extension
+        const ext = logoPath.toLowerCase().split('.').pop();
+        const mimeTypes = {
+          'png': 'image/png',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'gif': 'image/gif',
+          'svg': 'image/svg+xml',
+          'webp': 'image/webp'
+        };
+        const mimeType = mimeTypes[ext] || 'image/png';
+
+        // Convert to base64 data URI
+        const base64 = imageBuffer.toString('base64');
+        return `data:${mimeType};base64,${base64}`;
+      } catch (error) {
+        logger.error('Failed to convert logo to base64', { error: error.message, logoPath });
+        return ''; // Return empty string if file can't be read
+      }
+    }
+
+    return logoPath;
+  }
+
+  /**
+   * Get theme colors based on theme name
+   * @param {string} theme - Theme name
+   * @returns {Object} Theme colors
+   */
+  getThemeColors(theme) {
+    // Theme colors matching svgTemplateService.js for consistency between preview and generate
+    const themes = {
+      'professional-blue': {
+        header_bg: '#0F172A',        // Dark slate blue
+        header_text_color: '#C7AB81',    // Gold - works great with white logo
+        header_subtitle_color: '#E5D4BA', // Light gold
+        footer_bg: '#0F172A',
+        footer_text_color: '#FFFFFF',    // White for high contrast
+        footer_date_color: '#C7AB81'     // Gold accent
+      },
+      'corporate-green': {
+        header_bg: '#064E3B',        // Dark emerald green
+        header_text_color: '#FFFFFF',    // White for crisp contrast
+        header_subtitle_color: '#6EE7B7', // Light green
+        footer_bg: '#064E3B',
+        footer_text_color: '#FFFFFF',
+        footer_date_color: '#6EE7B7'
+      },
+      'modern-purple': {
+        header_bg: '#4C1D95',        // Deep purple
+        header_text_color: '#FFFFFF',    // White for clarity
+        header_subtitle_color: '#C4B5FD', // Light purple
+        footer_bg: '#4C1D95',
+        footer_text_color: '#FFFFFF',
+        footer_date_color: '#C4B5FD'
+      },
+      'tech-orange': {
+        header_bg: '#7C2D12',        // Deep orange-brown
+        header_text_color: '#FFFFFF',    // White for maximum contrast
+        header_subtitle_color: '#FED7AA', // Peach
+        footer_bg: '#7C2D12',
+        footer_text_color: '#FFFFFF',
+        footer_date_color: '#FED7AA'
+      },
+      'monochrome': {
+        header_bg: '#18181B',        // Almost black
+        header_text_color: '#FFFFFF',    // Pure white
+        header_subtitle_color: '#D4D4D8', // Light gray
+        footer_bg: '#18181B',
+        footer_text_color: '#FFFFFF',
+        footer_date_color: '#D4D4D8'
+      },
+      'dark': {
+        header_bg: '#0F172A',        // Same as professional-blue for consistency
+        header_text_color: '#E0F2FE',    // Light blue
+        header_subtitle_color: '#BAE6FD', // Sky blue
+        footer_bg: '#0F172A',
+        footer_text_color: '#FFFFFF',
+        footer_date_color: '#BAE6FD'
+      }
+    };
+
+    return themes[theme] || themes['professional-blue'];
   }
 
   /**
