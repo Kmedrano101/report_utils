@@ -172,7 +172,51 @@
             es: 'Tidop IoT Report Utils v1.0.0 - Creado con ❤️ para analítica IoT'
         },
         'Saludable': { en: 'Healthy', es: 'Saludable' },
-        'Conectado': { en: 'Connected', es: 'Conectado' }
+        'Conectado': { en: 'Connected', es: 'Conectado' },
+        // New collapsible sections
+        'Template Settings': { en: 'Template Settings', es: 'Configuración de plantilla' },
+        'Settings': { en: 'Settings', es: 'Configuración' },
+        'Refresh Health Status': { en: 'Refresh Health Status', es: 'Actualizar estado del sistema' },
+        'Database Source': { en: 'Database Source', es: 'Fuente de base de datos' },
+        'Local TimescaleDB': { en: 'Local TimescaleDB', es: 'TimescaleDB local' },
+        'External VictoriaMetrics': { en: 'External VictoriaMetrics', es: 'VictoriaMetrics externa' },
+        'Selected:': { en: 'Selected:', es: 'Seleccionado:' },
+        'PostgreSQL with TimescaleDB extension': { en: 'PostgreSQL with TimescaleDB extension', es: 'PostgreSQL con extensión TimescaleDB' },
+        'Time-series database (MetricsQL)': { en: 'Time-series database (MetricsQL)', es: 'Base de datos de series temporales (MetricsQL)' },
+        'Local TimescaleDB Configuration': { en: 'Local TimescaleDB Configuration', es: 'Configuración de TimescaleDB local' },
+        'Configure connection to local PostgreSQL/TimescaleDB instance': {
+            en: 'Configure connection to local PostgreSQL/TimescaleDB instance',
+            es: 'Configurar conexión a instancia local de PostgreSQL/TimescaleDB'
+        },
+        'External VictoriaMetrics Configuration': { en: 'External VictoriaMetrics Configuration', es: 'Configuración de VictoriaMetrics externa' },
+        'Configure connection to external VictoriaMetrics time-series database': {
+            en: 'Configure connection to external VictoriaMetrics time-series database',
+            es: 'Configurar conexión a base de datos de series temporales VictoriaMetrics externa'
+        },
+        'API Endpoint URL': { en: 'API Endpoint URL', es: 'URL del endpoint API' },
+        'Full URL to VictoriaMetrics API endpoint': { en: 'Full URL to VictoriaMetrics API endpoint', es: 'URL completa del endpoint API de VictoriaMetrics' },
+        'Default Source': { en: 'Default Source', es: 'Fuente predeterminada' },
+        'Local Instance': { en: 'Local Instance', es: 'Instancia local' },
+        'External API': { en: 'External API', es: 'API externa' },
+        'Which source to use by default': { en: 'Which source to use by default', es: 'Qué fuente usar por defecto' },
+        'Authorization Token (Basic Auth)': { en: 'Authorization Token (Basic Auth)', es: 'Token de autorización (Basic Auth)' },
+        'Enter Base64 encoded token': { en: 'Enter Base64 encoded token', es: 'Ingrese token codificado en Base64' },
+        'Base64 encoded credentials for Basic Authentication': {
+            en: 'Base64 encoded credentials for Basic Authentication',
+            es: 'Credenciales codificadas en Base64 para autenticación básica'
+        },
+        'Query Timeout (ms)': { en: 'Query Timeout (ms)', es: 'Tiempo de espera de consulta (ms)' },
+        'Max Retries': { en: 'Max Retries', es: 'Reintentos máximos' },
+        'SSL Verification': { en: 'SSL Verification', es: 'Verificación SSL' },
+        'Enabled': { en: 'Enabled', es: 'Habilitado' },
+        'Disabled': { en: 'Disabled', es: 'Deshabilitado' },
+        'VictoriaMetrics Endpoints': { en: 'VictoriaMetrics Endpoints', es: 'Endpoints de VictoriaMetrics' },
+        'Instant queries': { en: 'Instant queries', es: 'Consultas instantáneas' },
+        'Range queries': { en: 'Range queries', es: 'Consultas por rango' },
+        'List metrics': { en: 'List metrics', es: 'Listar métricas' },
+        'IoT Sensor Summary Report': { en: 'IoT Sensor Summary Report', es: 'Reporte resumido de sensores IoT' },
+        'Real-time monitoring and analytics': { en: 'Real-time monitoring and analytics', es: 'Monitoreo y análisis en tiempo real' },
+        'Madison - IoT Report': { en: 'Madison - IoT Report', es: 'Madison - Reporte IoT' }
     };
 
     const KEY_TRANSLATIONS = {
@@ -189,7 +233,8 @@
         'notification.copied': { en: 'Copied to clipboard!', es: '¡Copiado al portapapeles!' },
         'notification.reportSuccess': { en: 'Report downloaded successfully!', es: '¡Reporte descargado correctamente!' },
         'notification.reportOpened': { en: 'Report opened in new window', es: 'Reporte abierto en una nueva ventana' },
-        'notification.errorPrefix': { en: 'Error:', es: 'Error:' }
+        'notification.errorPrefix': { en: 'Error:', es: 'Error:' },
+        'metrics': { en: 'metrics', es: 'métricas' }
     };
 
     function findTextNodes(matchText) {

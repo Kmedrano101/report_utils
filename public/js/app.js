@@ -12,6 +12,14 @@ const t = (key, fallback = '') => {
     return fallback || key;
 };
 
+// Translation helper for text content (uses TEXT_TRANSLATIONS)
+const translateText = (text) => {
+    if (LanguageManager?.getTextTranslation) {
+        return LanguageManager.getTextTranslation(text);
+    }
+    return text;
+};
+
 function languageFetch(url, options = {}) {
     if (LanguageManager && typeof LanguageManager.applyLanguageToRequest === 'function') {
         return fetch(url, LanguageManager.applyLanguageToRequest(options));
@@ -48,15 +56,30 @@ async function initApp() {
     document.getElementById('reportStartDate').valueAsDate = lastWeek;
     document.getElementById('reportEndDate').valueAsDate = today;
 
-    // Load initial data
+    // Load initial data for reports-first layout
     await checkHealth();
-    await loadDashboard();
-    await checkExternalServices();
     await loadTemplates();
+    await loadRecentReports();
+    await loadSensors(); // Load sensors for the checkboxes
     initTheme();
     loadPDFConfig();
-    updateApiExample();
     initDatabaseSource();
+
+    // Set up automatic health check refresh every 30 seconds
+    setInterval(async () => {
+        await checkHealth();
+    }, 30000);
+
+    // Listen for language changes to update dynamic content
+    if (LanguageManager) {
+        LanguageManager.onChange((newLang) => {
+            console.log('Language changed to:', newLang);
+            // Refresh health status to update dynamic text
+            checkHealth();
+            // Update database source labels without changing selection
+            updateDatabaseSourceLabels();
+        });
+    }
 }
 
 // Tab Management
@@ -104,20 +127,49 @@ function updateHealthUI(data) {
     const statusDot = document.getElementById('systemStatus');
     const statusText = document.getElementById('systemStatusText');
 
+    // Check which database source is selected
+    const dbSourceToggle = document.getElementById('dbSourceToggle');
+    const isExternalVM = dbSourceToggle?.checked || false;
+
     if (data.success) {
-        statusDot.className = 'status-dot status-healthy';
-        statusText.textContent = t('status.online', 'Online');
-        statusText.className = 'text-sm font-medium text-green-600 dark:text-green-400';
+        // Determine overall health based on selected source
+        let isHealthy = true;
+        let statusMessage = t('status.online', 'Online');
+
+        if (isExternalVM && data.victoriaMetrics) {
+            // When VictoriaMetrics is selected, show its status in header
+            isHealthy = data.victoriaMetrics.healthy;
+            if (isHealthy) {
+                statusMessage = `${t('status.online', 'En línea')} - VM (${data.victoriaMetrics.metricCount || 0} ${t('metrics', 'métricas')})`;
+            } else {
+                statusMessage = `${t('status.offline', 'Desconectado')} - VictoriaMetrics`;
+            }
+        } else if (data.database) {
+            // When TimescaleDB is selected, show its status in header
+            isHealthy = data.database.healthy;
+            if (isHealthy) {
+                statusMessage = `${t('status.online', 'En línea')} - TimescaleDB`;
+            } else {
+                statusMessage = `${t('status.offline', 'Desconectado')} - TimescaleDB`;
+            }
+        }
+
+        // Update header status
+        if (isHealthy) {
+            statusDot.className = 'status-dot status-healthy';
+            statusText.className = 'text-sm font-medium text-green-600 dark:text-green-400';
+        } else {
+            statusDot.className = 'status-dot status-unhealthy';
+            statusText.className = 'text-sm font-medium text-red-600 dark:text-red-400';
+        }
+        statusText.textContent = statusMessage;
 
         // Update health details
-        document.getElementById('health-status').textContent = t('status.healthy', 'Healthy');
+        document.getElementById('health-status').textContent = isHealthy ? t('status.healthy', 'Healthy') : t('status.unhealthy', 'Unhealthy');
         document.getElementById('health-uptime').textContent = formatUptime(data.uptime);
         document.getElementById('health-memory').textContent = `${data.memory?.used || 0} / ${data.memory?.total || 0} MB`;
 
         // Update database status based on selected source
-        const dbSourceToggle = document.getElementById('dbSourceToggle');
-        const isExternalVM = dbSourceToggle?.checked || false;
-
         if (isExternalVM && data.victoriaMetrics) {
             // Show VictoriaMetrics status
             document.getElementById('db-status').textContent = data.victoriaMetrics.healthy
@@ -492,6 +544,23 @@ async function detectSchema() {
 }
 
 // Database Source Toggle Functions
+function updateDatabaseSourceLabels() {
+    const toggle = document.getElementById('dbSourceToggle');
+    if (!toggle) return;
+
+    const isExternal = toggle.checked;
+    const selectedSource = document.getElementById('selectedDbSource');
+    const sourceType = document.getElementById('dbSourceType');
+
+    if (isExternal) {
+        selectedSource.textContent = translateText('External VictoriaMetrics');
+        sourceType.textContent = translateText('Time-series database (MetricsQL)');
+    } else {
+        selectedSource.textContent = translateText('Local TimescaleDB');
+        sourceType.textContent = translateText('PostgreSQL with TimescaleDB extension');
+    }
+}
+
 function toggleDatabaseSource() {
     const toggle = document.getElementById('dbSourceToggle');
     const isExternal = toggle.checked;
@@ -506,8 +575,8 @@ function toggleDatabaseSource() {
         // Show VictoriaMetrics form
         localForm.classList.add('hidden');
         externalForm.classList.remove('hidden');
-        selectedSource.textContent = 'External VictoriaMetrics';
-        sourceType.textContent = 'Time-series database (MetricsQL)';
+        selectedSource.textContent = translateText('External VictoriaMetrics');
+        sourceType.textContent = translateText('Time-series database (MetricsQL)');
         statusDot.classList.remove('bg-green-500');
         statusDot.classList.add('bg-indigo-500');
 
@@ -517,8 +586,8 @@ function toggleDatabaseSource() {
         // Show TimescaleDB form
         localForm.classList.remove('hidden');
         externalForm.classList.add('hidden');
-        selectedSource.textContent = 'Local TimescaleDB';
-        sourceType.textContent = 'PostgreSQL with TimescaleDB extension';
+        selectedSource.textContent = translateText('Local TimescaleDB');
+        sourceType.textContent = translateText('PostgreSQL with TimescaleDB extension');
         statusDot.classList.remove('bg-indigo-500');
         statusDot.classList.add('bg-green-500');
 
@@ -711,8 +780,15 @@ function initDatabaseSource() {
     const preferredSource = localStorage.getItem('preferredDbSource');
     const toggle = document.getElementById('dbSourceToggle');
 
-    if (preferredSource === 'external' && toggle) {
+    if (!toggle) return;
+
+    // Default to external VictoriaMetrics if no preference is saved
+    if (!preferredSource || preferredSource === 'external') {
         toggle.checked = true;
+        toggleDatabaseSource();
+    } else {
+        // User explicitly chose local
+        toggle.checked = false;
         toggleDatabaseSource();
     }
 }
@@ -1227,4 +1303,74 @@ function resolveAssetUrl(path) {
         return `${origin}${trimmed}`;
     }
     return `${origin}/${trimmed}`;
+}
+
+// Settings Drawer Toggle
+function toggleSettingsDrawer() {
+    const drawer = document.getElementById('settings-drawer');
+    const overlay = document.getElementById('settings-overlay');
+
+    if (drawer.classList.contains('translate-x-full')) {
+        // Open drawer
+        drawer.classList.remove('translate-x-full');
+        drawer.classList.add('translate-x-0');
+        overlay.classList.remove('hidden');
+    } else {
+        // Close drawer
+        drawer.classList.remove('translate-x-0');
+        drawer.classList.add('translate-x-full');
+        overlay.classList.add('hidden');
+    }
+}
+
+// Template Settings Toggle
+function toggleTemplateSettings() {
+    const content = document.getElementById('template-settings-content');
+    const icon = document.getElementById('template-toggle-icon');
+
+    if (content.classList.contains('hidden')) {
+        // Open
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    } else {
+        // Close
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+    }
+}
+
+// Database Settings Toggle
+function toggleDatabaseSettings() {
+    const content = document.getElementById('database-settings-content');
+    const icon = document.getElementById('database-toggle-icon');
+
+    if (content.classList.contains('hidden')) {
+        // Open
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+
+        // Load database configuration data
+        loadExternalServicesConfig();
+        loadCurrentConfig();
+    } else {
+        // Close
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+    }
+}
+
+// API Settings Toggle
+function toggleAPISettings() {
+    const content = document.getElementById('api-settings-content');
+    const icon = document.getElementById('api-toggle-icon');
+
+    if (content.classList.contains('hidden')) {
+        // Open
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    } else {
+        // Close
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+    }
 }

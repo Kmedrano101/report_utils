@@ -35,145 +35,253 @@
                         <span class="status-dot" id="systemStatus"></span>
                         <span class="text-sm font-medium dark:text-gray-300" id="systemStatusText">Checking...</span>
                     </div>
-                    <button onclick="checkHealth()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                        <i class="fas fa-sync-alt mr-2"></i><span data-i18n="button.refresh">Refresh</span>
-                    </button>
-                    <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-2">
-                        <span id="languageFlag" class="text-lg mr-2" aria-hidden="true">🇪🇸</span>
-                        <label for="languageSelector" class="sr-only">Language</label>
-                        <select id="languageSelector" class="bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-700 dark:text-gray-200">
-                            <option value="es">Español</option>
-                            <option value="en">English</option>
-                        </select>
-                    </div>
                     <button id="theme-toggle" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">
                         <i id="theme-toggle-icon" class="fas fa-sun"></i>
+                    </button>
+                    <button id="settings-toggle" onclick="toggleSettingsDrawer()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">
+                        <i class="fas fa-cog"></i>
                     </button>
                 </div>
             </div>
         </div>
     </header>
 
+    <!-- Settings Drawer -->
+    <div id="settings-drawer" class="fixed inset-y-0 right-0 w-80 bg-white dark:bg-gray-800 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+        <div class="flex flex-col h-full">
+            <!-- Drawer Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </h2>
+                <button onclick="toggleSettingsDrawer()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Drawer Content -->
+            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+                <!-- Language Settings -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        <i class="fas fa-language mr-2"></i>Language
+                    </h3>
+                    <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-2">
+                        <span id="languageFlag" class="text-lg mr-2" aria-hidden="true">🇪🇸</span>
+                        <label for="languageSelector" class="sr-only">Language</label>
+                        <select id="languageSelector" class="bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-700 dark:text-gray-200 w-full">
+                            <option value="es">Español</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Health Check Settings -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        <i class="fas fa-heartbeat mr-2"></i>System Health
+                    </h3>
+                    <button onclick="checkHealth()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        <i class="fas fa-sync-alt mr-2"></i><span data-i18n="button.refresh">Refresh Health Status</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawer Overlay -->
+    <div id="settings-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40" onclick="toggleSettingsDrawer()"></div>
+
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Tabs -->
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
-            <nav class="-mb-px flex space-x-8">
-                <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-active border-b-2 py-4 px-1 text-sm font-medium">
-                    <i class="fas fa-tachometer-alt mr-2"></i><span data-i18n="tabs.dashboard">Dashboard</span>
-                </button>
-                <button onclick="showTab('database')" id="tab-database" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
-                    <i class="fas fa-database mr-2"></i><span data-i18n="tabs.database">Database Config</span>
-                </button>
-                <button onclick="showTab('reports')" id="tab-reports" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
-                    <i class="fas fa-file-pdf mr-2"></i><span data-i18n="tabs.reports">Reports</span>
-                </button>
-                <button onclick="showTab('api')" id="tab-api" class="tab-inactive border-b-2 py-4 px-1 text-sm font-medium">
-                    <i class="fas fa-code mr-2"></i><span data-i18n="tabs.api">API Explorer</span>
-                </button>
-            </nav>
-        </div>
-
-        <!-- Tab Content -->
-        <div id="content-dashboard" class="tab-content">
-            <!-- Dashboard Tab -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <!-- System Health Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="cards.systemHealth.title">System Health</h3>
-                        <i class="fas fa-heartbeat text-2xl text-blue-600"></i>
-                    </div>
-                    <div id="healthDetails" class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.systemHealth.status">Status</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="health-status">Loading...</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.systemHealth.uptime">Uptime</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="health-uptime">-</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.systemHealth.memory">Memory</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="health-memory">-</span>
-                        </div>
-                    </div>
+        <!-- PDF Template Configuration (Collapsible) -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+            <button onclick="toggleTemplateSettings()" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-palette text-blue-600 mr-3"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Template Settings</h3>
                 </div>
+                <i id="template-toggle-icon" class="fas fa-chevron-down text-gray-500 dark:text-gray-400 transform transition-transform"></i>
+            </button>
 
-                <!-- Database Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="cards.database.title">Database</h3>
-                        <i class="fas fa-database text-2xl text-green-600"></i>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.database.connection">Connection</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="db-status">-</span>
+            <div id="template-settings-content" class="hidden px-6 pb-6">
+                <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <!-- Title and Subtitle -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Report Title</label>
+                            <input type="text" id="pdfTitle" placeholder="IoT Sensor Summary Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Main title displayed on report header</p>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.database.pool">Pool</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="db-pool">-</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.database.type">Type</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="db-type">TimescaleDB</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Reports Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="cards.reports.title">Reports</h3>
-                        <i class="fas fa-chart-bar text-2xl text-purple-600"></i>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.reports.generated">Generated</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="report-count">-</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.reports.templates">Templates</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="template-count">-</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400" data-i18n="cards.reports.pdfEngine">PDF Engine</span>
-                            <span class="text-sm font-medium dark:text-gray-300" id="pdf-status">-</span>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Report Subtitle</label>
+                            <input type="text" id="pdfSubtitle" placeholder="Real-time monitoring and analytics" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Subtitle displayed below the title</p>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Quick Actions -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    <i class="fas fa-bolt mr-2"></i><span data-i18n="quickActions.title">Quick Actions</span>
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button onclick="generateQuickReport()" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition">
-                        <i class="fas fa-file-pdf text-3xl text-blue-600 mb-2"></i>
-                        <p class="text-sm font-medium dark:text-gray-300" data-i18n="quickActions.generateReport">Generate Report</p>
-                    </button>
-                    <button onclick="showTab('database')" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-gray-700 transition">
-                        <i class="fas fa-cog text-3xl text-green-600 mb-2"></i>
-                        <p class="text-sm font-medium dark:text-gray-300" data-i18n="quickActions.configureDatabase">Configure Database</p>
-                    </button>
-                    <button onclick="showTab('api')" class="p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-gray-700 transition">
-                        <i class="fas fa-terminal text-3xl text-purple-600 mb-2"></i>
-                        <p class="text-sm font-medium dark:text-gray-300" data-i18n="quickActions.apiExplorer">API Explorer</p>
-                    </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color Theme</label>
+                            <select id="pdfTheme" onchange="applyPDFTheme()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="professional-blue">Professional Blue</option>
+                                <option value="corporate-green">Corporate Green</option>
+                                <option value="modern-purple">Modern Purple</option>
+                                <option value="tech-orange">Tech Orange</option>
+                                <option value="monochrome">Monochrome</option>
+                                <option value="dark">Dark Mode</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Controls header/footer palette</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo URL (optional)</label>
+                            <input type="text" id="pdfLogoUrl" placeholder="https://example.com/logo.png" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Displayed inside the circular accent</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Preview Output -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview Output</label>
+                            <select id="pdfPreviewMode" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="pdf">PDF (accurate sizing)</option>
+                                <option value="svg">SVG (quick layout)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Switch between PDF or SVG preview</p>
+                        </div>
+                        <!-- Page Orientation -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Orientation</label>
+                            <select id="pdfLayout" onchange="updatePDFLayout()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="portrait">Portrait (Vertical)</option>
+                                <option value="landscape">Landscape (Horizontal)</option>
+                            </select>
+                        </div>
+
+                        <!-- Page Size -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Size</label>
+                            <select id="pdfPageSize" onchange="updatePDFPageSize()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="a4">A4 (210 x 297 mm)</option>
+                                <option value="letter">Letter (8.5 x 11 in)</option>
+                                <option value="legal">Legal (8.5 x 14 in)</option>
+                            </select>
+                        </div>
+
+                        <!-- Footer Text -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Footer Text</label>
+                            <input type="text" id="pdfFooterText" placeholder="Madison - IoT Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Appears on the left side of footer</p>
+                        </div>
+                        <!-- Template Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SVG Template</label>
+                            <select id="pdfTemplateName" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="auto">Auto (match orientation)</option>
+                                <option disabled>Loading templates...</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Templates are loaded automatically from the templates directory</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <button type="button" onclick="previewPDFTemplate()" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+                            <i class="fas fa-eye mr-2"></i>Preview Template
+                        </button>
+                        <button type="button" onclick="savePDFConfig()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                            <i class="fas fa-save mr-2"></i>Save Configuration
+                        </button>
+                        <button type="button" onclick="resetPDFConfig()" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                            <i class="fas fa-undo mr-2"></i>Reset
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="content-database" class="tab-content hidden">
-            <!-- Database Configuration Tab -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                    <i class="fas fa-database mr-2"></i><span data-i18n="database.config.title">Database Configuration</span>
-                </h3>
+        <!-- Generate Report -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                <i class="fas fa-file-pdf mr-2"></i>Generate Report
+            </h3>
 
+            <form id="reportForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Type</label>
+                        <select id="reportType" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="test-template">Test Template (report_test.svg)</option>
+                            <option value="iot-summary">IoT Summary Report</option>
+                            <option value="sensor-detailed">Sensor Detailed Report</option>
+                            <option value="building">Building Report</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Output Format</label>
+                        <select id="reportFormat" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="pdf">PDF</option>
+                            <option value="html">HTML</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                        <input type="date" id="reportStartDate" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+                        <input type="date" id="reportEndDate" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div id="sensorSelection">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Sensors (Optional)</label>
+                    <div id="sensorCheckboxes" class="grid grid-cols-1 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto p-4 border rounded-md dark:border-gray-700">
+                        <!-- Sensor checkboxes will be loaded here -->
+                    </div>
+                </div>
+
+                <button type="button" onclick="generateReport()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-lg font-medium">
+                    <i class="fas fa-file-download mr-2"></i>Generate & Download Report
+                </button>
+            </form>
+
+            <div id="reportProgress" class="mt-4 hidden">
+                <div class="flex items-center justify-center space-x-3">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span class="text-gray-600 dark:text-gray-400">Generating report...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                <i class="fas fa-history mr-2"></i>Recent Reports
+            </h3>
+            <div id="recentReports" class="space-y-2">
+                <!-- Recent reports will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Database Configuration (Collapsible) -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+            <button onclick="toggleDatabaseSettings()" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-database text-green-600 mr-3"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Database Configuration</h3>
+                </div>
+                <i id="database-toggle-icon" class="fas fa-chevron-down text-gray-500 dark:text-gray-400 transform transition-transform"></i>
+            </button>
+
+            <div id="database-settings-content" class="hidden px-6 pb-6">
+                <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <!-- Database Source Toggle -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -378,189 +486,22 @@
                         <!-- VictoriaMetrics connection test result will appear here -->
                     </div>
                 </form>
-            </div>
-        </div>
-
-        <div id="content-reports" class="tab-content hidden">
-            <!-- PDF Template Configuration -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                    <i class="fas fa-palette mr-2"></i>Template Configuration
-                </h3>
-
-                <div class="space-y-4">
-                    <!-- Title and Subtitle -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Report Title</label>
-                            <input type="text" id="pdfTitle" placeholder="IoT Sensor Summary Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Main title displayed on report header</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Report Subtitle</label>
-                            <input type="text" id="pdfSubtitle" placeholder="Real-time monitoring and analytics" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Subtitle displayed below the title</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color Theme</label>
-                            <select id="pdfTheme" onchange="applyPDFTheme()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="professional-blue">Professional Blue</option>
-                                <option value="corporate-green">Corporate Green</option>
-                                <option value="modern-purple">Modern Purple</option>
-                                <option value="tech-orange">Tech Orange</option>
-                                <option value="monochrome">Monochrome</option>
-                                <option value="dark">Dark Mode</option>
-                            </select>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Controls header/footer palette</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo URL (optional)</label>
-                            <input type="text" id="pdfLogoUrl" placeholder="https://example.com/logo.png" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Displayed inside the circular accent</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Preview Output -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview Output</label>
-                            <select id="pdfPreviewMode" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="pdf">PDF (accurate sizing)</option>
-                                <option value="svg">SVG (quick layout)</option>
-                            </select>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Switch between PDF or SVG preview</p>
-                        </div>
-                        <!-- Page Orientation -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Orientation</label>
-                            <select id="pdfLayout" onchange="updatePDFLayout()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="portrait">Portrait (Vertical)</option>
-                                <option value="landscape">Landscape (Horizontal)</option>
-                            </select>
-                        </div>
-
-                        <!-- Page Size -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Size</label>
-                            <select id="pdfPageSize" onchange="updatePDFPageSize()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="a4">A4 (210 x 297 mm)</option>
-                                <option value="letter">Letter (8.5 x 11 in)</option>
-                                <option value="legal">Legal (8.5 x 14 in)</option>
-                            </select>
-                        </div>
-
-                        <!-- Footer Text -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Footer Text</label>
-                            <input type="text" id="pdfFooterText" placeholder="Madison - IoT Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Appears on the left side of footer</p>
-                        </div>
-                        <!-- Template Selection -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SVG Template</label>
-                            <select id="pdfTemplateName" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="auto">Auto (match orientation)</option>
-                                <option disabled>Loading templates...</option>
-                            </select>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Templates are loaded automatically from the templates directory</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 flex gap-4">
-                    <button type="button" onclick="previewPDFTemplate()" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
-                        <i class="fas fa-eye mr-2"></i>Preview Template
-                    </button>
-                    <button type="button" onclick="savePDFConfig()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                        <i class="fas fa-save mr-2"></i>Save Configuration
-                    </button>
-                    <button type="button" onclick="resetPDFConfig()" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
-                        <i class="fas fa-undo mr-2"></i>Reset
-                    </button>
-                </div>
-            </div>
-
-            <!-- Reports Tab -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                    <i class="fas fa-file-pdf mr-2"></i>Generate Report
-                </h3>
-
-                <form id="reportForm" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Report Type</label>
-                            <select id="reportType" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="test-template">Test Template (report_test.svg)</option>
-                                <option value="iot-summary">IoT Summary Report</option>
-                                <option value="sensor-detailed">Sensor Detailed Report</option>
-                                <option value="building">Building Report</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Output Format</label>
-                            <select id="reportFormat" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="pdf">PDF</option>
-                                <option value="html">HTML</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
-                            <input type="date" id="reportStartDate" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
-                            <input type="date" id="reportEndDate" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        </div>
-                    </div>
-
-                    <div id="sensorSelection">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Sensors (Optional)</label>
-                        <div id="sensorCheckboxes" class="grid grid-cols-1 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto p-4 border rounded-md dark:border-gray-700">
-                            <!-- Sensor checkboxes will be loaded here -->
-                        </div>
-                    </div>
-
-                    <button type="button" onclick="generateReport()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-lg font-medium">
-                        <i class="fas fa-file-download mr-2"></i>Generate & Download Report
-                    </button>
-                </form>
-
-                <div id="reportProgress" class="mt-4 hidden">
-                    <div class="flex items-center justify-center space-x-3">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span class="text-gray-600 dark:text-gray-400">Generating report...</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Reports -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                    <i class="fas fa-history mr-2"></i>Recent Reports
-                </h3>
-                <div id="recentReports" class="space-y-2">
-                    <!-- Recent reports will be loaded here -->
                 </div>
             </div>
         </div>
 
-        <div id="content-api" class="tab-content hidden">
-            <!-- API Explorer Tab -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                    <i class="fas fa-code mr-2"></i>API Explorer
-                </h3>
+        <!-- API Explorer (Collapsible) -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+            <button onclick="toggleAPISettings()" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-code text-purple-600 mr-3"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">API Explorer</h3>
+                </div>
+                <i id="api-toggle-icon" class="fas fa-chevron-down text-gray-500 dark:text-gray-400 transform transition-transform"></i>
+            </button>
 
-                <div class="space-y-4">
+            <div id="api-settings-content" class="hidden px-6 pb-6">
+                <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Endpoint</label>
                         <select id="apiEndpoint" onchange="updateApiExample()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -592,6 +533,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- Hidden elements for backward compatibility -->
+        <div id="healthDetails" class="hidden">
+            <div id="health-status"></div>
+            <div id="health-uptime"></div>
+            <div id="health-memory"></div>
+        </div>
+        <div id="db-status" class="hidden"></div>
+        <div id="db-pool" class="hidden"></div>
+        <div id="db-type" class="hidden"></div>
+        <div id="report-count" class="hidden"></div>
+        <div id="template-count" class="hidden"></div>
+        <div id="pdf-status" class="hidden"></div>
     </main>
 
     <!-- Footer -->
