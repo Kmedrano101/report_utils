@@ -26,17 +26,19 @@ try {
 
     if (labelData.status === 'success' && labelData.data) {
         console.log('✓ Available labels:', labelData.data.join(', '));
+        const hasSensorName = labelData.data.includes('sensor_name');
+        console.log(`\n✓ sensor_name label is ${hasSensorName ? 'AVAILABLE ✓' : 'NOT AVAILABLE ✗'}`);
     }
 } catch (error) {
     console.error('✗ Error getting labels:', error.message);
 }
 
-// Get all unique sensors grouped by sensor_type
-console.log('\n2. Getting sensors grouped by sensor_type...');
+// Get all unique sensors grouped by sensor_name, sensor_type, and sensor_id
+console.log('\n2. Getting sensors grouped by sensor_name, sensor_id, sensor_type...');
 const queryOptions = {
     ...options,
     body: JSON.stringify({
-        query: 'group by (sensor_id, sensor_type, sensor_model) (iot_sensor_reading)',
+        query: 'group by (sensor_name, sensor_id, sensor_type, sensor_model) (iot_sensor_reading)',
         time: new Date().toISOString()
     })
 };
@@ -48,106 +50,130 @@ try {
     if (data.status === 'OK' && data.result?.length > 0) {
         console.log(`✓ Found ${data.result.length} unique sensor/type combinations\n`);
 
-        // Group sensors by type
-        const sensorsByType = {
-            temperature: [],
-            humidity: [],
-            light: [],
-            motion: [],
-            sound: [],
-            clamp: [],
-            other: []
-        };
+        // Collect all unique sensors with their names
+        const sensorsMap = new Map();
 
         data.result.forEach(item => {
+            const sensorName = item.metric.sensor_name;
             const sensorId = item.metric.sensor_id;
             const sensorType = item.metric.sensor_type;
             const sensorModel = item.metric.sensor_model;
 
-            if (sensorType === 'temperature') {
-                sensorsByType.temperature.push({ id: sensorId, model: sensorModel });
-            } else if (sensorType === 'humidity') {
-                sensorsByType.humidity.push({ id: sensorId, model: sensorModel });
-            } else if (sensorType === 'light') {
-                sensorsByType.light.push({ id: sensorId, model: sensorModel });
-            } else if (sensorType === 'motion') {
-                sensorsByType.motion.push({ id: sensorId, model: sensorModel });
-            } else if (sensorType.includes('sound')) {
-                sensorsByType.sound.push({ id: sensorId, model: sensorModel });
-            } else if (sensorType.includes('clamp') || sensorType.includes('current')) {
-                sensorsByType.clamp.push({ id: sensorId, model: sensorModel });
-            } else {
-                sensorsByType.other.push({ id: sensorId, type: sensorType, model: sensorModel });
+            if (!sensorsMap.has(sensorId)) {
+                sensorsMap.set(sensorId, {
+                    name: sensorName,
+                    id: sensorId,
+                    model: sensorModel,
+                    types: []
+                });
+            }
+
+            if (!sensorsMap.get(sensorId).types.includes(sensorType)) {
+                sensorsMap.get(sensorId).types.push(sensorType);
             }
         });
 
-        // Create mapping for s1-s8 (general/multi sensors), t1-t30 (temperature), c1-c2 (clamps)
-        console.log('=== SENSOR MAPPING ===\n');
+        console.log(`✓ Found ${sensorsMap.size} unique physical sensors\n`);
 
-        // Get unique sensor devices (by removing duplicates based on sensor_id)
-        const uniqueSensors = [...new Set(data.result.map(r => r.metric.sensor_id))];
+        // Categorize sensors by their sensor_name prefix
+        const categorized = {
+            temperature: [],
+            sound: [],
+            clamp: []
+        };
 
-        console.log('Temperature Sensors (t1-t30):');
-        const tempSensors = [...new Set(sensorsByType.temperature.map(s => s.id))];
-        tempSensors.forEach((id, i) => {
-            const model = sensorsByType.temperature.find(s => s.id === id)?.model || 'unknown';
-            console.log(`  t${i + 1}: ${id} (${model})`);
+        sensorsMap.forEach(sensor => {
+            if (sensor.name?.startsWith('t')) {
+                categorized.temperature.push(sensor);
+            } else if (sensor.name?.startsWith('s')) {
+                categorized.sound.push(sensor);
+            } else if (sensor.name?.startsWith('c')) {
+                categorized.clamp.push(sensor);
+            }
         });
 
-        console.log('\nClamp/Current Sensors (c1-c2):');
-        const clampSensors = [...new Set(sensorsByType.clamp.map(s => s.id))];
-        clampSensors.forEach((id, i) => {
-            const model = sensorsByType.clamp.find(s => s.id === id)?.model || 'unknown';
-            console.log(`  c${i + 1}: ${id} (${model})`);
+        // Sort each category by sensor_name number
+        const sortByName = (a, b) => {
+            const numA = parseInt(a.name?.replace(/[^0-9]/g, '') || '0');
+            const numB = parseInt(b.name?.replace(/[^0-9]/g, '') || '0');
+            return numA - numB;
+        };
+
+        categorized.temperature.sort(sortByName);
+        categorized.sound.sort(sortByName);
+        categorized.clamp.sort(sortByName);
+
+        console.log('=== SENSOR MAPPING (with sensor_name) ===\n');
+
+        console.log('Temperature Sensors:');
+        categorized.temperature.forEach(sensor => {
+            console.log(`  ${sensor.name}: ${sensor.id} (${sensor.model}) - ${sensor.types.join(', ')}`);
         });
 
-        console.log('\nSound Sensors (s1-s8):');
-        const soundSensors = [...new Set(sensorsByType.sound.map(s => s.id))];
-        soundSensors.forEach((id, i) => {
-            const model = sensorsByType.sound.find(s => s.id === id)?.model || 'unknown';
-            console.log(`  s${i + 1}: ${id} (${model})`);
+        console.log('\nSound Sensors:');
+        categorized.sound.forEach(sensor => {
+            console.log(`  ${sensor.name}: ${sensor.id} (${sensor.model}) - ${sensor.types.join(', ')}`);
         });
 
-        console.log('\nLight Sensors:');
-        const lightSensors = [...new Set(sensorsByType.light.map(s => s.id))];
-        lightSensors.forEach((id, i) => {
-            const model = sensorsByType.light.find(s => s.id === id)?.model || 'unknown';
-            console.log(`  l${i + 1}: ${id} (${model})`);
+        console.log('\nCurrent Clamp Sensors:');
+        categorized.clamp.forEach(sensor => {
+            console.log(`  ${sensor.name}: ${sensor.id} (${sensor.model}) - ${sensor.types.join(', ')}`);
         });
 
         // Generate mapping file
         const mapping = {
-            temperature: tempSensors.reduce((acc, id, i) => {
-                acc[`t${i + 1}`] = id;
-                return acc;
-            }, {}),
-            clamp: clampSensors.reduce((acc, id, i) => {
-                acc[`c${i + 1}`] = id;
-                return acc;
-            }, {}),
-            sound: soundSensors.reduce((acc, id, i) => {
-                acc[`s${i + 1}`] = id;
-                return acc;
-            }, {}),
-            light: lightSensors.reduce((acc, id, i) => {
-                acc[`l${i + 1}`] = id;
-                return acc;
-            }, {})
+            temperature: {},
+            sound: {},
+            clamp: {}
         };
+
+        categorized.temperature.forEach(s => {
+            mapping.temperature[s.name] = s.id;
+        });
+
+        categorized.sound.forEach(s => {
+            mapping.sound[s.name] = s.id;
+        });
+
+        categorized.clamp.forEach(s => {
+            mapping.clamp[s.name] = s.id;
+        });
 
         console.log('\n=== JSON MAPPING ===');
         console.log(JSON.stringify(mapping, null, 2));
 
         // Example query
-        console.log('\n=== EXAMPLE QUERY (Temperature for t1) ===');
-        const t1Id = mapping.temperature.t1;
-        if (t1Id) {
-            console.log(`
-Query for average temperature of t1 (${t1Id}) over last 20 days:
+        console.log('\n=== EXAMPLE QUERIES (using sensor_name) ===');
+        const firstTempName = Object.keys(mapping.temperature)[0];
+        const firstSoundName = Object.keys(mapping.sound)[0];
+        const firstClampName = Object.keys(mapping.clamp)[0];
 
-const query = 'avg_over_time(iot_sensor_reading{sensor_id="${t1Id}", sensor_type="temperature"}[20d])';
+        if (firstTempName) {
+            console.log(`
+Temperature query using sensor_name="${firstTempName}":
+  avg_over_time(iot_sensor_reading{sensor_name="${firstTempName}", sensor_type="temperature"}[20d])
             `.trim());
         }
+
+        if (firstSoundName) {
+            console.log(`
+Sound query using sensor_name="${firstSoundName}":
+  avg_over_time(iot_sensor_reading{sensor_name="${firstSoundName}", sensor_type="soundAvg"}[24h])
+            `.trim());
+        }
+
+        if (firstClampName) {
+            console.log(`
+Current query using sensor_name="${firstClampName}":
+  iot_sensor_reading{sensor_name="${firstClampName}", sensor_type="current_clamp_1"}
+            `.trim());
+        }
+
+        console.log(`
+\nNOTE: You can now use either sensor_name or sensor_id in queries!
+- sensor_name: Easier to use (e.g., "t1", "s1", "c1")
+- sensor_id: Device-specific (e.g., "lite-a81758fffe0d2d67")
+        `.trim());
 
     } else {
         console.log('✗ No data found');

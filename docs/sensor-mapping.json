@@ -1,26 +1,27 @@
 {
   "temperature": {
-    "t1": "lite-a81758fffe0d2d67",
-    "t2": "lite-a81758fffe0d2d6b",
-    "t3": "lite-a81758fffe0d2d6c",
-    "t4": "lite-a81758fffe0d2d6d",
-    "t5": "lite-a81758fffe0d2d6e",
-    "t6": "lite-a81758fffe0d4aae",
-    "t7": "lite-a81758fffe0d4aaf",
-    "t8": "lite-a81758fffe0d4ab1",
-    "t9": "lite-a81758fffe0d4ab3",
-    "t10": "lite-a81758fffe0d4ab4",
-    "t11": "lite-a81758fffe0d4ab5",
-    "t12": "lite-a81758fffe0d4af4",
-    "t13": "lite-a81758fffe0d4af9",
-    "t14": "lite-a81758fffe0d4afa",
-    "t15": "lite-a81758fffe0d4afb",
-    "t16": "sound-a81758fffe0d042f",
-    "t17": "sound-a81758fffe0d0437"
+    "t1": "lite-a81758fffe0d4ab0",
+    "t4": "lite-a81758fffe0d4ab3",
+    "t6": "lite-a81758fffe0d4ab5",
+    "t7": "lite-a81758fffe0d4af2",
+    "t9": "lite-a81758fffe0d4af4",
+    "t11": "lite-a81758fffe0d4af6",
+    "t13": "lite-a81758fffe0d4af8",
+    "t16": "lite-a81758fffe0d4afb",
+    "t17": "lite-a81758fffe0d2d67",
+    "t18": "lite-a81758fffe0d2d68",
+    "t19": "lite-a81758fffe0d2d69",
+    "t20": "lite-a81758fffe0d2d70",
+    "t21": "lite-a81758fffe0d2d6b",
+    "t22": "lite-a81758fffe0d2d6c",
+    "t30": "lite-a81758fffe0d2d6a"
   },
   "sound": {
-    "s1": "sound-a81758fffe0d0434",
-    "s2": "sound-a81758fffe0d0437"
+    "s1": "sound-a81758fffe0d0432",
+    "s2": "sound-a81758fffe0d0433",
+    "s3": "sound-a81758fffe0d0434",
+    "s6": "sound-a81758fffe0d0437",
+    "s7": "sound-a81758fffe0d042e"
   },
   "clamp": {
     "c1": "cs01-a840412f375a8bd6",

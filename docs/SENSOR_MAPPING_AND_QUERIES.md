@@ -25,9 +25,13 @@ This document provides the complete mapping between friendly sensor names (t1, s
 
 ## Important Note
 
-⚠️ **The external VictoriaMetrics does NOT have a `sensor_name` label.**
+✅ **The external VictoriaMetrics NOW HAS `sensor_name` label support!**
 
-It only uses `sensor_id` for identification. The friendly names (s1-s8, t1-t30, c1-c2) are mapped to actual sensor IDs as shown below.
+You can query using either:
+- **`sensor_name`** - Friendly names like "t1", "s2", "c1" (recommended for easier queries)
+- **`sensor_id`** - Device-specific IDs like "lite-a81758fffe0d2d67"
+
+Both methods work identically. Using `sensor_name` makes queries simpler and more readable.
 
 ---
 
@@ -35,10 +39,10 @@ It only uses `sensor_id` for identification. The friendly names (s1-s8, t1-t30, 
 
 ### Summary
 
-- **Temperature Sensors:** 15 (t1-t15)
-- **Sound Sensors:** 2 (s1-s2)
-- **Current Clamp Sensors:** 2 (c1-c2)
-- **Total Physical Sensors:** 17
+- **Temperature Sensors:** 15 (t1, t4, t6, t7, t9, t11, t13, t16, t17, t18, t19, t20, t21, t22, t30)
+- **Sound Sensors:** 5 (s1, s2, s3, s6, s7)
+- **Current Clamp Sensors:** 2 (c1, c2)
+- **Total Physical Sensors:** 22
 
 ### Sensor Capabilities
 
@@ -64,64 +68,136 @@ It only uses `sensor_id` for identification. The friendly names (s1-s8, t1-t30, 
 
 ## Sensor Mapping
 
-### Temperature Sensors (t1-t15)
+### Temperature Sensors (t1-t30)
 
-| Friendly Name | Sensor ID | Model | Sensor Types |
-|---------------|-----------|-------|--------------|
-| t1 | lite-a81758fffe0d2d67 | elsys ers-lite | temperature, humidity, vdd |
-| t2 | lite-a81758fffe0d2d6b | elsys ers-lite | temperature, humidity, vdd |
-| t3 | lite-a81758fffe0d2d6c | elsys ers-lite | temperature, humidity, vdd |
-| t4 | lite-a81758fffe0d4aae | elsys ers-lite | temperature, humidity, vdd |
-| t5 | lite-a81758fffe0d4aaf | elsys ers-lite | temperature, humidity, vdd |
-| t6 | lite-a81758fffe0d4ab1 | elsys ers-lite | temperature, humidity, vdd |
-| t7 | lite-a81758fffe0d4ab3 | elsys ers-lite | temperature, humidity, vdd |
-| t8 | lite-a81758fffe0d4ab4 | elsys ers-lite | temperature, humidity, vdd |
-| t9 | lite-a81758fffe0d4ab5 | elsys ers-lite | temperature, humidity, vdd |
-| t10 | lite-a81758fffe0d4af4 | elsys ers-lite | temperature, humidity, vdd |
-| t11 | lite-a81758fffe0d4af9 | elsys ers-lite | temperature, humidity, vdd |
-| t12 | lite-a81758fffe0d4afa | elsys ers-lite | temperature, humidity, vdd |
-| t13 | lite-a81758fffe0d4afb | elsys ers-lite | temperature, humidity, vdd |
-| t14 | sound-a81758fffe0d0434 | elsys ers-sound | temperature, humidity, sound, light, motion, vdd |
-| t15 | sound-a81758fffe0d0437 | elsys ers-sound | temperature, humidity, sound, light, motion, vdd |
+All temperature sensors (elsys ers-lite) provide **3 sensor types**:
 
-### Sound Sensors (s1-s2)
+| Property | sensor_type | Unit | Description |
+|----------|-------------|------|-------------|
+| Temperature | `temperature` | °C | Ambient temperature |
+| Humidity | `humidity` | % | Relative humidity |
+| Voltage | `vdd` | mV | Supply voltage (battery indicator) |
 
-| Friendly Name | Sensor ID | Model | Sensor Types |
-|---------------|-----------|-------|--------------|
-| s1 | sound-a81758fffe0d0434 | elsys ers-sound | soundAvg, soundPeak, temperature, humidity, light, motion, vdd |
-| s2 | sound-a81758fffe0d0437 | elsys ers-sound | soundAvg, soundPeak, temperature, humidity, light, motion, vdd |
+**Example Values (Latest reading from t1):**
+
+| Sensor Type | Value | Unit | Description |
+|-------------|-------|------|-------------|
+| temperature | 15.0 | °C | Ambient temperature |
+| humidity | 60 | % | Relative humidity |
+| vdd | 3684 | mV | Supply voltage |
+
+**Available Sensors:**
+
+| Friendly Name | Sensor ID | Model |
+|---------------|-----------|-------|
+| t1 | lite-a81758fffe0d4ab0 | elsys ers-lite |
+| t4 | lite-a81758fffe0d4ab3 | elsys ers-lite |
+| t6 | lite-a81758fffe0d4ab5 | elsys ers-lite |
+| t7 | lite-a81758fffe0d4af2 | elsys ers-lite |
+| t9 | lite-a81758fffe0d4af4 | elsys ers-lite |
+| t11 | lite-a81758fffe0d4af6 | elsys ers-lite |
+| t13 | lite-a81758fffe0d4af8 | elsys ers-lite |
+| t16 | lite-a81758fffe0d4afb | elsys ers-lite |
+| t17 | lite-a81758fffe0d2d67 | elsys ers-lite |
+| t18 | lite-a81758fffe0d2d68 | elsys ers-lite |
+| t19 | lite-a81758fffe0d2d69 | elsys ers-lite |
+| t20 | lite-a81758fffe0d2d70 | elsys ers-lite |
+| t21 | lite-a81758fffe0d2d6b | elsys ers-lite |
+| t22 | lite-a81758fffe0d2d6c | elsys ers-lite |
+| t30 | lite-a81758fffe0d2d6a | elsys ers-lite |
+
+### Sound Sensors (s1-s7)
+
+All sound sensors (elsys ers-sound) provide **7 sensor types**:
+
+| Property | sensor_type | Unit | Description |
+|----------|-------------|------|-------------|
+| Sound Average | `soundAvg` | dB | Average sound level |
+| Sound Peak | `soundPeak` | dB | Peak sound level |
+| Temperature | `temperature` | °C | Ambient temperature |
+| Humidity | `humidity` | % | Relative humidity |
+| Light | `light` | lux | Light intensity |
+| Motion | `motion` | boolean | Motion detection |
+| Voltage | `vdd` | mV | Supply voltage (battery indicator) |
+
+**Example Values (Latest reading from s1):**
+
+| Sensor Type | Value | Unit | Description |
+|-------------|-------|------|-------------|
+| soundAvg | 48 | dB | Average sound level |
+| soundPeak | 73 | dB | Peak sound level |
+| temperature | 20.8 | °C | Ambient temperature |
+| humidity | 42 | % | Relative humidity |
+| light | 34 | lux | Light intensity |
+| motion | 0 | boolean | Motion detection (no motion) |
+| vdd | 3658 | mV | Supply voltage |
+
+**Available Sensors:**
+
+| Friendly Name | Sensor ID | Model |
+|---------------|-----------|-------|
+| s1 | sound-a81758fffe0d0432 | elsys ers-sound |
+| s2 | sound-a81758fffe0d0433 | elsys ers-sound |
+| s3 | sound-a81758fffe0d0434 | elsys ers-sound |
+| s6 | sound-a81758fffe0d0437 | elsys ers-sound |
+| s7 | sound-a81758fffe0d042e | elsys ers-sound |
 
 ### Current Clamp Sensors (c1-c2)
 
-| Friendly Name | Sensor ID | Model | Sensor Types |
-|---------------|-----------|-------|--------------|
-| c1 | cs01-a840412f375a8bd6 | unknown | current_clamp_1, current_clamp_2, current_clamp_3, current_clamp_4, Bat_V |
-| c2 | cs01-a84041e9eb5c3996 | unknown | current_clamp_1, current_clamp_2, current_clamp_3, current_clamp_4, Bat_V |
+All current clamp sensors provide **5 sensor types**:
+
+| Property | sensor_type | Unit | Description |
+|----------|-------------|------|-------------|
+| Current Clamp 1 | `current_clamp_1` | A | Current measurement channel 1 |
+| Current Clamp 2 | `current_clamp_2` | A | Current measurement channel 2 |
+| Current Clamp 3 | `current_clamp_3` | A | Current measurement channel 3 |
+| Current Clamp 4 | `current_clamp_4` | A | Current measurement channel 4 |
+| Battery Voltage | `Bat_V` | V | Battery voltage |
+
+**Example Values (Latest reading from c1):**
+
+| Sensor Type | Value | Unit | Description |
+|-------------|-------|------|-------------|
+| current_clamp_1 | 0.36 | A | Channel 1 current |
+| current_clamp_2 | 0.46 | A | Channel 2 current |
+| current_clamp_3 | 0.36 | A | Channel 3 current |
+| current_clamp_4 | 0.17 | A | Channel 4 current |
+| Bat_V | 3.246 | V | Battery voltage |
+
+**Available Sensors:**
+
+| Friendly Name | Sensor ID | Model |
+|---------------|-----------|-------|
+| c1 | cs01-a840412f375a8bd6 | current sensor |
+| c2 | cs01-a84041e9eb5c3996 | current sensor |
 
 ### JSON Mapping
 
 ```json
 {
   "temperature": {
-    "t1": "lite-a81758fffe0d2d67",
-    "t2": "lite-a81758fffe0d2d6b",
-    "t3": "lite-a81758fffe0d2d6c",
-    "t4": "lite-a81758fffe0d4aae",
-    "t5": "lite-a81758fffe0d4aaf",
-    "t6": "lite-a81758fffe0d4ab1",
-    "t7": "lite-a81758fffe0d4ab3",
-    "t8": "lite-a81758fffe0d4ab4",
-    "t9": "lite-a81758fffe0d4ab5",
-    "t10": "lite-a81758fffe0d4af4",
-    "t11": "lite-a81758fffe0d4af9",
-    "t12": "lite-a81758fffe0d4afa",
-    "t13": "lite-a81758fffe0d4afb",
-    "t14": "sound-a81758fffe0d0434",
-    "t15": "sound-a81758fffe0d0437"
+    "t1": "lite-a81758fffe0d4ab0",
+    "t4": "lite-a81758fffe0d4ab3",
+    "t6": "lite-a81758fffe0d4ab5",
+    "t7": "lite-a81758fffe0d4af2",
+    "t9": "lite-a81758fffe0d4af4",
+    "t11": "lite-a81758fffe0d4af6",
+    "t13": "lite-a81758fffe0d4af8",
+    "t16": "lite-a81758fffe0d4afb",
+    "t17": "lite-a81758fffe0d2d67",
+    "t18": "lite-a81758fffe0d2d68",
+    "t19": "lite-a81758fffe0d2d69",
+    "t20": "lite-a81758fffe0d2d70",
+    "t21": "lite-a81758fffe0d2d6b",
+    "t22": "lite-a81758fffe0d2d6c",
+    "t30": "lite-a81758fffe0d2d6a"
   },
   "sound": {
-    "s1": "sound-a81758fffe0d0434",
-    "s2": "sound-a81758fffe0d0437"
+    "s1": "sound-a81758fffe0d0432",
+    "s2": "sound-a81758fffe0d0433",
+    "s3": "sound-a81758fffe0d0434",
+    "s6": "sound-a81758fffe0d0437",
+    "s7": "sound-a81758fffe0d042e"
   },
   "clamp": {
     "c1": "cs01-a840412f375a8bd6",
@@ -134,7 +210,9 @@ It only uses `sensor_id` for identification. The friendly names (s1-s8, t1-t30, 
 
 ## Query Examples
 
-### 1. Average Temperature for t1 (Last 20 Days)
+### 0. Get Current/Last Values for All Sensor Types (t1)
+
+**Get all current values (temperature, humidity, vdd) for sensor t1:**
 
 **Endpoint:** `/query`
 
@@ -147,14 +225,74 @@ const options = {
         'authorization': 'Basic bWFkaXNvbi1kdDoxY2NmMzQ3YWFmZDMwOTQ5NGZjOWE1MjZhMGIxNzE0M2U0YTViZDFlZjA2NWUzZjY4YzA0NGVlNWJmZWY4OGIw'
     },
     body: JSON.stringify({
-        query: 'avg_over_time(iot_sensor_reading{sensor_id="lite-a81758fffe0d2d67", sensor_type="temperature"}[20d])',
+        query: 'iot_sensor_reading{sensor_name="t1"}'
+    })
+};
+
+const response = await fetch(url, options);
+const data = await response.json();
+
+// Results will contain all 3 sensor types:
+// data.result[0] = humidity: 60%
+// data.result[1] = temperature: 15.1°C
+// data.result[2] = vdd: 3684mV
+```
+
+**Get specific sensor type (temperature only):**
+
+```javascript
+{
+    query: 'iot_sensor_reading{sensor_name="t1", sensor_type="temperature"}'
+}
+// Result: temperature = 15.1°C
+```
+
+**Get specific sensor type (humidity only):**
+
+```javascript
+{
+    query: 'iot_sensor_reading{sensor_name="t1", sensor_type="humidity"}'
+}
+// Result: humidity = 60%
+```
+
+**Get specific sensor type (voltage only):**
+
+```javascript
+{
+    query: 'iot_sensor_reading{sensor_name="t1", sensor_type="vdd"}'
+}
+// Result: vdd = 3684mV
+```
+
+### 1. Average Temperature for t1 (Last 20 Days)
+
+**Endpoint:** `/query`
+
+**Using sensor_name (Recommended):**
+```javascript
+const url = 'https://api.iot.tidop.es/v1/vm/query';
+const options = {
+    method: 'POST',
+    headers: {
+        'content-type': 'application/json',
+        'authorization': 'Basic bWFkaXNvbi1kdDoxY2NmMzQ3YWFmZDMwOTQ5NGZjOWE1MjZhMGIxNzE0M2U0YTViZDFlZjA2NWUzZjY4YzA0NGVlNWJmZWY4OGIw'
+    },
+    body: JSON.stringify({
+        query: 'avg_over_time(iot_sensor_reading{sensor_name="t1", sensor_type="temperature"}[20d])',
         time: new Date().toISOString()
     })
 };
 
 const response = await fetch(url, options);
 const data = await response.json();
-// Result: data.result[0].values[0] = 22.16°C
+// Result: data.result[0].values[0] = 15.1°C
+```
+
+**Using sensor_id (Alternative):**
+```javascript
+// Same query using sensor_id instead
+query: 'avg_over_time(iot_sensor_reading{sensor_id="lite-a81758fffe0d4ab0", sensor_type="temperature"}[20d])'
 ```
 
 ### 2. Temperature Time Series for t1 (Last 7 Days, Hourly)
@@ -170,7 +308,7 @@ const options = {
         'authorization': 'Basic bWFkaXNvbi1kdDoxY2NmMzQ3YWFmZDMwOTQ5NGZjOWE1MjZhMGIxNzE0M2U0YTViZDFlZjA2NWUzZjY4YzA0NGVlNWJmZWY4OGIw'
     },
     body: JSON.stringify({
-        query: 'iot_sensor_reading{sensor_id="lite-a81758fffe0d2d67", sensor_type="temperature"}',
+        query: 'iot_sensor_reading{sensor_name="t1", sensor_type="temperature"}',
         start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         end: new Date().toISOString(),
         step: '1h'
@@ -179,7 +317,7 @@ const options = {
 
 const response = await fetch(url, options);
 const data = await response.json();
-// Result: data.result[0].values = [24.7, 24.8, 25.1, ..., 25.4]
+// Result: data.result[0].values = [14.2, 14.5, 15.1, ..., 15.8]
 ```
 
 ### 3. Overall Average Temperature (All Sensors, Last 24 Hours)
@@ -192,14 +330,23 @@ const data = await response.json();
 // Result: 20.20°C
 ```
 
-### 4. Sound Level for s1 (Last 24 Hours Average)
+### 4. Sound Level for s2 (Last 24 Hours Average)
 
+**Using sensor_name:**
 ```javascript
 {
-    query: 'avg_over_time(iot_sensor_reading{sensor_id="sound-a81758fffe0d0434", sensor_type="soundAvg"}[24h])',
+    query: 'avg_over_time(iot_sensor_reading{sensor_name="s2", sensor_type="soundAvg"}[24h])',
     time: new Date().toISOString()
 }
-// Result: 48.83 dB
+// Result: 48.7 dB
+```
+
+**Using sensor_id:**
+```javascript
+{
+    query: 'avg_over_time(iot_sensor_reading{sensor_id="sound-a81758fffe0d0433", sensor_type="soundAvg"}[24h])',
+    time: new Date().toISOString()
+}
 ```
 
 ### 5. Current Clamp c1 - All 4 Clamps (Last Hour Average)
@@ -290,20 +437,32 @@ const data = await response.json();
 
 ### Get Average for Specific Sensor Over Time Period
 
+**Using sensor_name (Recommended):**
+```javascript
+const query = `avg_over_time(iot_sensor_reading{sensor_name="${sensorName}", sensor_type="${type}"}[${period}])`;
+
+// Example:
+// sensorName: "t1", "s2", "c1"
+// type: "temperature", "soundAvg", "current_clamp_1"
+// period: "20d", "7d", "24h", "1h"
+```
+
+**Using sensor_id (Alternative):**
 ```javascript
 const query = `avg_over_time(iot_sensor_reading{sensor_id="${sensorId}", sensor_type="${type}"}[${period}])`;
 
 // Example:
-// sensor_id: "lite-a81758fffe0d2d67"
+// sensorId: "lite-a81758fffe0d4ab0"
 // type: "temperature"
 // period: "20d", "7d", "24h", "1h"
 ```
 
 ### Get Time Series Data
 
+**Using sensor_name:**
 ```javascript
 const rangeQuery = {
-    query: `iot_sensor_reading{sensor_id="${sensorId}", sensor_type="${type}"}`,
+    query: `iot_sensor_reading{sensor_name="${sensorName}", sensor_type="${type}"}`,
     start: startDate.toISOString(),
     end: endDate.toISOString(),
     step: '1h' // or '15m', '1d', etc.
@@ -312,15 +471,34 @@ const rangeQuery = {
 // Use endpoint: /query_range
 ```
 
+**Using sensor_id:**
+```javascript
+const rangeQuery = {
+    query: `iot_sensor_reading{sensor_id="${sensorId}", sensor_type="${type}"}`,
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
+    step: '1h'
+};
+```
+
 ### Get Current Value (Instant Query)
 
+**Using sensor_name:**
+```javascript
+const instantQuery = {
+    query: `iot_sensor_reading{sensor_name="${sensorName}", sensor_type="${type}"}`,
+    time: new Date().toISOString()
+};
+
+// Use endpoint: /query
+```
+
+**Using sensor_id:**
 ```javascript
 const instantQuery = {
     query: `iot_sensor_reading{sensor_id="${sensorId}", sensor_type="${type}"}`,
     time: new Date().toISOString()
 };
-
-// Use endpoint: /query
 ```
 
 ### Aggregate Across Multiple Sensors
