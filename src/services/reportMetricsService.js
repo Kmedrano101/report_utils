@@ -83,15 +83,16 @@ class ReportMetricsService {
 
     /**
      * Calculate average temperature metrics
-     * Uses all temperature sensors (t1, t4, t6, t7, t9, t11, t13, t16, t17, t18, t19, t20, t21, t22, t30)
-     * and sound sensors (s1, s2, s3, s6, s7) which also have temperature
+     * Uses only temperature sensors t1-t30 (excludes sound sensors s1-s7)
      */
     async getTemperatureMetrics(startDate, endDate, source) {
         try {
-            // Query: Average of all temperature readings across all sensors
-            const avgQuery = `avg_over_time(iot_sensor_reading{sensor_type="temperature"}[${this.getTimeRange(startDate, endDate)}])`;
-            const minQuery = `min_over_time(iot_sensor_reading{sensor_type="temperature"}[${this.getTimeRange(startDate, endDate)}])`;
-            const maxQuery = `max_over_time(iot_sensor_reading{sensor_type="temperature"}[${this.getTimeRange(startDate, endDate)}])`;
+            // Query: Temperature readings from t1-t30 sensors only
+            // Filter: sensor_name matches t1-t30 pattern
+            const sensorFilter = 'sensor_type="temperature", sensor_name=~"t[1-9]|t[12][0-9]|t30"';
+            const avgQuery = `avg_over_time(iot_sensor_reading{${sensorFilter}}[${this.getTimeRange(startDate, endDate)}])`;
+            const minQuery = `min_over_time(iot_sensor_reading{${sensorFilter}}[${this.getTimeRange(startDate, endDate)}])`;
+            const maxQuery = `max_over_time(iot_sensor_reading{${sensorFilter}}[${this.getTimeRange(startDate, endDate)}])`;
 
             const [avgResult, minResult, maxResult] = await Promise.all([
                 victoriaMetricsService.query(avgQuery, { time: endDate, source }),

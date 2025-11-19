@@ -63,11 +63,14 @@ class UserMetricsService {
 
             // Calculate overall statistics
             const allTemps = sensorData.map(s => s.avgTemp);
+            const allMinTemps = sensorData.map(s => s.minTemp);
+            const allMaxTemps = sensorData.map(s => s.maxTemp);
             const overallAvg = allTemps.length > 0
                 ? (allTemps.reduce((a, b) => a + b, 0) / allTemps.length).toFixed(1)
                 : 0;
-            const overallMin = allTemps.length > 0 ? Math.min(...allTemps).toFixed(1) : 0;
-            const overallMax = allTemps.length > 0 ? Math.max(...allTemps).toFixed(1) : 0;
+            // Use actual min/max temperatures to match key metrics (temp_min/temp_max)
+            const overallMin = allMinTemps.length > 0 ? Math.min(...allMinTemps).toFixed(1) : 0;
+            const overallMax = allMaxTemps.length > 0 ? Math.max(...allMaxTemps).toFixed(1) : 0;
             const tempRange = (parseFloat(overallMax) - parseFloat(overallMin)).toFixed(1);
 
             // Generate chart data for visualization

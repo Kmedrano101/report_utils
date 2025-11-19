@@ -17,12 +17,12 @@
       .table-small { font-family: 'Inter', sans-serif; font-size: 9px; fill: {{table_header_color}}; }
 
       .card { fill: #ffffff; stroke: {{card_border_color}}; stroke-width: 1; }
-      .card-temperature { fill: #fef3c7; stroke: #f59e0b; stroke-width: 1.5; }
-      .card-humidity { fill: #dbeafe; stroke: #3b82f6; stroke-width: 1.5; }
-      .card-sound { fill: #fce7f3; stroke: #ec4899; stroke-width: 1.5; }
-      .card-power { fill: #d1fae5; stroke: #10b981; stroke-width: 1.5; }
-      .card-hotspot { fill: #fef2f2; stroke: #ef4444; stroke-width: 1.5; }
-      .card-coldzone { fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.5; }
+      .card-temperature { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
+      .card-humidity { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
+      .card-sound { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
+      .card-power { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
+      .card-hotspot { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
+      .card-coldzone { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
       .divider { stroke: {{card_border_color}}; stroke-width: 0.8; }
     </style>
   </defs>
@@ -35,11 +35,11 @@
   <!-- ========================================= -->
   <g id="header">
     <rect width="1123" height="110" fill="{{header_bg}}"/>
-    <image href="{{logo_url}}" x="40" y="20" width="70" height="70" preserveAspectRatio="xMidYMid meet"/>
-    <text x="130" y="55" fill="{{header_text_color}}" font-size="26" font-family="Inter, Arial, sans-serif" font-weight="700">
+    <image href="{{logo_url}}" x="45" y="15" width="105" height="105" preserveAspectRatio="xMidYMid meet"/>
+    <text x="190" y="45" fill="{{header_text_color}}" font-size="24" font-family="Inter, Arial, sans-serif" font-weight="700">
       {{header_title}}
     </text>
-    <text x="130" y="80" fill="{{header_subtitle_color}}" font-size="16" font-family="Inter, Arial, sans-serif" font-weight="400">
+    <text x="190" y="80" fill="{{header_subtitle_color}}" font-size="16" font-family="Inter, Arial, sans-serif" font-weight="400">
       {{header_subtitle}}
     </text>
   </g>
@@ -70,58 +70,58 @@
       <!-- 1. Temperature Card -->
       <g id="metric-temperature">
         <rect x="30" y="215" width="160" height="75" class="card-temperature" rx="6"/>
-        <text x="45" y="233" class="metric-title">Avg Temperature</text>
+        <text x="45" y="233" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Temperature</text>
         <!-- Icon + Value -->
         <g transform="translate(45, 245)">
           <path d="M8 14.5c-1.4 0-2.5-1.1-2.5-2.5 0-.9.5-1.7 1.2-2.1V4c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v5.9c.7.4 1.2 1.2 1.2 2.1 0 1.4-1.1 2.5-2.5 2.5z" fill="#f59e0b" opacity="0.9"/>
           <circle cx="8" cy="12" r="1.5" fill="#b45309"/>
           <rect x="7" y="4" width="2" height="6" fill="#b45309"/>
         </g>
-        <text x="68" y="263" class="metric-value" font-size="20">{{avg_temperature}}</text>
-        <text x="135" y="263" class="metric-unit">°C</text>
-        <text x="45" y="284" class="table-small">{{temp_min}}°C - {{temp_max}}°C</text>
+        <text x="68" y="263" fill="#ffffff" font-family="Inter, sans-serif" font-size="20" font-weight="700">{{avg_temperature}}</text>
+        <text x="135" y="263" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">°C</text>
+        <text x="45" y="284" fill="#64748b" font-family="Inter, sans-serif" font-size="9">{{temp_min}}°C - {{temp_max}}°C</text>
       </g>
 
       <!-- 2. Humidity Card -->
       <g id="metric-humidity">
         <rect x="30" y="300" width="160" height="75" class="card-humidity" rx="6"/>
-        <text x="45" y="318" class="metric-title">Avg Humidity</text>
+        <text x="45" y="318" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Humidity</text>
         <!-- Icon + Value -->
         <g transform="translate(45, 330)">
           <path d="M8 2s-6 6.5-6 10.5c0 3.3 2.7 6 6 6s6-2.7 6-6c0-4-6-10.5-6-10.5z" fill="#3b82f6" opacity="0.8"/>
           <path d="M6 14c-1.1 0-2-.9-2-2 0-.8.4-1.5 1-1.9" stroke="#1e40af" stroke-width="1" fill="none"/>
         </g>
-        <text x="68" y="348" class="metric-value" font-size="20">{{avg_humidity}}</text>
-        <text x="135" y="348" class="metric-unit">%</text>
-        <text x="45" y="369" class="table-small">{{humidity_min}}% - {{humidity_max}}%</text>
+        <text x="68" y="348" fill="#ffffff" font-family="Inter, sans-serif" font-size="20" font-weight="700">{{avg_humidity}}</text>
+        <text x="135" y="348" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">%</text>
+        <text x="45" y="369" fill="#64748b" font-family="Inter, sans-serif" font-size="9">{{humidity_min}}% - {{humidity_max}}%</text>
       </g>
 
       <!-- 3. Sound Level Card -->
       <g id="metric-sound">
         <rect x="30" y="385" width="160" height="75" class="card-sound" rx="6"/>
-        <text x="45" y="403" class="metric-title">Avg Sound Level</text>
+        <text x="45" y="403" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Sound Level</text>
         <!-- Icon + Value -->
         <g transform="translate(45, 415)">
           <path d="M3 9v6h4l5 5V4L7 9H3z" fill="#ec4899" opacity="0.9"/>
           <path d="M14 8.5c.8.8.8 2.1 0 2.9M16 6.5c1.6 1.6 1.6 4.1 0 5.7" stroke="#be185d" stroke-width="1.5" fill="none" stroke-linecap="round"/>
         </g>
-        <text x="68" y="433" class="metric-value" font-size="20">{{avg_sound}}</text>
-        <text x="135" y="433" class="metric-unit">dB</text>
-        <text x="45" y="454" class="table-small">Peak: {{peak_sound}} dB</text>
+        <text x="68" y="433" fill="#ffffff" font-family="Inter, sans-serif" font-size="20" font-weight="700">{{avg_sound}}</text>
+        <text x="135" y="433" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">dB</text>
+        <text x="45" y="454" fill="#64748b" font-family="Inter, sans-serif" font-size="9">Peak: {{peak_sound}} dB</text>
       </g>
 
       <!-- 4. Power Consumption Card -->
       <g id="metric-power">
         <rect x="30" y="470" width="160" height="75" class="card-power" rx="6"/>
-        <text x="45" y="488" class="metric-title">Total Power</text>
+        <text x="45" y="488" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Total Power</text>
         <!-- Icon + Value -->
         <g transform="translate(45, 500)">
           <path d="M13 2L3 14h6l-2 8 10-12h-6l2-8z" fill="#10b981" opacity="0.8"/>
           <path d="M13 2L3 14h6l-2 8 10-12h-6l2-8z" stroke="#047857" stroke-width="0.5" fill="none"/>
         </g>
-        <text x="68" y="518" class="metric-value" font-size="20">{{total_power}}</text>
-        <text x="135" y="518" class="metric-unit">kWh</text>
-        <text x="45" y="539" class="table-small">Peak: {{peak_power}} A</text>
+        <text x="68" y="518" fill="#ffffff" font-family="Inter, sans-serif" font-size="20" font-weight="700">{{total_power}}</text>
+        <text x="135" y="518" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">kWh</text>
+        <text x="45" y="539" fill="#64748b" font-family="Inter, sans-serif" font-size="9">Peak: {{peak_power}} A</text>
       </g>
     </g>
 
@@ -146,29 +146,59 @@
   <g id="right-column">
     <!-- Temperature Analysis Chart (Now on top) -->
     <g id="chart-section">
-      <text x="570" y="145" class="section-header">Temperature Analysis</text>
+      <text x="570" y="145" class="section-header">Temperature Analysis: Hotspots and Cold Zones</text>
 
       <rect x="570" y="155" width="523" height="250" class="card" rx="6"/>
 
-      <!-- Chart Legend -->
-      <g id="chart-legend">
-        <text x="590" y="175" class="table-small">
-          <tspan fill="#ef4444">■</tspan> Hotspots
-        </text>
-        <text x="680" y="175" class="table-small">
-          <tspan fill="#3b82f6">■</tspan> Cold Zones
-        </text>
-        <text x="780" y="175" class="table-small">
-          <tspan fill="#9ca3af">━</tspan> Avg: {{avg_temperature}}°C
-        </text>
+      <!-- Two Column Layout: Left 40% (Thermometer) | Right 60% (Chart + Legend) -->
+
+      <!-- LEFT COLUMN: Thermometer Graphic (40% = ~209px) -->
+      <g id="thermometer-section" transform="translate(580, 165)">
+        <!-- Thermometer Image -->
+        <image href="{{thermometer_url}}" x="20" y="5" width="80" height="180" preserveAspectRatio="xMidYMid meet"/>
+
+        <!-- Temperature values on the right side -->
+        <!-- Max temperature (top - HIGH level = red) -->
+        <g id="max-temp-display" transform="translate(110, 25)">
+          <text x="0" y="0" fill="#ef4444" font-family="Inter, sans-serif" font-size="8" font-weight="700">MAX</text>
+          <text x="0" y="16" fill="#ef4444" font-family="Inter, sans-serif" font-size="14" font-weight="700">{{overall_max_temp}}°C</text>
+        </g>
+
+        <!-- Average temperature (middle - COMFORT level = yellow/amber) -->
+        <g id="avg-temp-display" transform="translate(110, 85)">
+          <text x="0" y="0" fill="#f59e0b" font-family="Inter, sans-serif" font-size="8" font-weight="700">AVG</text>
+          <text x="0" y="16" fill="#f59e0b" font-family="Inter, sans-serif" font-size="12" font-weight="700">{{overall_avg_temp}}°C</text>
+        </g>
+
+        <!-- Min temperature (bottom - LOW level = blue) -->
+        <g id="min-temp-display" transform="translate(110, 145)">
+          <text x="0" y="0" fill="#3b82f6" font-family="Inter, sans-serif" font-size="8" font-weight="700">MIN</text>
+          <text x="0" y="16" fill="#3b82f6" font-family="Inter, sans-serif" font-size="14" font-weight="700">{{overall_min_temp}}°C</text>
+        </g>
       </g>
 
-      <!-- Chart Placeholder -->
-      <foreignObject x="580" y="185" width="503" height="210">
-        <div xmlns="http://www.w3.org/1999/xhtml" id="chart-container" style="width:100%; height:100%;">
-          <canvas id="temperature-comparison-chart"></canvas>
-        </div>
-      </foreignObject>
+      <!-- RIGHT COLUMN: Chart + Legend (60% = ~314px) -->
+      <g id="chart-column" transform="translate(779, 155)">
+        <!-- Chart Legend -->
+        <g id="chart-legend">
+          <text x="10" y="20" class="table-small">
+            <tspan fill="#ef4444">■</tspan> Hotspots
+          </text>
+          <text x="100" y="20" class="table-small">
+            <tspan fill="#3b82f6">■</tspan> Cold Zones
+          </text>
+          <text x="200" y="20" class="table-small">
+            <tspan fill="#9ca3af">━</tspan> Avg
+          </text>
+        </g>
+
+        <!-- Chart Placeholder -->
+        <foreignObject x="0" y="30" width="304" height="210">
+          <div xmlns="http://www.w3.org/1999/xhtml" id="chart-container" style="width:100%; height:100%;">
+            <canvas id="temperature-comparison-chart"></canvas>
+          </div>
+        </foreignObject>
+      </g>
     </g>
 
     <!-- Sensor Details Section (Now below chart) -->
@@ -177,51 +207,51 @@
 
       <!-- Hotspots Table (Top 3 Hottest) -->
       <rect x="570" y="445" width="523" height="120" class="card-hotspot" rx="6"/>
-      <text x="585" y="465" class="table-header">
+      <text x="585" y="465" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase">
         <tspan fill="#ef4444">🔥</tspan> Hotspots (Top 3 Highest Temperature)
       </text>
 
       <!-- Hotspot Row 1 -->
-      <text x="585" y="488" class="table-text" font-weight="600">#1 {{hotspot_1_name}}</text>
-      <text x="750" y="488" class="metric-value" font-size="16">{{hotspot_1_avg}}<tspan class="metric-unit">°C</tspan></text>
-      <text x="850" y="488" class="table-small">Min: {{hotspot_1_min}}°C | Max: {{hotspot_1_max}}°C</text>
-      <text x="1050" y="488" class="table-small" fill="#ef4444">+{{hotspot_1_deviation}}°C</text>
+      <text x="585" y="488" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#1 {{hotspot_1_name}}</text>
+      <text x="750" y="488" fill="#ffffff" font-family="Inter, sans-serif" font-size="16" font-weight="700">{{hotspot_1_avg}}<tspan fill="#94a3b8" font-size="11">°C</tspan></text>
+      <text x="850" y="488" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">Min: {{hotspot_1_min}}°C | Max: {{hotspot_1_max}}°C</text>
+      <text x="1050" y="488" fill="#ef4444" font-family="Inter, sans-serif" font-size="9">+{{hotspot_1_deviation}}°C</text>
 
       <!-- Hotspot Row 2 -->
-      <text x="585" y="513" class="table-text" font-weight="600">#2 {{hotspot_2_name}}</text>
-      <text x="750" y="513" class="metric-value" font-size="16">{{hotspot_2_avg}}<tspan class="metric-unit">°C</tspan></text>
-      <text x="850" y="513" class="table-small">Min: {{hotspot_2_min}}°C | Max: {{hotspot_2_max}}°C</text>
-      <text x="1050" y="513" class="table-small" fill="#ef4444">+{{hotspot_2_deviation}}°C</text>
+      <text x="585" y="513" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#2 {{hotspot_2_name}}</text>
+      <text x="750" y="513" fill="#ffffff" font-family="Inter, sans-serif" font-size="16" font-weight="700">{{hotspot_2_avg}}<tspan fill="#94a3b8" font-size="11">°C</tspan></text>
+      <text x="850" y="513" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">Min: {{hotspot_2_min}}°C | Max: {{hotspot_2_max}}°C</text>
+      <text x="1050" y="513" fill="#ef4444" font-family="Inter, sans-serif" font-size="9">+{{hotspot_2_deviation}}°C</text>
 
       <!-- Hotspot Row 3 -->
-      <text x="585" y="538" class="table-text" font-weight="600">#3 {{hotspot_3_name}}</text>
-      <text x="750" y="538" class="metric-value" font-size="16">{{hotspot_3_avg}}<tspan class="metric-unit">°C</tspan></text>
-      <text x="850" y="538" class="table-small">Min: {{hotspot_3_min}}°C | Max: {{hotspot_3_max}}°C</text>
-      <text x="1050" y="538" class="table-small" fill="#ef4444">+{{hotspot_3_deviation}}°C</text>
+      <text x="585" y="538" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#3 {{hotspot_3_name}}</text>
+      <text x="750" y="538" fill="#ffffff" font-family="Inter, sans-serif" font-size="16" font-weight="700">{{hotspot_3_avg}}<tspan fill="#94a3b8" font-size="11">°C</tspan></text>
+      <text x="850" y="538" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">Min: {{hotspot_3_min}}°C | Max: {{hotspot_3_max}}°C</text>
+      <text x="1050" y="538" fill="#ef4444" font-family="Inter, sans-serif" font-size="9">+{{hotspot_3_deviation}}°C</text>
 
       <!-- Cold Zones Table (Top 3 Coldest) -->
       <rect x="570" y="575" width="523" height="120" class="card-coldzone" rx="6"/>
-      <text x="585" y="595" class="table-header">
+      <text x="585" y="595" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase">
         <tspan fill="#3b82f6">❄️</tspan> Cold Zones (Top 3 Lowest Temperature)
       </text>
 
       <!-- Cold Zone Row 1 -->
-      <text x="585" y="618" class="table-text" font-weight="600">#1 {{coldzone_1_name}}</text>
-      <text x="750" y="618" class="metric-value" font-size="16">{{coldzone_1_avg}}<tspan class="metric-unit">°C</tspan></text>
-      <text x="850" y="618" class="table-small">Min: {{coldzone_1_min}}°C | Max: {{coldzone_1_max}}°C</text>
-      <text x="1050" y="618" class="table-small" fill="#3b82f6">{{coldzone_1_deviation}}°C</text>
+      <text x="585" y="618" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#1 {{coldzone_1_name}}</text>
+      <text x="750" y="618" fill="#ffffff" font-family="Inter, sans-serif" font-size="16" font-weight="700">{{coldzone_1_avg}}<tspan fill="#94a3b8" font-size="11">°C</tspan></text>
+      <text x="850" y="618" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">Min: {{coldzone_1_min}}°C | Max: {{coldzone_1_max}}°C</text>
+      <text x="1050" y="618" fill="#3b82f6" font-family="Inter, sans-serif" font-size="9">{{coldzone_1_deviation}}°C</text>
 
       <!-- Cold Zone Row 2 -->
-      <text x="585" y="643" class="table-text" font-weight="600">#2 {{coldzone_2_name}}</text>
-      <text x="750" y="643" class="metric-value" font-size="16">{{coldzone_2_avg}}<tspan class="metric-unit">°C</tspan></text>
-      <text x="850" y="643" class="table-small">Min: {{coldzone_2_min}}°C | Max: {{coldzone_2_max}}°C</text>
-      <text x="1050" y="643" class="table-small" fill="#3b82f6">{{coldzone_2_deviation}}°C</text>
+      <text x="585" y="643" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#2 {{coldzone_2_name}}</text>
+      <text x="750" y="643" fill="#ffffff" font-family="Inter, sans-serif" font-size="16" font-weight="700">{{coldzone_2_avg}}<tspan fill="#94a3b8" font-size="11">°C</tspan></text>
+      <text x="850" y="643" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">Min: {{coldzone_2_min}}°C | Max: {{coldzone_2_max}}°C</text>
+      <text x="1050" y="643" fill="#3b82f6" font-family="Inter, sans-serif" font-size="9">{{coldzone_2_deviation}}°C</text>
 
       <!-- Cold Zone Row 3 -->
-      <text x="585" y="668" class="table-text" font-weight="600">#3 {{coldzone_3_name}}</text>
-      <text x="750" y="668" class="metric-value" font-size="16">{{coldzone_3_avg}}<tspan class="metric-unit">°C</tspan></text>
-      <text x="850" y="668" class="table-small">Min: {{coldzone_3_min}}°C | Max: {{coldzone_3_max}}°C</text>
-      <text x="1050" y="668" class="table-small" fill="#3b82f6">{{coldzone_3_deviation}}°C</text>
+      <text x="585" y="668" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#3 {{coldzone_3_name}}</text>
+      <text x="750" y="668" fill="#ffffff" font-family="Inter, sans-serif" font-size="16" font-weight="700">{{coldzone_3_avg}}<tspan fill="#94a3b8" font-size="11">°C</tspan></text>
+      <text x="850" y="668" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">Min: {{coldzone_3_min}}°C | Max: {{coldzone_3_max}}°C</text>
+      <text x="1050" y="668" fill="#3b82f6" font-family="Inter, sans-serif" font-size="9">{{coldzone_3_deviation}}°C</text>
     </g>
   </g>
 
