@@ -828,7 +828,7 @@ async function generateReport() {
             body.headerTitle = config.reportTitle || document.getElementById('pdfTitle')?.value || 'IoT Sensor Summary Report';
             body.headerSubtitle = config.reportSubtitle || document.getElementById('pdfSubtitle')?.value || 'Real-time monitoring and analytics';
             body.footerText = config.footer?.text || document.getElementById('pdfFooterText')?.value || 'Madison - IoT Report';
-            body.logoUrl = config.logo?.url || document.getElementById('pdfLogoUrl')?.value || '/images/logo_madison.png';
+            body.logoUrl = '/images/logo_madison.png';
             body.theme = config.theme || document.getElementById('pdfTheme')?.value || 'professional-blue';
             body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'landscape';
             body.pageSize = config.pageSize || document.getElementById('pdfPageSize')?.value || 'a4';
@@ -1040,7 +1040,6 @@ function loadPDFConfig() {
     document.getElementById('pdfLayout').value = config.layout || 'portrait';
     document.getElementById('pdfPageSize').value = config.pageSize || 'a4';
     document.getElementById('pdfFooterText').value = config.footer?.text || 'Madison - IoT Report';
-    document.getElementById('pdfLogoUrl').value = config.logo?.url || '';
     document.getElementById('pdfTemplateName').value = config.templateName || 'auto';
     document.getElementById('pdfPreviewMode').value = config.previewMode || 'pdf';
 }
@@ -1086,7 +1085,7 @@ async function previewPDFTemplate() {
         headerTitle: document.getElementById('pdfTitle').value || config.reportTitle || 'IoT Report',
         headerSubtitle: document.getElementById('pdfSubtitle').value || config.reportSubtitle || 'Environmental Monitoring',
         footerText: document.getElementById('pdfFooterText').value || config.footer?.text || 'Madison - IoT Report Suite',
-        logoUrl: resolveAssetUrl(document.getElementById('pdfLogoUrl').value || config.logo?.url || '/images/logo.png'),
+        logoUrl: resolveAssetUrl('/images/logo_madison.png'),
         theme: document.getElementById('pdfTheme').value || config.theme || 'professional-blue',
         layout: document.getElementById('pdfLayout').value || config.layout || 'portrait',
         pageSize: document.getElementById('pdfPageSize').value || config.pageSize || 'a4',
@@ -1200,7 +1199,6 @@ function savePDFConfig() {
     const layout = document.getElementById('pdfLayout').value;
     const pageSize = document.getElementById('pdfPageSize').value;
     const footerText = document.getElementById('pdfFooterText').value;
-    const logoUrl = document.getElementById('pdfLogoUrl').value;
     const templateName = document.getElementById('pdfTemplateName').value;
     const previewMode = document.getElementById('pdfPreviewMode').value;
 
@@ -1216,8 +1214,8 @@ function savePDFConfig() {
         templateName,
         previewMode,
         logo: {
-            enabled: !!logoUrl,
-            url: logoUrl || '/images/logo.png'
+            enabled: true,
+            url: '/images/logo_madison.png'
         }
     });
 

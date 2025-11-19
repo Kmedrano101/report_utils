@@ -121,7 +121,8 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Color Theme -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color Theme</label>
                             <select id="pdfTheme" onchange="applyPDFTheme()" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -135,10 +136,21 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Controls header/footer palette</p>
                         </div>
 
+                        <!-- Footer Text -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo URL (optional)</label>
-                            <input type="text" id="pdfLogoUrl" placeholder="https://example.com/logo.png" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Displayed inside the circular accent</p>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Footer Text</label>
+                            <input type="text" id="pdfFooterText" placeholder="Madison - IoT Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Appears on the left side of footer</p>
+                        </div>
+
+                        <!-- Template Selection -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SVG Template</label>
+                            <select id="pdfTemplateName" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="auto">Auto (match orientation)</option>
+                                <option disabled>Loading templates...</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Templates are loaded automatically from the templates directory</p>
                         </div>
                     </div>
 
@@ -169,22 +181,6 @@
                                 <option value="letter">Letter (8.5 x 11 in)</option>
                                 <option value="legal">Legal (8.5 x 14 in)</option>
                             </select>
-                        </div>
-
-                        <!-- Footer Text -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Footer Text</label>
-                            <input type="text" id="pdfFooterText" placeholder="Madison - IoT Report" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Appears on the left side of footer</p>
-                        </div>
-                        <!-- Template Selection -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SVG Template</label>
-                            <select id="pdfTemplateName" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="auto">Auto (match orientation)</option>
-                                <option disabled>Loading templates...</option>
-                            </select>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Templates are loaded automatically from the templates directory</p>
                         </div>
                     </div>
 

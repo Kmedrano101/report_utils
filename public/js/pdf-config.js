@@ -35,8 +35,8 @@ class PDFConfig {
                 text: 'Madison - IoT Report'
             },
             logo: {
-                enabled: false,
-                url: '/images/logo.png',
+                enabled: true,
+                url: '/images/logo_madison.png',
                 position: 'left'
             },
             typography: {
