@@ -937,14 +937,17 @@ class ReportController {
       // Determine which template to use based on layout
       const normalizedLayout = layout.toLowerCase();
       const templateName = normalizedLayout === 'landscape' || normalizedLayout === 'horizontal'
-        ? 'template_hotspots_coldzones.svg'
-        : 'template_vertical_hotspots_coldzones.svg';
+        ? 'report_horizontal_1.svg'
+        : 'report_vertical_1.svg';
 
       // Apply theme colors
       const themeColors = this.getThemeColors(theme);
 
       // Resolve logo path to base64 data URI for Puppeteer
       const resolvedLogoUrl = await this.resolveLogoPath(logoUrl);
+
+      // Resolve thermometer image to base64 data URI for Puppeteer
+      const resolvedThermometerUrl = await this.resolveLogoPath('/images/termometer.png');
 
       // Prepare template data with base metrics and hotspots/cold zones
       const templateData = {
@@ -955,6 +958,9 @@ class ReportController {
         header_text_color: themeColors.header_text_color,
         header_subtitle_color: themeColors.header_subtitle_color,
         logo_url: resolvedLogoUrl,
+
+        // Thermometer image
+        thermometer_url: resolvedThermometerUrl,
 
         // Base metrics from VictoriaMetrics
         ...baseMetrics,
@@ -967,6 +973,16 @@ class ReportController {
         footer_bg: themeColors.footer_bg,
         footer_text_color: themeColors.footer_text_color,
         footer_date_color: themeColors.footer_date_color,
+
+        // Content body theme colors
+        section_header_color: themeColors.section_header_color,
+        metric_value_color: themeColors.metric_value_color,
+        metric_title_color: themeColors.metric_title_color,
+        table_text_color: themeColors.table_text_color,
+        table_header_color: themeColors.table_header_color,
+        card_border_color: themeColors.card_border_color,
+        accent_primary: themeColors.accent_primary,
+        accent_secondary: themeColors.accent_secondary,
 
         // Temperature summary
         temperature_range: hotspotsData.summary?.temperatureRange || '0',
@@ -1131,7 +1147,16 @@ class ReportController {
         header_subtitle_color: '#E5D4BA', // Light gold
         footer_bg: '#0F172A',
         footer_text_color: '#FFFFFF',    // White for high contrast
-        footer_date_color: '#C7AB81'     // Gold accent
+        footer_date_color: '#C7AB81',    // Gold accent
+        // Content body colors
+        section_header_color: '#0F172A',  // Match header for hierarchy
+        metric_value_color: '#0F172A',    // Primary text
+        metric_title_color: '#475569',    // Muted for labels
+        table_text_color: '#334155',      // Body text
+        table_header_color: '#475569',    // Table headers
+        card_border_color: '#CBD5E1',     // Card borders
+        accent_primary: '#C7AB81',        // Gold accent
+        accent_secondary: '#0F172A'       // Secondary accent
       },
       'corporate-green': {
         header_bg: '#064E3B',        // Dark emerald green
@@ -1139,7 +1164,16 @@ class ReportController {
         header_subtitle_color: '#6EE7B7', // Light green
         footer_bg: '#064E3B',
         footer_text_color: '#FFFFFF',
-        footer_date_color: '#6EE7B7'
+        footer_date_color: '#6EE7B7',
+        // Content body colors
+        section_header_color: '#064E3B',
+        metric_value_color: '#064E3B',
+        metric_title_color: '#065F46',
+        table_text_color: '#047857',
+        table_header_color: '#065F46',
+        card_border_color: '#A7F3D0',
+        accent_primary: '#10B981',
+        accent_secondary: '#064E3B'
       },
       'modern-purple': {
         header_bg: '#4C1D95',        // Deep purple
@@ -1147,7 +1181,16 @@ class ReportController {
         header_subtitle_color: '#C4B5FD', // Light purple
         footer_bg: '#4C1D95',
         footer_text_color: '#FFFFFF',
-        footer_date_color: '#C4B5FD'
+        footer_date_color: '#C4B5FD',
+        // Content body colors
+        section_header_color: '#4C1D95',
+        metric_value_color: '#4C1D95',
+        metric_title_color: '#6D28D9',
+        table_text_color: '#7C3AED',
+        table_header_color: '#6D28D9',
+        card_border_color: '#DDD6FE',
+        accent_primary: '#A78BFA',
+        accent_secondary: '#4C1D95'
       },
       'tech-orange': {
         header_bg: '#7C2D12',        // Deep orange-brown
@@ -1155,7 +1198,16 @@ class ReportController {
         header_subtitle_color: '#FED7AA', // Peach
         footer_bg: '#7C2D12',
         footer_text_color: '#FFFFFF',
-        footer_date_color: '#FED7AA'
+        footer_date_color: '#FED7AA',
+        // Content body colors
+        section_header_color: '#7C2D12',
+        metric_value_color: '#7C2D12',
+        metric_title_color: '#9A3412',
+        table_text_color: '#C2410C',
+        table_header_color: '#9A3412',
+        card_border_color: '#FED7AA',
+        accent_primary: '#FB923C',
+        accent_secondary: '#7C2D12'
       },
       'monochrome': {
         header_bg: '#18181B',        // Almost black
@@ -1163,7 +1215,16 @@ class ReportController {
         header_subtitle_color: '#D4D4D8', // Light gray
         footer_bg: '#18181B',
         footer_text_color: '#FFFFFF',
-        footer_date_color: '#D4D4D8'
+        footer_date_color: '#D4D4D8',
+        // Content body colors
+        section_header_color: '#18181B',
+        metric_value_color: '#18181B',
+        metric_title_color: '#3F3F46',
+        table_text_color: '#52525B',
+        table_header_color: '#3F3F46',
+        card_border_color: '#D4D4D8',
+        accent_primary: '#71717A',
+        accent_secondary: '#18181B'
       },
       'dark': {
         header_bg: '#0F172A',        // Same as professional-blue for consistency
@@ -1171,7 +1232,16 @@ class ReportController {
         header_subtitle_color: '#BAE6FD', // Sky blue
         footer_bg: '#0F172A',
         footer_text_color: '#FFFFFF',
-        footer_date_color: '#BAE6FD'
+        footer_date_color: '#BAE6FD',
+        // Content body colors
+        section_header_color: '#0F172A',
+        metric_value_color: '#0F172A',
+        metric_title_color: '#334155',
+        table_text_color: '#475569',
+        table_header_color: '#334155',
+        card_border_color: '#94A3B8',
+        accent_primary: '#38BDF8',
+        accent_secondary: '#0F172A'
       }
     };
 

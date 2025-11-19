@@ -8,22 +8,22 @@
     <style type="text/css">
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap');
 
-      .metric-title { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
-      .metric-value { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; fill: #1a1a1a; }
-      .metric-unit { font-family: 'Inter', sans-serif; font-size: 11px; fill: #6b7280; }
-      .section-header { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: #374151; }
-      .table-header { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: #6b7280; text-transform: uppercase; }
-      .table-text { font-family: 'Inter', sans-serif; font-size: 11px; fill: #374151; }
-      .table-small { font-family: 'Inter', sans-serif; font-size: 9px; fill: #6b7280; }
+      .metric-title { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: {{metric_title_color}}; text-transform: uppercase; letter-spacing: 0.05em; }
+      .metric-value { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; fill: {{metric_value_color}}; }
+      .metric-unit { font-family: 'Inter', sans-serif; font-size: 11px; fill: {{metric_title_color}}; }
+      .section-header { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: {{section_header_color}}; }
+      .table-header { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: {{table_header_color}}; text-transform: uppercase; }
+      .table-text { font-family: 'Inter', sans-serif; font-size: 11px; fill: {{table_text_color}}; }
+      .table-small { font-family: 'Inter', sans-serif; font-size: 9px; fill: {{table_header_color}}; }
 
-      .card { fill: #ffffff; stroke: #e5e7eb; stroke-width: 1; }
+      .card { fill: #ffffff; stroke: {{card_border_color}}; stroke-width: 1; }
       .card-temperature { fill: #fef3c7; stroke: #f59e0b; stroke-width: 1.5; }
       .card-humidity { fill: #dbeafe; stroke: #3b82f6; stroke-width: 1.5; }
       .card-sound { fill: #fce7f3; stroke: #ec4899; stroke-width: 1.5; }
       .card-power { fill: #d1fae5; stroke: #10b981; stroke-width: 1.5; }
       .card-hotspot { fill: #fef2f2; stroke: #ef4444; stroke-width: 1.5; }
       .card-coldzone { fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.5; }
-      .divider { stroke: #e5e7eb; stroke-width: 0.8; }
+      .divider { stroke: {{card_border_color}}; stroke-width: 0.8; }
     </style>
   </defs>
 
@@ -60,7 +60,7 @@
       <text x="220" y="164" class="table-text">{{building_name}}</text>
 
       <text x="380" y="147" class="table-header">Sensors</text>
-      <text x="380" y="164" class="metric-value" font-size="16">{{total_sensors}} / <tspan fill="#10b981">{{active_sensors}}</tspan></text>
+      <text x="380" y="164" class="metric-value" font-size="16">{{total_sensors}} / <tspan fill="{{accent_primary}}">{{active_sensors}}</tspan></text>
     </g>
 
     <!-- KPI Metric Cards Section (Vertical Stack) -->
@@ -130,7 +130,7 @@
       <text x="30" y="575" class="section-header">Status Summary</text>
       <rect x="30" y="585" width="160" height="140" class="card" rx="6"/>
       <text x="45" y="605" class="table-small">Active Sensors</text>
-      <text x="45" y="625" class="metric-value" font-size="28" fill="#10b981">{{active_count}}</text>
+      <text x="45" y="625" class="metric-value" font-size="28" fill="{{accent_primary}}">{{active_count}}</text>
 
       <line x1="45" y1="640" x2="175" y2="640" class="divider"/>
 

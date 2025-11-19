@@ -8,22 +8,22 @@
     <style type="text/css">
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap');
 
-      .metric-title { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
-      .metric-value { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; fill: #1a1a1a; }
-      .metric-unit { font-family: 'Inter', sans-serif; font-size: 11px; fill: #6b7280; }
-      .section-header { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: #374151; }
-      .table-header { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: #6b7280; text-transform: uppercase; }
-      .table-text { font-family: 'Inter', sans-serif; font-size: 11px; fill: #374151; }
-      .table-small { font-family: 'Inter', sans-serif; font-size: 9px; fill: #6b7280; }
+      .metric-title { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: {{metric_title_color}}; text-transform: uppercase; letter-spacing: 0.05em; }
+      .metric-value { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; fill: {{metric_value_color}}; }
+      .metric-unit { font-family: 'Inter', sans-serif; font-size: 11px; fill: {{metric_title_color}}; }
+      .section-header { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: {{section_header_color}}; }
+      .table-header { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: {{table_header_color}}; text-transform: uppercase; }
+      .table-text { font-family: 'Inter', sans-serif; font-size: 11px; fill: {{table_text_color}}; }
+      .table-small { font-family: 'Inter', sans-serif; font-size: 9px; fill: {{table_header_color}}; }
 
-      .card { fill: #ffffff; stroke: #e5e7eb; stroke-width: 1; }
+      .card { fill: #ffffff; stroke: {{card_border_color}}; stroke-width: 1; }
       .card-temperature { fill: #fef3c7; stroke: #f59e0b; stroke-width: 1.5; }
       .card-humidity { fill: #dbeafe; stroke: #3b82f6; stroke-width: 1.5; }
       .card-sound { fill: #fce7f3; stroke: #ec4899; stroke-width: 1.5; }
       .card-power { fill: #d1fae5; stroke: #10b981; stroke-width: 1.5; }
       .card-hotspot { fill: #fef2f2; stroke: #ef4444; stroke-width: 1.5; }
       .card-coldzone { fill: #eff6ff; stroke: #3b82f6; stroke-width: 1.5; }
-      .divider { stroke: #e5e7eb; stroke-width: 0.8; }
+      .divider { stroke: {{card_border_color}}; stroke-width: 0.8; }
     </style>
   </defs>
 
@@ -61,7 +61,7 @@
     <text x="480" y="194" class="metric-value" font-size="18">{{total_sensors}}</text>
 
     <text x="630" y="177" class="table-header">Active</text>
-    <text x="630" y="194" class="metric-value" font-size="18" fill="#10b981">{{active_sensors}}</text>
+    <text x="630" y="194" class="metric-value" font-size="18" fill="{{accent_primary}}">{{active_sensors}}</text>
   </g>
 
   <!-- KPI Metric Cards Section -->
@@ -128,29 +128,59 @@
 
   <!-- Temperature Analysis Chart (Now on top) -->
   <g id="chart-section">
-    <text x="30" y="370" class="section-header">Temperature Analysis</text>
+    <text x="30" y="370" class="section-header">Temperature Analysis: Hotspots and Cold Zones</text>
 
     <rect x="30" y="380" width="734" height="280" class="card" rx="6"/>
 
-    <!-- Chart Legend -->
-    <g id="chart-legend">
-      <text x="50" y="400" class="table-small">
-        <tspan fill="#ef4444">■</tspan> Hotspots
-      </text>
-      <text x="150" y="400" class="table-small">
-        <tspan fill="#3b82f6">■</tspan> Cold Zones
-      </text>
-      <text x="270" y="400" class="table-small">
-        <tspan fill="#9ca3af">━</tspan> Avg: {{avg_temperature}}°C
-      </text>
+    <!-- Two Column Layout: Left 40% (Thermometer) | Right 60% (Chart + Legend) -->
+
+    <!-- LEFT COLUMN: Thermometer Graphic (40% = ~294px) -->
+    <g id="thermometer-section" transform="translate(50, 395)">
+      <!-- Thermometer Image -->
+      <image href="{{thermometer_url}}" x="30" y="10" width="120" height="240" preserveAspectRatio="xMidYMid meet"/>
+
+      <!-- Temperature values on the right side -->
+      <!-- Max temperature (top - HIGH level = red) -->
+      <g id="max-temp-display" transform="translate(160, 45)">
+        <text x="0" y="0" class="table-small" fill="#ef4444" font-weight="700">MAX</text>
+        <text x="0" y="18" class="metric-value" font-size="16" fill="#ef4444">{{overall_max_temp}}°C</text>
+      </g>
+
+      <!-- Average temperature (middle - COMFORT level = yellow/amber) -->
+      <g id="avg-temp-display" transform="translate(160, 115)">
+        <text x="0" y="0" class="table-small" fill="#f59e0b" font-weight="700">AVG</text>
+        <text x="0" y="18" class="metric-value" font-size="14" fill="#f59e0b">{{overall_avg_temp}}°C</text>
+      </g>
+
+      <!-- Min temperature (bottom - LOW level = blue) -->
+      <g id="min-temp-display" transform="translate(160, 185)">
+        <text x="0" y="0" class="table-small" fill="#0369a1" font-weight="700">MIN</text>
+        <text x="0" y="18" class="metric-value" font-size="16" fill="#0369a1">{{overall_min_temp}}°C</text>
+      </g>
     </g>
 
-    <!-- Chart Placeholder -->
-    <foreignObject x="40" y="410" width="714" height="240">
-      <div xmlns="http://www.w3.org/1999/xhtml" id="chart-container" style="width:100%; height:100%;">
-        <canvas id="temperature-comparison-chart"></canvas>
-      </div>
-    </foreignObject>
+    <!-- RIGHT COLUMN: Chart + Legend (60% = ~440px) -->
+    <g id="chart-column" transform="translate(334, 390)">
+      <!-- Chart Legend -->
+      <g id="chart-legend">
+        <text x="10" y="15" class="table-small">
+          <tspan fill="#ef4444">■</tspan> Hotspots
+        </text>
+        <text x="100" y="15" class="table-small">
+          <tspan fill="#3b82f6">■</tspan> Cold Zones
+        </text>
+        <text x="200" y="15" class="table-small">
+          <tspan fill="#9ca3af">━</tspan> Avg
+        </text>
+      </g>
+
+      <!-- Chart Placeholder -->
+      <foreignObject x="0" y="25" width="420" height="230">
+        <div xmlns="http://www.w3.org/1999/xhtml" id="chart-container" style="width:100%; height:100%;">
+          <canvas id="temperature-comparison-chart"></canvas>
+        </div>
+      </foreignObject>
+    </g>
   </g>
 
   <!-- Sensor Details Section (Now below chart) -->
