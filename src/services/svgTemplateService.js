@@ -530,24 +530,62 @@ class SvgTemplateService {
     document.addEventListener('DOMContentLoaded', function() {
       ${chartData ? `
       // Generate Chart.js chart
-      const ctx = document.getElementById('time-series-chart');
-      if (ctx) {
-        const chartData = ${JSON.stringify(chartData)};
-        new Chart(ctx, {
-          type: 'line',
-          data: chartData,
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-              legend: { position: 'top' },
-              title: { display: false }
-            },
-            scales: {
-              y: { beginAtZero: false }
+      const chartType = '${options.chartType || 'time-series'}';
+
+      if (chartType === 'temperature-comparison') {
+        // Temperature comparison chart (horizontal bar)
+        const ctx = document.getElementById('temperature-comparison-chart');
+        if (ctx) {
+          const chartData = ${JSON.stringify(chartData)};
+          new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                title: { display: false }
+              },
+              scales: {
+                x: {
+                  beginAtZero: false,
+                  title: {
+                    display: true,
+                    text: 'Temperature (°C)',
+                    font: { size: 10 }
+                  },
+                  ticks: { font: { size: 9 } }
+                },
+                y: {
+                  ticks: { font: { size: 9 } }
+                }
+              }
             }
-          }
-        });
+          });
+        }
+      } else {
+        // Default time-series chart
+        const ctx = document.getElementById('time-series-chart');
+        if (ctx) {
+          const chartData = ${JSON.stringify(chartData)};
+          new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: { position: 'top' },
+                title: { display: false }
+              },
+              scales: {
+                y: { beginAtZero: false }
+              }
+            }
+          });
+        }
       }
       ` : ''}
 

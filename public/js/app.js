@@ -820,13 +820,13 @@ async function generateReport() {
             format: format
         };
 
-        if (reportType === 'key-metrics') {
-            url += 'key-metrics';
+        if (reportType === 'hotspots-coldzones') {
+            url += 'hotspots-coldzones';
 
             // Get all configuration values from template settings
             const config = window.pdfConfig.getConfig();
-            body.headerTitle = config.reportTitle || document.getElementById('pdfTitle')?.value || 'IoT Sensor Summary Report';
-            body.headerSubtitle = config.reportSubtitle || document.getElementById('pdfSubtitle')?.value || 'Real-time monitoring and analytics';
+            body.headerTitle = config.reportTitle || document.getElementById('pdfTitle')?.value || 'Hotspots and Cold Zones';
+            body.headerSubtitle = config.reportSubtitle || document.getElementById('pdfSubtitle')?.value || 'Temperature Analysis Report';
             body.footerText = config.footer?.text || document.getElementById('pdfFooterText')?.value || 'Madison - IoT Report';
             body.logoUrl = '/images/logo_madison.png';
             body.theme = config.theme || document.getElementById('pdfTheme')?.value || 'professional-blue';

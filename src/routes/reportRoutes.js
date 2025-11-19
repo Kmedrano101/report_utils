@@ -11,6 +11,7 @@ const router = express.Router();
 // Report generation endpoints
 router.post('/generate-pdf', reportController.generatePDFFromHTML.bind(reportController));
 router.post('/key-metrics', reportController.generateKeyMetricsReport.bind(reportController));
+router.post('/hotspots-coldzones', reportController.generateHotspotsColdzonesReport.bind(reportController));
 router.post('/test-template', reportController.generateTestTemplateReport.bind(reportController));
 router.post('/test-metrics', reportController.generateMetricsTestReport.bind(reportController));
 router.post('/iot-summary', reportController.generateIoTSummaryReport.bind(reportController));

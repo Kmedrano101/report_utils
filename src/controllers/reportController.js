@@ -7,6 +7,7 @@ import iotDataService from '../services/iotDataService.js';
 import svgTemplateService from '../services/svgTemplateService.js';
 import pdfGenerationService from '../services/pdfGenerationService.js';
 import reportMetricsService from '../services/reportMetricsService.js';
+import userMetricsService from '../services/userMetricsService.js';
 import database from '../config/database.js';
 import logger from '../utils/logger.js';
 import { parseISO, subDays } from 'date-fns';
@@ -874,6 +875,195 @@ class ReportController {
 
     } catch (error) {
       logger.error('Failed to generate key metrics report', { error: error.message, stack: error.stack });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Generate Hotspots and Cold Zones report
+   * POST /api/reports/hotspots-coldzones
+   */
+  async generateHotspotsColdzonesReport(req, res) {
+    const startTime = Date.now();
+
+    try {
+      const {
+        startDate,
+        endDate,
+        layout = 'landscape',
+        pageSize = 'a4',
+        format = 'pdf',
+        source = 'external',
+        // Template configuration from web page
+        headerTitle = 'Hotspots and Cold Zones',
+        headerSubtitle = 'Temperature Analysis Report',
+        footerText = 'Madison - IoT Report',
+        logoUrl = '/images/logo_madison.png',
+        theme = 'professional-blue'
+      } = req.body;
+
+      // Validate date range
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'Start date and end date are required'
+        });
+      }
+
+      logger.info('Generating Hotspots and Cold Zones report', { startDate, endDate, layout, pageSize, format, source, theme });
+
+      // Fetch base metrics from VictoriaMetrics
+      const baseMetrics = await reportMetricsService.getReportMetrics({
+        startDate,
+        endDate,
+        source
+      });
+
+      // Fetch hotspots and cold zones data
+      const hotspotsData = await userMetricsService.getHotspotsAndColdZones({
+        startDate,
+        endDate,
+        source
+      });
+
+      logger.info('Hotspots and Cold Zones data fetched successfully', {
+        hotspots: hotspotsData.hotspots?.length,
+        coldZones: hotspotsData.coldZones?.length
+      });
+
+      // Determine which template to use based on layout
+      const normalizedLayout = layout.toLowerCase();
+      const templateName = normalizedLayout === 'landscape' || normalizedLayout === 'horizontal'
+        ? 'template_hotspots_coldzones.svg'
+        : 'template_vertical_hotspots_coldzones.svg';
+
+      // Apply theme colors
+      const themeColors = this.getThemeColors(theme);
+
+      // Resolve logo path to base64 data URI for Puppeteer
+      const resolvedLogoUrl = await this.resolveLogoPath(logoUrl);
+
+      // Prepare template data with base metrics and hotspots/cold zones
+      const templateData = {
+        // Header (from template configuration)
+        header_title: headerTitle,
+        header_subtitle: headerSubtitle,
+        header_bg: themeColors.header_bg,
+        header_text_color: themeColors.header_text_color,
+        header_subtitle_color: themeColors.header_subtitle_color,
+        logo_url: resolvedLogoUrl,
+
+        // Base metrics from VictoriaMetrics
+        ...baseMetrics,
+
+        // Building name
+        building_name: 'Madison Arena',
+
+        // Footer (from template configuration)
+        footer_text: footerText,
+        footer_bg: themeColors.footer_bg,
+        footer_text_color: themeColors.footer_text_color,
+        footer_date_color: themeColors.footer_date_color,
+
+        // Temperature summary
+        temperature_range: hotspotsData.summary?.temperatureRange || '0',
+        overall_avg_temp: hotspotsData.summary?.overallAvgTemp || '0',
+        overall_min_temp: hotspotsData.summary?.overallMinTemp || '0',
+        overall_max_temp: hotspotsData.summary?.overallMaxTemp || '0',
+
+        // Hotspots data (top 3)
+        hotspot_1_name: hotspotsData.hotspots?.[0]?.sensorName || 'N/A',
+        hotspot_1_avg: hotspotsData.hotspots?.[0]?.avgTemperature || '0',
+        hotspot_1_min: hotspotsData.hotspots?.[0]?.minTemperature || '0',
+        hotspot_1_max: hotspotsData.hotspots?.[0]?.maxTemperature || '0',
+        hotspot_1_deviation: hotspotsData.hotspots?.[0]?.deviation || '0',
+
+        hotspot_2_name: hotspotsData.hotspots?.[1]?.sensorName || 'N/A',
+        hotspot_2_avg: hotspotsData.hotspots?.[1]?.avgTemperature || '0',
+        hotspot_2_min: hotspotsData.hotspots?.[1]?.minTemperature || '0',
+        hotspot_2_max: hotspotsData.hotspots?.[1]?.maxTemperature || '0',
+        hotspot_2_deviation: hotspotsData.hotspots?.[1]?.deviation || '0',
+
+        hotspot_3_name: hotspotsData.hotspots?.[2]?.sensorName || 'N/A',
+        hotspot_3_avg: hotspotsData.hotspots?.[2]?.avgTemperature || '0',
+        hotspot_3_min: hotspotsData.hotspots?.[2]?.minTemperature || '0',
+        hotspot_3_max: hotspotsData.hotspots?.[2]?.maxTemperature || '0',
+        hotspot_3_deviation: hotspotsData.hotspots?.[2]?.deviation || '0',
+
+        // Cold zones data (top 3)
+        coldzone_1_name: hotspotsData.coldZones?.[0]?.sensorName || 'N/A',
+        coldzone_1_avg: hotspotsData.coldZones?.[0]?.avgTemperature || '0',
+        coldzone_1_min: hotspotsData.coldZones?.[0]?.minTemperature || '0',
+        coldzone_1_max: hotspotsData.coldZones?.[0]?.maxTemperature || '0',
+        coldzone_1_deviation: hotspotsData.coldZones?.[0]?.deviation || '0',
+
+        coldzone_2_name: hotspotsData.coldZones?.[1]?.sensorName || 'N/A',
+        coldzone_2_avg: hotspotsData.coldZones?.[1]?.avgTemperature || '0',
+        coldzone_2_min: hotspotsData.coldZones?.[1]?.minTemperature || '0',
+        coldzone_2_max: hotspotsData.coldZones?.[1]?.maxTemperature || '0',
+        coldzone_2_deviation: hotspotsData.coldZones?.[1]?.deviation || '0',
+
+        coldzone_3_name: hotspotsData.coldZones?.[2]?.sensorName || 'N/A',
+        coldzone_3_avg: hotspotsData.coldZones?.[2]?.avgTemperature || '0',
+        coldzone_3_min: hotspotsData.coldZones?.[2]?.minTemperature || '0',
+        coldzone_3_max: hotspotsData.coldZones?.[2]?.maxTemperature || '0',
+        coldzone_3_deviation: hotspotsData.coldZones?.[2]?.deviation || '0',
+
+        // Status info
+        last_update_time: new Date().toLocaleString('es-ES')
+      };
+
+      logger.info('Generating report with template', { templateName, layout: normalizedLayout });
+
+      // Load and process template
+      const templateContent = await svgTemplateService.loadTemplate(templateName);
+      const svgContent = svgTemplateService.replacePlaceholders(templateContent, templateData);
+
+      // Prepare HTML generation options
+      const htmlOptions = {
+        layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
+        pageSize: pageSize.toUpperCase(),
+        chartType: 'temperature-comparison'
+      };
+
+      // Prepare chart data for temperature comparison chart
+      const chartData = hotspotsData.chartData?.comparisonChart || null;
+
+      if (format === 'html') {
+        const htmlContent = svgTemplateService.generateHtmlWithSvg(svgContent, chartData, htmlOptions);
+        return res.send(htmlContent);
+      }
+
+      // Generate PDF
+      const pdfOptions = {
+        landscape: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal',
+        pageSize: pageSize.toUpperCase()
+      };
+
+      const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(
+        svgTemplateService.generateHtmlWithSvg(svgContent, chartData, htmlOptions),
+        pdfOptions
+      );
+
+      const duration = Date.now() - startTime;
+      logger.info('Hotspots and Cold Zones report generated successfully', {
+        format,
+        layout: normalizedLayout,
+        pageSize,
+        duration: `${duration}ms`,
+        size: `${(pdfBuffer.length / 1024).toFixed(2)} KB`
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="hotspots-coldzones-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer, 'binary');
+
+    } catch (error) {
+      logger.error('Failed to generate Hotspots and Cold Zones report', { error: error.message, stack: error.stack });
       res.status(500).json({
         success: false,
         error: error.message
