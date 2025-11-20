@@ -160,11 +160,13 @@ class ReportMetricsService {
     /**
      * Calculate sound level metrics
      * Uses sound sensors (s1, s2, s3, s6, s7) - soundPeak and soundAvg
+     * Uses clamp_max(95) to cap unrealistic ceiling values from sensors
      */
     async getSoundMetrics(startDate, endDate, source) {
         try {
             // Query: Peak sound level (max of soundPeak)
-            const peakQuery = `max_over_time(iot_sensor_reading{sensor_type="soundPeak"}[${this.getTimeRange(startDate, endDate)}])`;
+            // Use clamp_max to cap at 95 dB (indoor environments rarely exceed this)
+            const peakQuery = `max(clamp_max(max_over_time(iot_sensor_reading{sensor_type="soundPeak"}[${this.getTimeRange(startDate, endDate)}]), 95))`;
 
             // Query: Average sound level (avg of soundAvg)
             const avgQuery = `avg_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${this.getTimeRange(startDate, endDate)}])`;
@@ -194,6 +196,7 @@ class ReportMetricsService {
      * Calculate power consumption metrics
      * Uses current clamp sensors (c1, c2) - 4 channels each
      * Converts from Amperes to kWh (assuming 230V AC)
+     * Uses range_trim_spikes(0.009) to remove noise values
      */
     async getPowerMetrics(startDate, endDate, source) {
         try {
@@ -202,10 +205,12 @@ class ReportMetricsService {
 
             // Calculate total power consumption across all channels
             // Sum of all current readings over time, converted to kWh
-            const totalQuery = `sum(avg_over_time(iot_sensor_reading{sensor_type=~"${channels.join('|')}"}[${this.getTimeRange(startDate, endDate)}]))`;
+            // Use range_trim_spikes to remove noise values (spikes < 0.009)
+            const totalQuery = `sum(avg_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type=~"${channels.join('|')}"})[${this.getTimeRange(startDate, endDate)}]))`;
 
             // Peak current reading
-            const peakQuery = `max(max_over_time(iot_sensor_reading{sensor_type=~"${channels.join('|')}"}[${this.getTimeRange(startDate, endDate)}]))`;
+            // Use range_trim_spikes to remove noise values before finding peak
+            const peakQuery = `max(max_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type=~"${channels.join('|')}"})[${this.getTimeRange(startDate, endDate)}]))`;
 
             const [totalResult, peakResult] = await Promise.all([
                 victoriaMetricsService.query(totalQuery, { time: endDate, source }),

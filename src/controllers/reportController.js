@@ -1088,6 +1088,170 @@ class ReportController {
   }
 
   /**
+   * Generate Power Consumption Analysis report
+   * POST /api/reports/power-consumption
+   */
+  async generatePowerConsumptionReport(req, res) {
+    const startTime = Date.now();
+
+    try {
+      const {
+        startDate,
+        endDate,
+        layout = 'landscape',
+        pageSize = 'a4',
+        format = 'pdf',
+        source = 'external',
+        // Template configuration from web page
+        headerTitle = 'Power Consumption Analysis',
+        headerSubtitle = 'Energy Monitoring Report',
+        footerText = 'Madison - IoT Report',
+        logoUrl = '/images/logo_madison.png',
+        theme = 'professional-blue'
+      } = req.body;
+
+      // Validate date range
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'Start date and end date are required'
+        });
+      }
+
+      logger.info('Generating Power Consumption Analysis report', { startDate, endDate, layout, pageSize, format, source, theme });
+
+      // Fetch base metrics from VictoriaMetrics
+      const baseMetrics = await reportMetricsService.getReportMetrics({
+        startDate,
+        endDate,
+        source
+      });
+
+      // Fetch power consumption analysis data
+      const powerData = await userMetricsService.getPowerConsumptionAnalysis({
+        startDate,
+        endDate,
+        source
+      });
+
+      logger.info('Power Consumption Analysis data fetched successfully', {
+        totalKwh: powerData.total_kwh,
+        totalCost: powerData.total_cost
+      });
+
+      // Determine which template to use based on layout
+      const normalizedLayout = layout.toLowerCase();
+      const templateName = normalizedLayout === 'landscape' || normalizedLayout === 'horizontal'
+        ? 'report_horizontal_2.svg'
+        : 'report_vertical_2.svg';
+
+      // Apply theme colors
+      const themeColors = this.getThemeColors(theme);
+
+      // Resolve logo path to base64 data URI for Puppeteer
+      const resolvedLogoUrl = await this.resolveLogoPath(logoUrl);
+
+      // Resolve electric image to base64 data URI for Puppeteer
+      const resolvedElectricUrl = await this.resolveLogoPath('/images/electric.png');
+
+      // Prepare template data with base metrics and power consumption data
+      const templateData = {
+        // Header (from template configuration)
+        header_title: headerTitle,
+        header_subtitle: headerSubtitle,
+        header_bg: themeColors.header_bg,
+        header_text_color: themeColors.header_text_color,
+        header_subtitle_color: themeColors.header_subtitle_color,
+        logo_url: resolvedLogoUrl,
+
+        // Electric image
+        electric_url: resolvedElectricUrl,
+
+        // Base metrics from VictoriaMetrics (for key metrics cards)
+        ...baseMetrics,
+
+        // Building name
+        building_name: 'Madison Arena',
+
+        // Footer (from template configuration)
+        footer_text: footerText,
+        footer_bg: themeColors.footer_bg,
+        footer_text_color: themeColors.footer_text_color,
+        footer_date_color: themeColors.footer_date_color,
+
+        // Content body theme colors
+        section_header_color: themeColors.section_header_color,
+        metric_value_color: themeColors.metric_value_color,
+        metric_title_color: themeColors.metric_title_color,
+        table_text_color: themeColors.table_text_color,
+        table_header_color: themeColors.table_header_color,
+        card_border_color: themeColors.card_border_color,
+        accent_primary: themeColors.accent_primary,
+        accent_secondary: themeColors.accent_secondary,
+
+        // Power consumption data
+        ...powerData,
+
+        // Status info
+        last_update_time: new Date().toLocaleString('es-ES')
+      };
+
+      logger.info('Generating report with template', { templateName, layout: normalizedLayout });
+
+      // Load and process template
+      const templateContent = await svgTemplateService.loadTemplate(templateName);
+      const svgContent = svgTemplateService.replacePlaceholders(templateContent, templateData);
+
+      // Prepare HTML generation options
+      const htmlOptions = {
+        layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
+        pageSize: pageSize.toUpperCase(),
+        chartType: 'consumption-comparison'
+      };
+
+      // Prepare chart data for consumption comparison chart
+      const chartData = powerData.chartData || null;
+
+      if (format === 'html') {
+        const htmlContent = svgTemplateService.generateHtmlWithSvg(svgContent, chartData, htmlOptions);
+        return res.send(htmlContent);
+      }
+
+      // Generate PDF
+      const pdfOptions = {
+        landscape: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal',
+        pageSize: pageSize.toUpperCase()
+      };
+
+      const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(
+        svgTemplateService.generateHtmlWithSvg(svgContent, chartData, htmlOptions),
+        pdfOptions
+      );
+
+      const duration = Date.now() - startTime;
+      logger.info('Power Consumption Analysis report generated successfully', {
+        format,
+        layout: normalizedLayout,
+        pageSize,
+        duration: `${duration}ms`,
+        size: `${(pdfBuffer.length / 1024).toFixed(2)} KB`
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="power-consumption-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer, 'binary');
+
+    } catch (error) {
+      logger.error('Failed to generate Power Consumption Analysis report', { error: error.message, stack: error.stack });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
    * Resolve logo path to base64 data URI for Puppeteer
    * @param {string} logoPath - Logo path (can be relative like /images/logo.png or absolute)
    * @returns {Promise<string>} Base64 data URI

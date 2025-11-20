@@ -1,0 +1,5 @@
+Kevin, revisa porfa el query que estés usando para la corriente, porque ese pico de 630A debe ser un error del sensor (ocurre de vez en cuando).
+
+Prueba con este query que te mandé para eliminar esos picos: range_trim_spikes(0.009, sum by(sensor_type) (iot_sensor_reading{lns_app="madison-iotsensors", sensor_name="c1", sensor_type!="Bat_V"}))
+
+Lo puedes usar como base para estadísticas: max_over_time(range_trim_spikes(0.009, sum by(sensor_type) (iot_sensor_reading{lns_app="madison-iotsensors", sensor_name="c1", sensor_type!="Bat_V"}))[1w])

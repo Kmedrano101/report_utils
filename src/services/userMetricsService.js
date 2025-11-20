@@ -344,6 +344,247 @@ class UserMetricsService {
             day: '2-digit'
         });
     }
+
+    /**
+     * Power Consumption Analysis Report
+     * Analyzes current consumption from sensors c1 and c2
+     * Uses range_trim_spikes(0.009) to remove noise values
+     *
+     * @param {Object} params - Query parameters
+     * @param {string} params.startDate - Start date (ISO format)
+     * @param {string} params.endDate - End date (ISO format)
+     * @param {string} params.source - Data source ('local' or 'external')
+     * @returns {Promise<Object>} Power consumption analysis data
+     */
+    async getPowerConsumptionAnalysis(params) {
+        const { startDate, endDate, source = this.defaultSource } = params;
+
+        try {
+            logger.info('Generating Power Consumption Analysis report', { startDate, endDate, source });
+
+            const timeRange = this.getTimeRange(startDate, endDate);
+            const voltage = 230; // Spain voltage
+            const pricePerKwh = 0.18; // Average Spain electricity price €/kWh
+            const durationMs = new Date(endDate) - new Date(startDate);
+            const durationHours = durationMs / (1000 * 60 * 60);
+
+            // Get detailed power metrics with range_trim_spikes
+            const detailedMetrics = await this.getDetailedPowerMetrics(startDate, endDate, source, timeRange, voltage, durationHours);
+
+            // Get consumption details (A, kWh, EUR)
+            const consumptionDetails = await this.getTotalConsumptionDetails(startDate, endDate, source, timeRange, voltage, durationHours, pricePerKwh);
+
+            // Get peak load events
+            const peakLoads = await this.getPeakLoadEvents(startDate, endDate, source, timeRange, voltage);
+
+            // Get average consumption per channel for chart
+            const channelData = await this.getAverageConsumptionPerChannel(startDate, endDate, source, timeRange);
+
+            const report = {
+                reportName: 'Power Consumption Analysis',
+                reportType: 'power-consumption',
+                dateRange: `${this.formatDate(startDate)} - ${this.formatDate(endDate)}`,
+                generatedAt: new Date().toISOString(),
+
+                // Detailed metrics (max, avg, min with units)
+                ...detailedMetrics,
+
+                // Consumption details
+                ...consumptionDetails,
+
+                // Peak load events
+                ...peakLoads,
+
+                // Chart data
+                chartData: channelData
+            };
+
+            logger.info('Power Consumption Analysis report generated successfully');
+            return report;
+
+        } catch (error) {
+            logger.error('Failed to generate Power Consumption Analysis report', {
+                error: error.message,
+                params
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Get detailed power metrics (max, avg, min with dynamic units)
+     */
+    async getDetailedPowerMetrics(startDate, endDate, source, timeRange, voltage, durationHours) {
+        const channels = ['current_clamp_1', 'current_clamp_2', 'current_clamp_3', 'current_clamp_4'];
+
+        const maxQuery = `max(max_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type=~"${channels.join('|')}"})[${timeRange}]))`;
+        const avgQuery = `avg(avg_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type=~"${channels.join('|')}"})[${timeRange}]))`;
+        const minQuery = `min(min_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type=~"${channels.join('|')}"})[${timeRange}]))`;
+
+        const [maxResult, avgResult, minResult] = await Promise.all([
+            victoriaMetricsService.query(maxQuery, { time: endDate, source }),
+            victoriaMetricsService.query(avgQuery, { time: endDate, source }),
+            victoriaMetricsService.query(minQuery, { time: endDate, source })
+        ]);
+
+        const maxCurrent = parseFloat(maxResult.data?.result?.[0]?.values?.[0] || 0);
+        const avgCurrent = parseFloat(avgResult.data?.result?.[0]?.values?.[0] || 0);
+        const minCurrent = parseFloat(minResult.data?.result?.[0]?.values?.[0] || 0);
+
+        // Convert to kWh
+        const maxKwh = (maxCurrent * voltage * durationHours) / 1000;
+        const avgKwh = (avgCurrent * voltage * durationHours) / 1000;
+        const minKwh = (minCurrent * voltage * durationHours) / 1000;
+
+        // Format with appropriate unit (kWh or MWh)
+        const formatWithUnit = (kwh) => {
+            if (kwh >= 1000) {
+                return { value: (kwh / 1000).toFixed(2), unit: 'MWh' };
+            }
+            return { value: kwh.toFixed(2), unit: 'kWh' };
+        };
+
+        const max = formatWithUnit(maxKwh);
+        const avg = formatWithUnit(avgKwh);
+        const min = formatWithUnit(minKwh);
+
+        return {
+            max_consumption: max.value,
+            max_consumption_unit: max.unit,
+            avg_consumption: avg.value,
+            avg_consumption_unit: avg.unit,
+            min_consumption: min.value,
+            min_consumption_unit: min.unit,
+            overall_max_consumption: max.value,
+            overall_avg_consumption: avg.value,
+            overall_min_consumption: min.value
+        };
+    }
+
+    /**
+     * Get total consumption details (A, kWh, EUR)
+     */
+    async getTotalConsumptionDetails(startDate, endDate, source, timeRange, voltage, durationHours, pricePerKwh) {
+        const channels = ['current_clamp_1', 'current_clamp_2', 'current_clamp_3', 'current_clamp_4'];
+
+        const totalQuery = `sum(avg_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type=~"${channels.join('|')}"})[${timeRange}]))`;
+        const totalResult = await victoriaMetricsService.query(totalQuery, { time: endDate, source });
+
+        const totalAmperes = parseFloat(totalResult.data?.result?.[0]?.values?.[0] || 0);
+        const totalKwh = (totalAmperes * voltage * durationHours) / 1000;
+        const totalCost = (totalKwh * pricePerKwh).toFixed(2);
+
+        return {
+            total_amperes: totalAmperes.toFixed(2),
+            total_kwh: totalKwh.toFixed(2),
+            total_cost: totalCost
+        };
+    }
+
+    /**
+     * Get peak load events
+     */
+    async getPeakLoadEvents(startDate, endDate, source, timeRange, voltage) {
+        const channels = ['current_clamp_1', 'current_clamp_2', 'current_clamp_3', 'current_clamp_4'];
+
+        const peakPromises = channels.map(async (channel) => {
+            const query = `max_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type="${channel}"})[${timeRange}])`;
+            const result = await victoriaMetricsService.query(query, { time: endDate, source });
+
+            const peaks = [];
+            result.data?.result?.forEach(r => {
+                const value = parseFloat(r.values?.[0] || 0);
+                const sensorName = r.metric?.sensor_name || 'unknown';
+                const power = ((value * voltage) / 1000).toFixed(2);
+
+                peaks.push({
+                    sensor: sensorName,
+                    channel: channel,
+                    value: value.toFixed(2),
+                    power: power,
+                    time: new Date(endDate).toLocaleString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                });
+            });
+
+            return peaks;
+        });
+
+        const allPeaks = (await Promise.all(peakPromises)).flat();
+        allPeaks.sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
+        const top3 = allPeaks.slice(0, 3);
+
+        return {
+            peak_1_sensor: top3[0]?.sensor || 'N/A',
+            peak_1_channel: top3[0]?.channel || 'N/A',
+            peak_1_value: top3[0]?.value || '0.00',
+            peak_1_power: top3[0]?.power || '0.00',
+            peak_1_time: top3[0]?.time || 'N/A',
+            peak_2_sensor: top3[1]?.sensor || 'N/A',
+            peak_2_channel: top3[1]?.channel || 'N/A',
+            peak_2_value: top3[1]?.value || '0.00',
+            peak_2_power: top3[1]?.power || '0.00',
+            peak_2_time: top3[1]?.time || 'N/A',
+            peak_3_sensor: top3[2]?.sensor || 'N/A',
+            peak_3_channel: top3[2]?.channel || 'N/A',
+            peak_3_value: top3[2]?.value || '0.00',
+            peak_3_power: top3[2]?.power || '0.00',
+            peak_3_time: top3[2]?.time || 'N/A'
+        };
+    }
+
+    /**
+     * Get average consumption per channel for chart visualization
+     */
+    async getAverageConsumptionPerChannel(startDate, endDate, source, timeRange) {
+        const channels = ['current_clamp_1', 'current_clamp_2', 'current_clamp_3', 'current_clamp_4'];
+        const sensors = ['c1', 'c2'];
+
+        const channelDataPromises = sensors.map(async (sensor) => {
+            const channelValues = await Promise.all(
+                channels.map(async (channel) => {
+                    const query = `avg_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type="${channel}", sensor_name="${sensor}"})[${timeRange}])`;
+                    const result = await victoriaMetricsService.query(query, { time: endDate, source });
+                    return parseFloat(result.data?.result?.[0]?.values?.[0] || 0);
+                })
+            );
+
+            return {
+                sensor: sensor,
+                channel1: channelValues[0].toFixed(2),
+                channel2: channelValues[1].toFixed(2),
+                channel3: channelValues[2].toFixed(2),
+                channel4: channelValues[3].toFixed(2),
+                average: (channelValues.reduce((a, b) => a + b, 0) / channelValues.length).toFixed(2)
+            };
+        });
+
+        const sensorData = await Promise.all(channelDataPromises);
+
+        return {
+            labels: channels.map((_, i) => `Ch${i + 1}`),
+            datasets: [
+                {
+                    label: 'Sensor C1',
+                    data: [sensorData[0].channel1, sensorData[0].channel2, sensorData[0].channel3, sensorData[0].channel4],
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Sensor C2',
+                    data: [sensorData[1].channel1, sensorData[1].channel2, sensorData[1].channel3, sensorData[1].channel4],
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 1
+                }
+            ]
+        };
+    }
 }
 
 export default new UserMetricsService();

@@ -565,6 +565,43 @@ class SvgTemplateService {
             }
           });
         }
+      } else if (chartType === 'consumption-comparison') {
+        // Power consumption comparison chart (bar chart)
+        const ctx = document.getElementById('consumption-comparison-chart');
+        if (ctx) {
+          const chartData = ${JSON.stringify(chartData)};
+          new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                title: { display: false }
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: 'Channels',
+                    font: { size: 10 }
+                  },
+                  ticks: { font: { size: 9 } }
+                },
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: 'Consumption (A)',
+                    font: { size: 10 }
+                  },
+                  ticks: { font: { size: 9 } }
+                }
+              }
+            }
+          });
+        }
       } else {
         // Default time-series chart
         const ctx = document.getElementById('time-series-chart');
