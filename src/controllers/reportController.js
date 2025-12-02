@@ -14,6 +14,7 @@ import { parseISO, subDays } from 'date-fns';
 import { readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { getReportCopy, toLanguageTag, translateTemplateText } from '../utils/templateLocalization.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -624,6 +625,9 @@ class ReportController {
         source = 'external'
       } = req.body;
 
+      const locale = req.locale || 'es';
+      const languageTag = toLanguageTag(locale);
+
       logger.info('Generating metrics test report', { layout, pageSize, format, source });
 
       // Calculate date range (last 7 days)
@@ -683,7 +687,7 @@ class ReportController {
         sensor_2_status_color: '#10b981',
 
         // Status info
-        last_update_time: new Date().toLocaleString('es-ES')
+        last_update_time: new Date().toLocaleString(languageTag)
       };
 
       // Load template and replace placeholders
@@ -898,12 +902,16 @@ class ReportController {
         format = 'pdf',
         source = 'external',
         // Template configuration from web page
-        headerTitle = 'Hotspots and Cold Zones',
-        headerSubtitle = 'Temperature Analysis Report',
-        footerText = 'Madison - IoT Report',
+        headerTitle,
+        headerSubtitle,
+        footerText,
         logoUrl = '/images/logo_madison.png',
         theme = 'professional-blue'
       } = req.body;
+
+      const locale = req.locale || 'es';
+      const languageTag = toLanguageTag(locale);
+      const { headerTitle: defaultHeaderTitle, headerSubtitle: defaultHeaderSubtitle, footerText: defaultFooterText } = getReportCopy('hotspots', locale);
 
       // Validate date range
       if (!startDate || !endDate) {
@@ -926,7 +934,8 @@ class ReportController {
       const hotspotsData = await userMetricsService.getHotspotsAndColdZones({
         startDate,
         endDate,
-        source
+        source,
+        locale: languageTag
       });
 
       logger.info('Hotspots and Cold Zones data fetched successfully', {
@@ -937,8 +946,8 @@ class ReportController {
       // Determine which template to use based on layout
       const normalizedLayout = layout.toLowerCase();
       const templateName = normalizedLayout === 'landscape' || normalizedLayout === 'horizontal'
-        ? 'report_horizontal_1.svg'
-        : 'report_vertical_1.svg';
+        ? 'hotspots_landscape.svg'
+        : 'hotspots_portrait.svg';
 
       // Apply theme colors
       const themeColors = this.getThemeColors(theme);
@@ -952,8 +961,8 @@ class ReportController {
       // Prepare template data with base metrics and hotspots/cold zones
       const templateData = {
         // Header (from template configuration)
-        header_title: headerTitle,
-        header_subtitle: headerSubtitle,
+        header_title: headerTitle || defaultHeaderTitle,
+        header_subtitle: headerSubtitle || defaultHeaderSubtitle,
         header_bg: themeColors.header_bg,
         header_text_color: themeColors.header_text_color,
         header_subtitle_color: themeColors.header_subtitle_color,
@@ -969,7 +978,7 @@ class ReportController {
         building_name: 'Madison Arena',
 
         // Footer (from template configuration)
-        footer_text: footerText,
+        footer_text: footerText || defaultFooterText,
         footer_bg: themeColors.footer_bg,
         footer_text_color: themeColors.footer_text_color,
         footer_date_color: themeColors.footer_date_color,
@@ -1029,7 +1038,7 @@ class ReportController {
         coldzone_3_deviation: hotspotsData.coldZones?.[2]?.deviation || '0',
 
         // Status info
-        last_update_time: new Date().toLocaleString('es-ES')
+        last_update_time: new Date().toLocaleString(languageTag)
       };
 
       logger.info('Generating report with template', { templateName, layout: normalizedLayout });
@@ -1037,6 +1046,7 @@ class ReportController {
       // Load and process template
       const templateContent = await svgTemplateService.loadTemplate(templateName);
       const svgContent = svgTemplateService.replacePlaceholders(templateContent, templateData);
+      const localizedSvg = translateTemplateText(svgContent, locale);
 
       // Prepare HTML generation options
       const htmlOptions = {
@@ -1049,7 +1059,7 @@ class ReportController {
       const chartData = hotspotsData.chartData?.comparisonChart || null;
 
       if (format === 'html') {
-        const htmlContent = svgTemplateService.generateHtmlWithSvg(svgContent, chartData, htmlOptions);
+        const htmlContent = svgTemplateService.generateHtmlWithSvg(localizedSvg, chartData, htmlOptions);
         return res.send(htmlContent);
       }
 
@@ -1060,7 +1070,7 @@ class ReportController {
       };
 
       const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(
-        svgTemplateService.generateHtmlWithSvg(svgContent, chartData, htmlOptions),
+        svgTemplateService.generateHtmlWithSvg(localizedSvg, chartData, htmlOptions),
         pdfOptions
       );
 
@@ -1103,12 +1113,16 @@ class ReportController {
         format = 'pdf',
         source = 'external',
         // Template configuration from web page
-        headerTitle = 'Power Consumption Analysis',
-        headerSubtitle = 'Energy Monitoring Report',
-        footerText = 'Madison - IoT Report',
+        headerTitle,
+        headerSubtitle,
+        footerText,
         logoUrl = '/images/logo_madison.png',
         theme = 'professional-blue'
       } = req.body;
+
+      const locale = req.locale || 'es';
+      const languageTag = toLanguageTag(locale);
+      const { headerTitle: defaultHeaderTitle, headerSubtitle: defaultHeaderSubtitle, footerText: defaultFooterText } = getReportCopy('power', locale);
 
       // Validate date range
       if (!startDate || !endDate) {
@@ -1131,7 +1145,8 @@ class ReportController {
       const powerData = await userMetricsService.getPowerConsumptionAnalysis({
         startDate,
         endDate,
-        source
+        source,
+        locale: languageTag
       });
 
       logger.info('Power Consumption Analysis data fetched successfully', {
@@ -1142,8 +1157,8 @@ class ReportController {
       // Determine which template to use based on layout
       const normalizedLayout = layout.toLowerCase();
       const templateName = normalizedLayout === 'landscape' || normalizedLayout === 'horizontal'
-        ? 'report_horizontal_2.svg'
-        : 'report_vertical_2.svg';
+        ? 'power_landscape.svg'
+        : 'power_portrait.svg';
 
       // Apply theme colors
       const themeColors = this.getThemeColors(theme);
@@ -1157,8 +1172,8 @@ class ReportController {
       // Prepare template data with base metrics and power consumption data
       const templateData = {
         // Header (from template configuration)
-        header_title: headerTitle,
-        header_subtitle: headerSubtitle,
+        header_title: headerTitle || defaultHeaderTitle,
+        header_subtitle: headerSubtitle || defaultHeaderSubtitle,
         header_bg: themeColors.header_bg,
         header_text_color: themeColors.header_text_color,
         header_subtitle_color: themeColors.header_subtitle_color,
@@ -1174,7 +1189,7 @@ class ReportController {
         building_name: 'Madison Arena',
 
         // Footer (from template configuration)
-        footer_text: footerText,
+        footer_text: footerText || defaultFooterText,
         footer_bg: themeColors.footer_bg,
         footer_text_color: themeColors.footer_text_color,
         footer_date_color: themeColors.footer_date_color,
@@ -1193,7 +1208,7 @@ class ReportController {
         ...powerData,
 
         // Status info
-        last_update_time: new Date().toLocaleString('es-ES')
+        last_update_time: new Date().toLocaleString(languageTag)
       };
 
       logger.info('Generating report with template', { templateName, layout: normalizedLayout });
@@ -1201,6 +1216,7 @@ class ReportController {
       // Load and process template
       const templateContent = await svgTemplateService.loadTemplate(templateName);
       const svgContent = svgTemplateService.replacePlaceholders(templateContent, templateData);
+      const localizedSvg = translateTemplateText(svgContent, locale);
 
       // Prepare HTML generation options
       const htmlOptions = {
@@ -1213,7 +1229,7 @@ class ReportController {
       const chartData = powerData.chartData || null;
 
       if (format === 'html') {
-        const htmlContent = svgTemplateService.generateHtmlWithSvg(svgContent, chartData, htmlOptions);
+        const htmlContent = svgTemplateService.generateHtmlWithSvg(localizedSvg, chartData, htmlOptions);
         return res.send(htmlContent);
       }
 
@@ -1224,7 +1240,7 @@ class ReportController {
       };
 
       const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(
-        svgTemplateService.generateHtmlWithSvg(svgContent, chartData, htmlOptions),
+        svgTemplateService.generateHtmlWithSvg(localizedSvg, chartData, htmlOptions),
         pdfOptions
       );
 
@@ -1244,6 +1260,176 @@ class ReportController {
 
     } catch (error) {
       logger.error('Failed to generate Power Consumption Analysis report', { error: error.message, stack: error.stack });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Generate Sound Levels - Noise Pollution Analysis report
+   * POST /api/reports/sound-analysis
+   */
+  async generateSoundAnalysisReport(req, res) {
+    const startTime = Date.now();
+
+    try {
+      const {
+        startDate,
+        endDate,
+        layout = 'landscape',
+        pageSize = 'a4',
+        format = 'pdf',
+        source = 'external',
+        // Template configuration from web page
+        headerTitle,
+        headerSubtitle,
+        footerText,
+        logoUrl = '/images/logo_madison.png',
+        theme = 'professional-blue'
+      } = req.body;
+
+      const locale = req.locale || 'es';
+      const languageTag = toLanguageTag(locale);
+      const { headerTitle: defaultHeaderTitle, headerSubtitle: defaultHeaderSubtitle, footerText: defaultFooterText } = getReportCopy('noise', locale);
+
+      // Validate date range
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          success: false,
+          error: 'Start date and end date are required'
+        });
+      }
+
+      logger.info('Generating Sound Analysis report', { startDate, endDate, layout, pageSize, format, source, theme });
+
+      // Fetch base metrics from VictoriaMetrics
+      const baseMetrics = await reportMetricsService.getReportMetrics({
+        startDate,
+        endDate,
+        source
+      });
+
+      // Fetch sound analysis data
+      const soundData = await userMetricsService.getSoundLevelAnalysis({
+        startDate,
+        endDate,
+        source,
+        locale: languageTag
+      });
+
+      logger.info('Sound Analysis data fetched successfully', {
+        maxSound: soundData.overall_max_sound,
+        avgSound: soundData.overall_avg_sound
+      });
+
+      // Determine which template to use based on layout
+      const normalizedLayout = layout.toLowerCase();
+      const templateName = normalizedLayout === 'landscape' || normalizedLayout === 'horizontal'
+        ? 'noise_landscape.svg'
+        : 'noise_portrait.svg';
+
+      // Apply theme colors
+      const themeColors = this.getThemeColors(theme);
+
+      // Resolve logo path to base64 data URI for Puppeteer
+      const resolvedLogoUrl = await this.resolveLogoPath(logoUrl);
+
+      // Resolve sound image to base64 data URI for Puppeteer
+      const resolvedSoundUrl = await this.resolveLogoPath('/images/sound.png');
+
+      // Prepare template data with base metrics and sound analysis
+      const templateData = {
+        // Header (from template configuration)
+        header_title: headerTitle || defaultHeaderTitle,
+        header_subtitle: headerSubtitle || defaultHeaderSubtitle,
+        header_bg: themeColors.header_bg,
+        header_text_color: themeColors.header_text_color,
+        header_subtitle_color: themeColors.header_subtitle_color,
+        logo_url: resolvedLogoUrl,
+
+        // Sound image
+        sound_url: resolvedSoundUrl,
+
+        // Base metrics from VictoriaMetrics (for key metrics cards)
+        ...baseMetrics,
+
+        // Building name
+        building_name: 'Madison Arena',
+
+        // Footer (from template configuration)
+        footer_text: footerText || defaultFooterText,
+        footer_bg: themeColors.footer_bg,
+        footer_text_color: themeColors.footer_text_color,
+        footer_date_color: themeColors.footer_date_color,
+
+        // Content body theme colors
+        section_header_color: themeColors.section_header_color,
+        metric_value_color: themeColors.metric_value_color,
+        metric_title_color: themeColors.metric_title_color,
+        table_text_color: themeColors.table_text_color,
+        table_header_color: themeColors.table_header_color,
+        card_border_color: themeColors.card_border_color,
+        accent_primary: themeColors.accent_primary,
+        accent_secondary: themeColors.accent_secondary,
+
+        // Sound analysis data
+        ...soundData,
+
+        // Status info
+        last_update_time: new Date().toLocaleString(languageTag)
+      };
+
+      logger.info('Generating report with template', { templateName, layout: normalizedLayout });
+
+      // Load and process template
+      const templateContent = await svgTemplateService.loadTemplate(templateName);
+      const svgContent = svgTemplateService.replacePlaceholders(templateContent, templateData);
+      const localizedSvg = translateTemplateText(svgContent, locale);
+
+      // Prepare HTML generation options
+      const htmlOptions = {
+        layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
+        pageSize: pageSize.toUpperCase(),
+        chartType: 'noise-comparison'
+      };
+
+      // Prepare chart data for noise comparison chart
+      const chartData = soundData.chartData || null;
+
+      if (format === 'html') {
+        const htmlContent = svgTemplateService.generateHtmlWithSvg(localizedSvg, chartData, htmlOptions);
+        return res.send(htmlContent);
+      }
+
+      // Generate PDF
+      const pdfOptions = {
+        landscape: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal',
+        pageSize: pageSize.toUpperCase()
+      };
+
+      const pdfBuffer = await pdfGenerationService.generatePdfFromHtml(
+        svgTemplateService.generateHtmlWithSvg(localizedSvg, chartData, htmlOptions),
+        pdfOptions
+      );
+
+      const duration = Date.now() - startTime;
+      logger.info('Sound Analysis report generated successfully', {
+        format,
+        layout: normalizedLayout,
+        pageSize,
+        duration: `${duration}ms`,
+        size: `${(pdfBuffer.length / 1024).toFixed(2)} KB`
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="sound-analysis-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.end(pdfBuffer, 'binary');
+
+    } catch (error) {
+      logger.error('Failed to generate Sound Analysis report', { error: error.message, stack: error.stack });
       res.status(500).json({
         success: false,
         error: error.message
@@ -1423,6 +1609,12 @@ class ReportController {
       'template_horizontal.svg': 'Template Horizontal (Landscape)',
       'madison_vertical.svg': 'Madison Portrait',
       'madison_horizontal.svg': 'Madison Landscape',
+      'hotspots_portrait.svg': 'Hotspots & Cold Zones (Portrait)',
+      'hotspots_landscape.svg': 'Hotspots & Cold Zones (Landscape)',
+      'power_portrait.svg': 'Power Consumption Analysis (Portrait)',
+      'power_landscape.svg': 'Power Consumption Analysis (Landscape)',
+      'noise_portrait.svg': 'Sound Levels & Noise Pollution (Portrait)',
+      'noise_landscape.svg': 'Sound Levels & Noise Pollution (Landscape)',
       'report_test.svg': 'Classic Data Layout',
       'iot-summary-report.svg': 'IoT Summary Report'
     };

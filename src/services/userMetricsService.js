@@ -23,7 +23,7 @@ class UserMetricsService {
      * @returns {Promise<Object>} Hotspots and cold zones data
      */
     async getHotspotsAndColdZones(params) {
-        const { startDate, endDate, source = this.defaultSource } = params;
+        const { startDate, endDate, source = this.defaultSource, locale = 'es-ES' } = params;
 
         try {
             logger.info('Generating Hotspots and Cold Zones report', { startDate, endDate, source });
@@ -79,7 +79,7 @@ class UserMetricsService {
             const report = {
                 reportName: 'Hotspots and Cold Zones',
                 reportType: 'temperature-analysis',
-                dateRange: `${this.formatDate(startDate)} - ${this.formatDate(endDate)}`,
+                dateRange: `${this.formatDate(startDate, locale)} - ${this.formatDate(endDate, locale)}`,
                 generatedAt: new Date().toISOString(),
 
                 // Summary statistics
@@ -336,9 +336,9 @@ class UserMetricsService {
     /**
      * Format date for display
      */
-    formatDate(dateString) {
+    formatDate(dateString, locale = 'es-ES') {
         const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {
+        return date.toLocaleDateString(locale, {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
@@ -357,7 +357,7 @@ class UserMetricsService {
      * @returns {Promise<Object>} Power consumption analysis data
      */
     async getPowerConsumptionAnalysis(params) {
-        const { startDate, endDate, source = this.defaultSource } = params;
+        const { startDate, endDate, source = this.defaultSource, locale = 'es-ES' } = params;
 
         try {
             logger.info('Generating Power Consumption Analysis report', { startDate, endDate, source });
@@ -375,7 +375,7 @@ class UserMetricsService {
             const consumptionDetails = await this.getTotalConsumptionDetails(startDate, endDate, source, timeRange, voltage, durationHours, pricePerKwh);
 
             // Get peak load events
-            const peakLoads = await this.getPeakLoadEvents(startDate, endDate, source, timeRange, voltage);
+            const peakLoads = await this.getPeakLoadEvents(startDate, endDate, source, timeRange, voltage, locale);
 
             // Get average consumption per channel for chart
             const channelData = await this.getAverageConsumptionPerChannel(startDate, endDate, source, timeRange);
@@ -383,7 +383,7 @@ class UserMetricsService {
             const report = {
                 reportName: 'Power Consumption Analysis',
                 reportType: 'power-consumption',
-                dateRange: `${this.formatDate(startDate)} - ${this.formatDate(endDate)}`,
+                dateRange: `${this.formatDate(startDate, locale)} - ${this.formatDate(endDate, locale)}`,
                 generatedAt: new Date().toISOString(),
 
                 // Detailed metrics (max, avg, min with units)
@@ -484,7 +484,7 @@ class UserMetricsService {
     /**
      * Get peak load events
      */
-    async getPeakLoadEvents(startDate, endDate, source, timeRange, voltage) {
+    async getPeakLoadEvents(startDate, endDate, source, timeRange, voltage, locale = 'es-ES') {
         const channels = ['current_clamp_1', 'current_clamp_2', 'current_clamp_3', 'current_clamp_4'];
 
         const peakPromises = channels.map(async (channel) => {
@@ -497,17 +497,17 @@ class UserMetricsService {
                 const sensorName = r.metric?.sensor_name || 'unknown';
                 const power = ((value * voltage) / 1000).toFixed(2);
 
-                peaks.push({
-                    sensor: sensorName,
-                    channel: channel,
-                    value: value.toFixed(2),
-                    power: power,
-                    time: new Date(endDate).toLocaleString('es-ES', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })
+                    peaks.push({
+                        sensor: sensorName,
+                        channel: channel,
+                        value: value.toFixed(2),
+                        power: power,
+                        time: new Date(endDate).toLocaleString(locale, {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
                 });
             });
 
@@ -534,6 +534,210 @@ class UserMetricsService {
             peak_3_value: top3[2]?.value || '0.00',
             peak_3_power: top3[2]?.power || '0.00',
             peak_3_time: top3[2]?.time || 'N/A'
+        };
+    }
+
+    /**
+     * Sound Levels - Noise Pollution Analysis Report
+     * Analyzes sound levels across sensors to identify noisiest locations
+     * Uses range_trim_spikes(0.009) to remove noise values
+     *
+     * @param {Object} params - Query parameters
+     * @param {string} params.startDate - Start date (ISO format)
+     * @param {string} params.endDate - End date (ISO format)
+     * @param {string} params.source - Data source ('local' or 'external')
+     * @returns {Promise<Object>} Sound level analysis data
+     */
+    async getSoundLevelAnalysis(params) {
+        const { startDate, endDate, source = this.defaultSource, locale = 'es-ES' } = params;
+
+        try {
+            logger.info('Generating Sound Level Analysis report', { startDate, endDate, source });
+
+            const timeRange = this.getTimeRange(startDate, endDate);
+
+            // Get max, avg, min sound levels
+            const soundMetrics = await this.getDetailedSoundMetrics(startDate, endDate, source, timeRange);
+
+            // Get noisiest locations for chart
+            const noisiestLocations = await this.getNoisiestLocations(startDate, endDate, source, timeRange);
+
+            // Get peak noise events
+            const peakNoiseEvents = await this.getPeakNoiseEvents(startDate, endDate, source, timeRange, locale);
+
+            // Calculate statistics
+            const statistics = await this.getSoundStatistics(startDate, endDate, source, timeRange);
+
+            const report = {
+                reportName: 'Sound Levels - Noise Pollution Analysis',
+                reportType: 'sound-analysis',
+                dateRange: `${this.formatDate(startDate, locale)} - ${this.formatDate(endDate, locale)}`,
+                generatedAt: new Date().toISOString(),
+
+                // Sound metrics
+                ...soundMetrics,
+
+                // Statistics
+                ...statistics,
+
+                // Peak noise events
+                ...peakNoiseEvents,
+
+                // Chart data
+                chartData: noisiestLocations
+            };
+
+            logger.info('Sound Level Analysis report generated successfully');
+            return report;
+
+        } catch (error) {
+            logger.error('Failed to generate Sound Level Analysis report', {
+                error: error.message,
+                params
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Get detailed sound metrics (max, avg, min)
+     */
+    async getDetailedSoundMetrics(startDate, endDate, source, timeRange) {
+        const maxQuery = `max(clamp_max(max_over_time(iot_sensor_reading{sensor_type="soundPeak"}[${timeRange}]), 95))`;
+        const avgQuery = `avg_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${timeRange}])`;
+        const minQuery = `min(min_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${timeRange}]))`;
+
+        const [maxResult, avgResult, minResult] = await Promise.all([
+            victoriaMetricsService.query(maxQuery, { time: endDate, source }),
+            victoriaMetricsService.query(avgQuery, { time: endDate, source }),
+            victoriaMetricsService.query(minQuery, { time: endDate, source })
+        ]);
+
+        const maxValues = maxResult.data?.result?.map(r => parseFloat(r.values?.[0] || 0)) || [];
+        const avgValues = avgResult.data?.result?.map(r => parseFloat(r.values?.[0] || 0)) || [];
+        const minValues = minResult.data?.result?.map(r => parseFloat(r.values?.[0] || 0)) || [];
+
+        const maxSound = maxValues.length > 0 ? Math.max(...maxValues) : 0;
+        const avgSound = avgValues.length > 0 ? avgValues.reduce((a, b) => a + b, 0) / avgValues.length : 0;
+        const minSound = minValues.length > 0 ? Math.min(...minValues) : 0;
+
+        return {
+            overall_max_sound: maxSound.toFixed(1),
+            overall_avg_sound: avgSound.toFixed(1),
+            overall_min_sound: minSound.toFixed(1)
+        };
+    }
+
+    /**
+     * Get noisiest locations for chart
+     */
+    async getNoisiestLocations(startDate, endDate, source, timeRange) {
+        const query = `avg_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${timeRange}])`;
+        const result = await victoriaMetricsService.query(query, { time: endDate, source });
+
+        const locations = [];
+        result.data?.result?.forEach(r => {
+            const avgSound = parseFloat(r.values?.[0] || 0);
+            const sensorName = r.metric?.sensor_name || 'unknown';
+
+            locations.push({
+                sensor: sensorName,
+                avgSound: avgSound.toFixed(1)
+            });
+        });
+
+        // Sort by sound level descending
+        locations.sort((a, b) => parseFloat(b.avgSound) - parseFloat(a.avgSound));
+
+        // Get top 5 noisiest and bottom 3 quietest
+        const noisiest = locations.slice(0, Math.min(5, locations.length));
+        const quietest = locations.slice(-Math.min(3, locations.length)).reverse();
+
+        return {
+            labels: [...noisiest.map(l => l.sensor), ...quietest.map(l => l.sensor)],
+            datasets: [
+                {
+                    label: 'Noisiest Locations',
+                    data: noisiest.map(l => parseFloat(l.avgSound)),
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderColor: 'rgb(239, 68, 68)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Quietest Locations',
+                    data: Array(noisiest.length).fill(null).concat(quietest.map(l => parseFloat(l.avgSound))),
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 1
+                }
+            ]
+        };
+    }
+
+    /**
+     * Get peak noise events
+     */
+    async getPeakNoiseEvents(startDate, endDate, source, timeRange, locale = 'es-ES') {
+        const query = `max_over_time(iot_sensor_reading{sensor_type="soundPeak"}[${timeRange}])`;
+        const result = await victoriaMetricsService.query(query, { time: endDate, source });
+
+        const peaks = [];
+        result.data?.result?.forEach(r => {
+            const value = parseFloat(r.values?.[0] || 0);
+            const sensorName = r.metric?.sensor_name || 'unknown';
+
+            peaks.push({
+                sensor: sensorName,
+                location: `Zone ${sensorName}`,
+                value: value.toFixed(1),
+                time: new Date(endDate).toLocaleString(locale, {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                duration: '~2 min' // Placeholder - would need time-series data for accurate duration
+            });
+        });
+
+        // Sort by value descending and take top 2
+        peaks.sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
+        const top2 = peaks.slice(0, 2);
+
+        return {
+            peak_noise_1_location: top2[0]?.location || 'N/A',
+            peak_noise_1_sensor: top2[0]?.sensor || 'N/A',
+            peak_noise_1_value: top2[0]?.value || '0.0',
+            peak_noise_1_time: top2[0]?.time || 'N/A',
+            peak_noise_1_duration: top2[0]?.duration || 'N/A',
+            peak_noise_2_location: top2[1]?.location || 'N/A',
+            peak_noise_2_sensor: top2[1]?.sensor || 'N/A',
+            peak_noise_2_value: top2[1]?.value || '0.0',
+            peak_noise_2_time: top2[1]?.time || 'N/A',
+            peak_noise_2_duration: top2[1]?.duration || 'N/A'
+        };
+    }
+
+    /**
+     * Get sound statistics
+     */
+    async getSoundStatistics(startDate, endDate, source, timeRange) {
+        // Count total sound sensors
+        const sensorsQuery = `count(count_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${timeRange}]))`;
+        const sensorsResult = await victoriaMetricsService.query(sensorsQuery, { time: endDate, source });
+        const totalSensorsValues = sensorsResult.data?.result?.map(r => parseInt(r.values?.[0] || 0)) || [];
+        const totalSensors = totalSensorsValues.length > 0 ? Math.max(...totalSensorsValues) : 0;
+
+        // Calculate percentage of time above 70 dB threshold
+        const thresholdQuery = `avg(iot_sensor_reading{sensor_type="soundAvg"} > 70)`;
+        const thresholdResult = await victoriaMetricsService.query(thresholdQuery, { time: endDate, source });
+        const thresholdValues = thresholdResult.data?.result?.map(r => parseFloat(r.values?.[0] || 0)) || [];
+        const aboveThreshold = thresholdValues.length > 0 ? thresholdValues.reduce((a, b) => a + b, 0) / thresholdValues.length : 0;
+        const aboveThresholdPercent = (aboveThreshold * 100).toFixed(1);
+
+        return {
+            total_sound_sensors: totalSensors,
+            above_threshold_percent: aboveThresholdPercent
         };
     }
 

@@ -602,6 +602,39 @@ class SvgTemplateService {
             }
           });
         }
+      } else if (chartType === 'noise-comparison') {
+        // Noise pollution comparison chart (horizontal bar chart)
+        const ctx = document.getElementById('noise-comparison-chart');
+        if (ctx) {
+          const chartData = ${JSON.stringify(chartData)};
+          new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                title: { display: false }
+              },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: 'Sound Level (dB)',
+                    font: { size: 10 }
+                  },
+                  ticks: { font: { size: 9 } }
+                },
+                y: {
+                  ticks: { font: { size: 9 } }
+                }
+              }
+            }
+          });
+        }
       } else {
         // Default time-series chart
         const ctx = document.getElementById('time-series-chart');
