@@ -1,72 +1,4 @@
 services:
-  # PostgreSQL with TimescaleDB extension for metadata and relational data
-  # Note: Time-series sensor data is now stored in VictoriaMetrics
-  # This database stores: sensor metadata, report history, user configs
-  timescaledb:
-    image: timescale/timescaledb:latest-pg16
-    container_name: iot-timescaledb
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME:-madison_iot}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      TIMESCALEDB_TELEMETRY: 'off'
-    ports:
-      - "${DB_PORT:-5433}:5432"
-    volumes:
-      - timescale_data:/var/lib/postgresql/data
-      - ./docker/init-db:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - iot-network
-    profiles:
-      - metadata  # Optional: Use '--profile metadata' to include metadata storage
-
-  # IoT Report Generation Service
-  report-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: iot-report-service
-    restart: unless-stopped
-    environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      SERVER_PORT: ${SERVER_PORT:-3000}
-      DB_HOST: timescaledb
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-madison_iot}
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      VICTORIA_METRICS_LOCAL_URL: http://victoriametrics:8428
-      VICTORIA_METRICS_EXTERNAL_URL: ${VICTORIA_METRICS_EXTERNAL_URL}
-      VICTORIA_METRICS_EXTERNAL_TOKEN: ${VICTORIA_METRICS_EXTERNAL_TOKEN}
-      VICTORIA_METRICS_DEFAULT_SOURCE: ${VICTORIA_METRICS_DEFAULT_SOURCE:-external}
-      PUPPETEER_HEADLESS: 'true'
-      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-    ports:
-      - "${SERVER_PORT:-3000}:3000"
-    volumes:
-      - ./src:/app/src:ro
-      - ./public:/app/public:ro
-      - report_output:/app/reports
-      - logs:/app/logs
-    depends_on:
-      victoriametrics:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - iot-network
-
   # VictoriaMetrics - Primary time-series database for IoT sensor data
   # Stores: battery_voltage_mv, clamp_current_amperes, temperature_celsius,
   #         humidity_percent, light_lux, movement, noise_avg_db, noise_peak_db
@@ -96,49 +28,46 @@ services:
     networks:
       - iot-network
 
-  # Ollama for local LLM (Text-to-SQL) - Optional, can be enabled later
-  ollama:
-    image: ollama/ollama:latest
-    container_name: iot-ollama
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_models:/root/.ollama
-    networks:
-      - iot-network
-    profiles:
-      - ai-enabled  # Use 'docker-compose --profile ai-enabled up' to include this service
-
-  # pgAdmin for database management (development only)
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: iot-pgadmin
+  # IoT Report Generation Service
+  report-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iot-report-service
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      NODE_ENV: ${NODE_ENV:-production}
+      SERVER_PORT: ${SERVER_PORT:-3000}
+      VICTORIA_METRICS_LOCAL_URL: http://victoriametrics:8428
+      VICTORIA_METRICS_EXTERNAL_URL: ${VICTORIA_METRICS_EXTERNAL_URL}
+      VICTORIA_METRICS_EXTERNAL_TOKEN: ${VICTORIA_METRICS_EXTERNAL_TOKEN}
+      VICTORIA_METRICS_DEFAULT_SOURCE: ${VICTORIA_METRICS_DEFAULT_SOURCE:-external}
+      PUPPETEER_HEADLESS: 'true'
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
-      - "5050:80"
+      - "${SERVER_PORT:-3000}:3000"
     volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro
+      - report_output:/app/reports
+      - logs:/app/logs
     depends_on:
-      - timescaledb
+      victoriametrics:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - iot-network
-    profiles:
-      - dev  # Use 'docker-compose --profile dev up' to include this service
+
 
 volumes:
-  timescale_data:
-    name: iot_timescale_data
   victoria_data:
     name: iot_victoria_data
-  ollama_models:
-    name: iot_ollama_models
-  pgadmin_data:
-    name: iot_pgadmin_data
   report_output:
     name: iot_report_output
   logs:
