@@ -401,8 +401,8 @@ class ReportMetricsService {
             }
 
             // Calculate segmented bar widths and positions
-            // Portrait: max 664px, Landscape: max 460px
-            const portraitMaxWidth = 664;
+            // Portrait: max 420px (adjusted for two-column layout), Landscape: max 460px
+            const portraitMaxWidth = 420;
             const landscapeMaxWidth = 460;
 
             // Calculate widths for each segment
@@ -432,10 +432,17 @@ class ReportMetricsService {
             const comfortLabelXLandscape = comfortBarStartLandscape + (comfortBarWidthLandscape / 2);
             const hotLabelXLandscape = hotBarStartLandscape + (hotBarWidthLandscape / 2);
 
+            // Calculate circular progress indicator offset
+            // Circle circumference: 2 * π * r = 2 * π * 40 = 251.2
+            // stroke-dashoffset = circumference - (circumference * percentage / 100)
+            const circleCircumference = 251.2;
+            const comfortCircleOffset = circleCircumference - (circleCircumference * comfortPercentage / 100);
+
             return {
                 comfort_percentage: comfortPercentage,
                 cold_percentage: coldPercentage,
                 hot_percentage: hotPercentage,
+                comfort_circle_offset: comfortCircleOffset.toFixed(2),
 
                 // Portrait dimensions
                 cold_bar_width_portrait: coldBarWidthPortrait,
@@ -471,6 +478,7 @@ class ReportMetricsService {
                 comfort_percentage: 0,
                 cold_percentage: 0,
                 hot_percentage: 0,
+                comfort_circle_offset: '251.2',
 
                 // Portrait dimensions
                 cold_bar_width_portrait: 0,

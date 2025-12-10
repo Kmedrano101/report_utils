@@ -24,6 +24,8 @@ const TEMPLATE_TEXT_TRANSLATIONS = {
   'Highest Noise Events': { es: 'Eventos de ruido más altos' },
   Hotspots: { es: 'Zonas calientes' },
   'Hotspots (Top 3 Highest Temperature)': { es: 'Zonas calientes (3 temperaturas más altas)' },
+  HOTSPOT: { es: 'ZONA CALIENTE' },
+  'COLD ZONE': { es: 'ZONA FRÍA' },
   'Key Metrics': { es: 'Métricas clave' },
   'Last Update': { es: 'Última actualización' },
   Location: { es: 'Ubicación' },
