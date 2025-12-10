@@ -20,12 +20,12 @@ const envSchema = Joi.object({
   SERVER_PORT: Joi.number().port().default(3000),
   HOST: Joi.string().uri().default('http://localhost:3000'),
 
-  // Database
-  DB_HOST: Joi.string().required(),
+  // Database (optional - only needed if using TimescaleDB)
+  DB_HOST: Joi.string().optional(),
   DB_PORT: Joi.number().port().default(5432),
-  DB_NAME: Joi.string().required(),
-  DB_USER: Joi.string().required(),
-  DB_PASSWORD: Joi.string().required(),
+  DB_NAME: Joi.string().optional(),
+  DB_USER: Joi.string().optional(),
+  DB_PASSWORD: Joi.string().optional(),
   DB_POOL_MIN: Joi.number().min(1).default(2),
   DB_POOL_MAX: Joi.number().min(1).default(10),
 
@@ -33,11 +33,6 @@ const envSchema = Joi.object({
   PUPPETEER_HEADLESS: Joi.string().valid('true', 'false', 'new').default('true'),
   PUPPETEER_TIMEOUT: Joi.number().min(1000).default(30000),
   PUPPETEER_EXECUTABLE_PATH: Joi.string().optional(),
-
-  // Ollama (optional)
-  OLLAMA_ENABLED: Joi.string().valid('true', 'false').default('false'),
-  OLLAMA_HOST: Joi.string().uri().default('http://localhost:11434'),
-  OLLAMA_MODEL: Joi.string().default('qwen2.5-coder:7b'),
 
   // Report settings
   REPORT_TIMEOUT: Joi.number().min(1000).default(60000),
@@ -47,11 +42,10 @@ const envSchema = Joi.object({
   LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').default('info'),
   LOG_FILE: Joi.string().default('logs/app.log'),
 
-  // VictoriaMetrics
-  VICTORIA_METRICS_LOCAL_URL: Joi.string().uri().default('http://localhost:8428'),
-  VICTORIA_METRICS_EXTERNAL_URL: Joi.string().uri().optional(),
-  VICTORIA_METRICS_EXTERNAL_TOKEN: Joi.string().optional(),
-  VICTORIA_METRICS_DEFAULT_SOURCE: Joi.string().valid('local', 'external').default('local')
+  // VictoriaMetrics (external only)
+  VICTORIA_METRICS_EXTERNAL_URL: Joi.string().uri().required(),
+  VICTORIA_METRICS_EXTERNAL_TOKEN: Joi.string().required(),
+  VICTORIA_METRICS_DEFAULT_SOURCE: Joi.string().valid('external').default('external')
 }).unknown(true);
 
 // Validate environment variables
@@ -99,12 +93,6 @@ const config = {
     ]
   },
 
-  ollama: {
-    enabled: envVars.OLLAMA_ENABLED === 'true',
-    host: envVars.OLLAMA_HOST,
-    model: envVars.OLLAMA_MODEL
-  },
-
   report: {
     timeout: envVars.REPORT_TIMEOUT,
     maxSizeMB: envVars.MAX_REPORT_SIZE_MB,
@@ -117,10 +105,9 @@ const config = {
   },
 
   victoriaMetrics: {
-    localUrl: envVars.VICTORIA_METRICS_LOCAL_URL,
-    externalUrl: envVars.VICTORIA_METRICS_EXTERNAL_URL || null,
-    externalToken: envVars.VICTORIA_METRICS_EXTERNAL_TOKEN || null,
-    defaultSource: envVars.VICTORIA_METRICS_DEFAULT_SOURCE
+    externalUrl: envVars.VICTORIA_METRICS_EXTERNAL_URL,
+    externalToken: envVars.VICTORIA_METRICS_EXTERNAL_TOKEN,
+    defaultSource: 'external'
   }
 };
 

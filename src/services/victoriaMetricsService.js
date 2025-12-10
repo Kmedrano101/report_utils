@@ -8,10 +8,9 @@ import config from '../config/index.js';
 
 class VictoriaMetricsService {
     constructor() {
-        this.localUrl = config.victoriaMetrics.localUrl;
         this.externalUrl = config.victoriaMetrics.externalUrl;
         this.externalToken = config.victoriaMetrics.externalToken;
-        this.defaultSource = config.victoriaMetrics.defaultSource || 'local';
+        this.defaultSource = 'external';
     }
 
     /**
@@ -44,45 +43,34 @@ class VictoriaMetricsService {
 
     /**
      * Check health of VictoriaMetrics instance
-     * @param {string} source - 'local' or 'external'
      * @returns {Promise<Object>} Health status
      */
-    async checkHealth(source = this.defaultSource) {
+    async checkHealth() {
         try {
-            const baseUrl = source === 'external' ? this.externalUrl : this.localUrl;
+            const baseUrl = this.externalUrl;
 
             if (!baseUrl) {
-                throw new Error(`${source} VictoriaMetrics URL not configured`);
+                throw new Error('VictoriaMetrics URL not configured');
             }
 
             const options = {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
-                }
-            };
-
-            if (source === 'external' && this.externalToken) {
-                options.headers['Authorization'] = `Basic ${this.externalToken}`;
-            }
-
-            // External API uses /query endpoint, local uses /health
-            let response;
-            if (source === 'external') {
-                // Use a simple query to check health
-                options.method = 'POST';
-                options.body = JSON.stringify({
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${this.externalToken}`
+                },
+                body: JSON.stringify({
                     query: 'iot_sensor_reading',
                     time: new Date().toISOString()
-                });
-                response = await fetch(`${baseUrl}/query`, options);
-            } else {
-                response = await fetch(`${baseUrl}/health`, options);
-            }
+                })
+            };
+
+            const response = await fetch(`${baseUrl}/query`, options);
 
             if (!response.ok) {
                 return {
                     healthy: false,
-                    source,
+                    source: 'external',
                     url: baseUrl,
                     error: `Health check failed with status ${response.status}`
                 };
@@ -90,38 +78,26 @@ class VictoriaMetricsService {
 
             let metricCount = 0;
             try {
-                // For external, we already have the response from health check
-                if (source === 'external') {
-                    const data = await response.json();
-                    metricCount = data.result ? data.result.length : 0;
-                } else {
-                    // For local, fetch metrics count
-                    const metricsUrl = `${baseUrl}/api/v1/label/__name__/values`;
-                    const metricsResponse = await fetch(metricsUrl);
-                    if (metricsResponse.ok) {
-                        const data = await metricsResponse.json();
-                        metricCount = data.data?.length || 0;
-                    }
-                }
+                const data = await response.json();
+                metricCount = data.result ? data.result.length : 0;
             } catch (e) {
-                logger.warn('Failed to get metrics count', { error: e.message, source });
+                logger.warn('Failed to get metrics count', { error: e.message });
             }
 
             return {
                 healthy: true,
-                source,
+                source: 'external',
                 url: baseUrl,
                 metricCount,
                 timestamp: new Date().toISOString()
             };
 
         } catch (error) {
-            const baseUrl = source === 'external' ? this.externalUrl : this.localUrl;
-            logger.error('VictoriaMetrics health check failed', { error: error.message, source, url: baseUrl });
+            logger.error('VictoriaMetrics health check failed', { error: error.message, url: this.externalUrl });
             return {
                 healthy: false,
-                source,
-                url: baseUrl,
+                source: 'external',
+                url: this.externalUrl,
                 error: error.message
             };
         }
@@ -134,55 +110,38 @@ class VictoriaMetricsService {
      * @returns {Promise<Object>} Query results
      */
     async query(query, options = {}) {
-        const {
-            time = new Date().toISOString(),
-            source = this.defaultSource
-        } = options;
+        const { time = new Date().toISOString() } = options;
 
         try {
-            const baseUrl = source === 'external' ? this.externalUrl : this.localUrl;
+            const baseUrl = this.externalUrl;
 
             if (!baseUrl) {
-                throw new Error(`${source} VictoriaMetrics URL not configured`);
+                throw new Error('VictoriaMetrics URL not configured');
             }
 
-            if (source === 'external') {
-                const response = await fetch(`${baseUrl}/query`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(this.externalToken && { 'Authorization': `Basic ${this.externalToken}` })
-                    },
-                    body: JSON.stringify({
-                        query,
-                        time: this.parseTimeRange(time)
-                    })
-                });
+            const response = await fetch(`${baseUrl}/query`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${this.externalToken}`
+                },
+                body: JSON.stringify({
+                    query,
+                    time: this.parseTimeRange(time)
+                })
+            });
 
-                const data = await response.json();
+            const data = await response.json();
 
-                return {
-                    success: response.ok,
-                    source,
-                    data: data.data || data,
-                    status: data.status
-                };
-
-            } else {
-                const params = new URLSearchParams({ query, time });
-                const response = await fetch(`${baseUrl}/api/v1/query?${params.toString()}`);
-                const data = await response.json();
-
-                return {
-                    success: response.ok,
-                    source,
-                    data: data.data || data,
-                    status: data.status
-                };
-            }
+            return {
+                success: response.ok,
+                source: 'external',
+                data: data.data || data,
+                status: data.status
+            };
 
         } catch (error) {
-            logger.error('VictoriaMetrics query failed', { error: error.message, query, source });
+            logger.error('VictoriaMetrics query failed', { error: error.message, query });
             throw error;
         }
     }
@@ -197,8 +156,7 @@ class VictoriaMetricsService {
         const {
             start,
             end = new Date().toISOString(),
-            step = '1h',
-            source = this.defaultSource
+            step = '1h'
         } = options;
 
         if (!start) {
@@ -206,99 +164,77 @@ class VictoriaMetricsService {
         }
 
         try {
-            const baseUrl = source === 'external' ? this.externalUrl : this.localUrl;
+            const baseUrl = this.externalUrl;
 
             if (!baseUrl) {
-                throw new Error(`${source} VictoriaMetrics URL not configured`);
+                throw new Error('VictoriaMetrics URL not configured');
             }
 
-            if (source === 'external') {
-                const response = await fetch(`${baseUrl}/query_range`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(this.externalToken && { 'Authorization': `Basic ${this.externalToken}` })
-                    },
-                    body: JSON.stringify({
-                        query,
-                        start: this.parseTimeRange(start),
-                        end: this.parseTimeRange(end),
-                        step
-                    })
-                });
+            const response = await fetch(`${baseUrl}/query_range`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${this.externalToken}`
+                },
+                body: JSON.stringify({
+                    query,
+                    start: this.parseTimeRange(start),
+                    end: this.parseTimeRange(end),
+                    step
+                })
+            });
 
-                const data = await response.json();
+            const data = await response.json();
 
-                return {
-                    success: response.ok,
-                    source,
-                    data: data.data || data,
-                    status: data.status
-                };
-
-            } else {
-                const params = new URLSearchParams({ query, start, end, step });
-                const response = await fetch(`${baseUrl}/api/v1/query_range?${params.toString()}`);
-                const data = await response.json();
-
-                return {
-                    success: response.ok,
-                    source,
-                    data: data.data || data,
-                    status: data.status
-                };
-            }
+            return {
+                success: response.ok,
+                source: 'external',
+                data: data.data || data,
+                status: data.status
+            };
 
         } catch (error) {
-            logger.error('VictoriaMetrics range query failed', { error: error.message, query, source });
+            logger.error('VictoriaMetrics range query failed', { error: error.message, query });
             throw error;
         }
     }
 
     /**
      * List all metric names
-     * @param {string} source - 'local' or 'external'
      * @returns {Promise<Array>} List of metric names
      */
-    async listMetrics(source = this.defaultSource) {
+    async listMetrics() {
         try {
-            const baseUrl = source === 'external' ? this.externalUrl : this.localUrl;
+            const baseUrl = this.externalUrl;
 
             if (!baseUrl) {
-                throw new Error(`${source} VictoriaMetrics URL not configured`);
+                throw new Error('VictoriaMetrics URL not configured');
             }
 
-            if (source === 'external') {
-                const response = await fetch(`${baseUrl}/query`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(this.externalToken && { 'Authorization': `Basic ${this.externalToken}` })
-                    },
-                    body: JSON.stringify({
-                        query: '{__name__!=""}'
-                    })
-                });
+            const response = await fetch(`${baseUrl}/query`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${this.externalToken}`
+                },
+                body: JSON.stringify({
+                    query: '{__name__!=""}'
+                })
+            });
 
-                const data = await response.json();
-                const metrics = new Set();
+            const data = await response.json();
+            const metrics = new Set();
 
-                data.data?.result?.forEach(result => {
-                    if (result.metric?.__name__) {
-                        metrics.add(result.metric.__name__);
-                    }
-                });
+            data.data?.result?.forEach(result => {
+                if (result.metric?.__name__) {
+                    metrics.add(result.metric.__name__);
+                }
+            });
 
-                return Array.from(metrics).sort();
-
-            } else {
-                const response = await fetch(`${baseUrl}/api/v1/label/__name__/values`);
-                const data = await response.json();
-                return data.data || [];
-            }
+            return Array.from(metrics).sort();
 
         } catch (error) {
-            logger.error('Failed to list metrics', { error: error.message, source });
+            logger.error('Failed to list metrics', { error: error.message });
             throw error;
         }
     }
@@ -306,28 +242,27 @@ class VictoriaMetricsService {
     /**
      * Get label values for a specific label
      * @param {string} label - Label name
-     * @param {string} source - 'local' or 'external'
      * @returns {Promise<Array>} List of label values
      */
-    async getLabelValues(label, source = this.defaultSource) {
+    async getLabelValues(label) {
         try {
-            const baseUrl = source === 'external' ? this.externalUrl : this.localUrl;
+            const baseUrl = this.externalUrl;
 
             if (!baseUrl) {
-                throw new Error(`${source} VictoriaMetrics URL not configured`);
+                throw new Error('VictoriaMetrics URL not configured');
             }
 
             const response = await fetch(`${baseUrl}/api/v1/label/${label}/values`, {
-                headers: source === 'external' && this.externalToken
-                    ? { 'Authorization': `Basic ${this.externalToken}` }
-                    : {}
+                headers: {
+                    'Authorization': `Basic ${this.externalToken}`
+                }
             });
 
             const data = await response.json();
             return data.data || [];
 
         } catch (error) {
-            logger.error('Failed to get label values', { error: error.message, label, source });
+            logger.error('Failed to get label values', { error: error.message, label });
             throw error;
         }
     }
@@ -342,15 +277,13 @@ class VictoriaMetricsService {
             // Update configuration
             this.externalUrl = newConfig.url;
             this.externalToken = newConfig.token;
-            this.defaultSource = newConfig.defaultSource || 'external';
 
             logger.info('VictoriaMetrics configuration updated', {
-                url: newConfig.url,
-                defaultSource: this.defaultSource
+                url: newConfig.url
             });
 
             // Test the connection
-            const healthResult = await this.checkHealth('external');
+            const healthResult = await this.checkHealth();
 
             if (healthResult.healthy) {
                 logger.info('VictoriaMetrics connection successful');

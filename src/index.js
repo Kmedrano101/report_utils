@@ -93,15 +93,10 @@ app.get('/health', async (req, res) => {
     const dbHealth = await database.healthCheck();
     const pdfHealth = await pdfGenerationService.healthCheck();
 
-    // Check VictoriaMetrics health (both local and external if configured)
+    // Check VictoriaMetrics health
     let vmHealth = null;
     try {
-      // Check external VictoriaMetrics if configured
-      if (config.victoriaMetrics.externalUrl) {
-        vmHealth = await victoriaMetricsService.checkHealth('external');
-      } else if (config.victoriaMetrics.localUrl) {
-        vmHealth = await victoriaMetricsService.checkHealth('local');
-      }
+      vmHealth = await victoriaMetricsService.checkHealth();
     } catch (error) {
       logger.warn('VictoriaMetrics health check failed', { error: error.message });
     }

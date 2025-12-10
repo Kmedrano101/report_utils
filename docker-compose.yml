@@ -1,33 +1,4 @@
 services:
-  # VictoriaMetrics - Primary time-series database for IoT sensor data
-  # Stores: battery_voltage_mv, clamp_current_amperes, temperature_celsius,
-  #         humidity_percent, light_lux, movement, noise_avg_db, noise_peak_db
-  victoriametrics:
-    image: victoriametrics/victoria-metrics:latest
-    container_name: iot-victoriametrics
-    restart: unless-stopped
-    ports:
-      - "8428:8428"  # HTTP API
-      - "8089:8089"  # InfluxDB line protocol
-      - "2003:2003"  # Graphite plaintext
-      - "4242:4242"  # OpenTSDB
-    volumes:
-      - victoria_data:/victoria-metrics-data
-    command:
-      - '--storageDataPath=/victoria-metrics-data'
-      - '--httpListenAddr=:8428'
-      - '--retentionPeriod=12'  # Keep data for 12 months
-      - '--maxLabelsPerTimeseries=50'
-      - '--search.maxQueryDuration=300s'
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 -O /dev/null http://127.0.0.1:8428/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    networks:
-      - iot-network
-
   # IoT Report Generation Service
   report-service:
     build:
@@ -38,10 +9,9 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       SERVER_PORT: ${SERVER_PORT:-3000}
-      VICTORIA_METRICS_LOCAL_URL: http://victoriametrics:8428
       VICTORIA_METRICS_EXTERNAL_URL: ${VICTORIA_METRICS_EXTERNAL_URL}
       VICTORIA_METRICS_EXTERNAL_TOKEN: ${VICTORIA_METRICS_EXTERNAL_TOKEN}
-      VICTORIA_METRICS_DEFAULT_SOURCE: ${VICTORIA_METRICS_DEFAULT_SOURCE:-external}
+      VICTORIA_METRICS_DEFAULT_SOURCE: external
       PUPPETEER_HEADLESS: 'true'
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
       LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -52,9 +22,6 @@ services:
       - ./public:/app/public:ro
       - report_output:/app/reports
       - logs:/app/logs
-    depends_on:
-      victoriametrics:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 30s
@@ -66,8 +33,6 @@ services:
 
 
 volumes:
-  victoria_data:
-    name: iot_victoria_data
   report_output:
     name: iot_report_output
   logs:
