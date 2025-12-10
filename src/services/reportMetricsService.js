@@ -18,28 +18,45 @@ class ReportMetricsService {
      * @param {string} params.startDate - Start date (ISO format)
      * @param {string} params.endDate - End date (ISO format)
      * @param {string} params.source - Data source ('local' or 'external')
+     * @param {string} params.reportType - Report type ('hotspots', 'power', 'sound')
      * @returns {Promise<Object>} All calculated metrics
      */
     async getReportMetrics(params) {
-        const { startDate, endDate, source = this.defaultSource } = params;
+        const { startDate, endDate, source = this.defaultSource, reportType = 'all' } = params;
 
         try {
-            logger.info('Calculating report metrics', { startDate, endDate, source });
+            logger.info('Calculating report metrics', { startDate, endDate, source, reportType });
 
             // Calculate all metrics in parallel
+            const promises = [
+                this.getTemperatureMetrics(startDate, endDate, source),
+                this.getHumidityMetrics(startDate, endDate, source),
+                this.getSoundMetrics(startDate, endDate, source),
+                this.getPowerMetrics(startDate, endDate, source),
+                this.getSensorCounts(source, reportType)
+            ];
+
+            // Add report-specific traffic light indicators
+            if (reportType === 'hotspots' || reportType === 'temperature') {
+                promises.push(this.getTemperatureComfortMetrics(startDate, endDate, source));
+            }
+            if (reportType === 'sound' || reportType === 'noise') {
+                promises.push(this.getAcousticComfortMetrics(startDate, endDate, source));
+            }
+            if (reportType === 'power') {
+                promises.push(this.getPhaseBalanceMetrics(startDate, endDate, source));
+            }
+
+            const results = await Promise.all(promises);
+
             const [
                 temperature,
                 humidity,
                 sound,
                 power,
-                sensorCounts
-            ] = await Promise.all([
-                this.getTemperatureMetrics(startDate, endDate, source),
-                this.getHumidityMetrics(startDate, endDate, source),
-                this.getSoundMetrics(startDate, endDate, source),
-                this.getPowerMetrics(startDate, endDate, source),
-                this.getSensorCounts(source)
-            ]);
+                sensorCounts,
+                trafficLightIndicator
+            ] = results;
 
             const metrics = {
                 // Temperature metrics
@@ -65,6 +82,9 @@ class ReportMetricsService {
                 active_sensors: sensorCounts.active,
                 active_count: sensorCounts.active,
                 offline_count: sensorCounts.offline,
+
+                // Traffic light indicators (if available)
+                ...(trafficLightIndicator || {}),
 
                 // Metadata
                 date_range: `${this.formatDate(startDate)} - ${this.formatDate(endDate)}`,
@@ -239,19 +259,46 @@ class ReportMetricsService {
     }
 
     /**
-     * Get sensor counts (total, active, offline)
-     * Only counts sensors: t1-t30, s1-s7, c1-c2
-     * Total = sensors with data in last 1 hour (actively sending)
-     * Expected = 39 sensors (t1-t30=30, s1-s7=7, c1-c2=2)
+     * Get sensor counts (total, active, offline) filtered by report type
+     * @param {string} source - Data source ('local' or 'external')
+     * @param {string} reportType - Report type ('hotspots', 'power', 'sound')
+     * Temperature sensors: tx, t1, t2, ... t30 (31 sensors)
+     * Sound sensors: s1-s7 (7 sensors)
+     * Power sensors: c1-c2 (2 sensors)
      */
-    async getSensorCounts(source) {
+    async getSensorCounts(source, reportType = 'all') {
         try {
-            // Filter for specific sensors: t1-t30, s1-s7, c1-c2
-            // Using regex to match: t[1-9]|t[12][0-9]|t30|s[1-7]|c[12]
-            const sensorFilter = 'sensor_name=~"t[1-9]|t[12][0-9]|t30|s[1-7]|c[12]"';
+            let sensorFilter = '';
+            let expectedTotal = 0;
 
-            // Expected total sensors: t1-t30 (30) + s1-s7 (7) + c1-c2 (2) = 39
-            const expectedTotal = 39;
+            // Filter sensors based on report type
+            switch (reportType) {
+                case 'hotspots':
+                case 'temperature':
+                    // Temperature sensors: tx, t1-t30
+                    sensorFilter = 'sensor_name=~"tx|t[1-9]|t[12][0-9]|t30"';
+                    expectedTotal = 31; // tx + t1-t30
+                    break;
+
+                case 'sound':
+                case 'noise':
+                    // Sound sensors: s1-s7
+                    sensorFilter = 'sensor_name=~"s[1-7]"';
+                    expectedTotal = 7;
+                    break;
+
+                case 'power':
+                    // Power sensors: c1-c2
+                    sensorFilter = 'sensor_name=~"c[12]"';
+                    expectedTotal = 2;
+                    break;
+
+                default:
+                    // All sensors: tx, t1-t30, s1-s7, c1-c2
+                    sensorFilter = 'sensor_name=~"tx|t[1-9]|t[12][0-9]|t30|s[1-7]|c[12]"';
+                    expectedTotal = 40; // tx + t1-t30 (31) + s1-s7 (7) + c1-c2 (2)
+                    break;
+            }
 
             // Query to get sensors with recent data (last 1 hour = active)
             const activeSensorsQuery = `count(count by (sensor_name) (iot_sensor_reading{${sensorFilter}}[1h]))`;
@@ -265,7 +312,7 @@ class ReportMetricsService {
             return { total, active, offline };
 
         } catch (error) {
-            logger.error('Failed to get sensor counts', { error: error.message });
+            logger.error('Failed to get sensor counts', { error: error.message, reportType });
             return { total: 0, active: 0, offline: 0 };
         }
     }
@@ -305,6 +352,348 @@ class ReportMetricsService {
             month: '2-digit',
             day: '2-digit'
         });
+    }
+
+    /**
+     * Calculate temperature comfort metrics
+     * Comfort zone: 20-26°C
+     * @returns {Object} Temperature comfort indicators
+     */
+    async getTemperatureComfortMetrics(startDate, endDate, source) {
+        try {
+            const sensorFilter = 'sensor_type="temperature", sensor_name=~"tx|t[1-9]|t[12][0-9]|t30"';
+            const timeRange = this.getTimeRange(startDate, endDate);
+
+            // Query to count readings in different temperature ranges
+            const comfortQuery = `count_over_time(iot_sensor_reading{${sensorFilter}}[${timeRange}] >= 20 <= 26)`;
+            const coldQuery = `count_over_time(iot_sensor_reading{${sensorFilter}}[${timeRange}] < 20)`;
+            const hotQuery = `count_over_time(iot_sensor_reading{${sensorFilter}}[${timeRange}] > 26)`;
+
+            const [comfortResult, coldResult, hotResult] = await Promise.all([
+                victoriaMetricsService.query(comfortQuery, { time: endDate, source }),
+                victoriaMetricsService.query(coldQuery, { time: endDate, source }),
+                victoriaMetricsService.query(hotQuery, { time: endDate, source })
+            ]);
+
+            // Sum all readings across sensors
+            const comfortReadings = comfortResult.data?.result?.reduce((sum, r) => sum + parseFloat(r.values?.[0] || 0), 0) || 0;
+            const coldReadings = coldResult.data?.result?.reduce((sum, r) => sum + parseFloat(r.values?.[0] || 0), 0) || 0;
+            const hotReadings = hotResult.data?.result?.reduce((sum, r) => sum + parseFloat(r.values?.[0] || 0), 0) || 0;
+
+            const totalReadings = comfortReadings + coldReadings + hotReadings;
+
+            // Calculate percentages
+            const comfortPercentage = totalReadings > 0 ? Math.round((comfortReadings / totalReadings) * 100) : 0;
+            const coldPercentage = totalReadings > 0 ? Math.round((coldReadings / totalReadings) * 100) : 0;
+            const hotPercentage = totalReadings > 0 ? Math.round((hotReadings / totalReadings) * 100) : 0;
+
+            // Determine traffic light status
+            let statusColor, statusText;
+            if (comfortPercentage >= 80) {
+                statusColor = '#10B981'; // Green
+                statusText = 'Excellent';
+            } else if (comfortPercentage >= 50) {
+                statusColor = '#F59E0B'; // Yellow
+                statusText = 'Warning';
+            } else {
+                statusColor = '#EF4444'; // Red
+                statusText = 'Critical';
+            }
+
+            // Calculate segmented bar widths and positions
+            // Portrait: max 664px, Landscape: max 460px
+            const portraitMaxWidth = 664;
+            const landscapeMaxWidth = 460;
+
+            // Calculate widths for each segment
+            const coldBarWidthPortrait = Math.round((coldPercentage / 100) * portraitMaxWidth);
+            const comfortBarWidthPortrait = Math.round((comfortPercentage / 100) * portraitMaxWidth);
+            const hotBarWidthPortrait = Math.round((hotPercentage / 100) * portraitMaxWidth);
+
+            const coldBarWidthLandscape = Math.round((coldPercentage / 100) * landscapeMaxWidth);
+            const comfortBarWidthLandscape = Math.round((comfortPercentage / 100) * landscapeMaxWidth);
+            const hotBarWidthLandscape = Math.round((hotPercentage / 100) * landscapeMaxWidth);
+
+            // Calculate start positions for each segment (x coordinate)
+            // Portrait starts at x=50
+            const comfortBarStartPortrait = 50 + coldBarWidthPortrait;
+            const hotBarStartPortrait = comfortBarStartPortrait + comfortBarWidthPortrait;
+
+            // Landscape starts at x=50
+            const comfortBarStartLandscape = 50 + coldBarWidthLandscape;
+            const hotBarStartLandscape = comfortBarStartLandscape + comfortBarWidthLandscape;
+
+            // Calculate label positions (center of each segment)
+            const coldLabelXPortrait = 50 + (coldBarWidthPortrait / 2);
+            const comfortLabelXPortrait = comfortBarStartPortrait + (comfortBarWidthPortrait / 2);
+            const hotLabelXPortrait = hotBarStartPortrait + (hotBarWidthPortrait / 2);
+
+            const coldLabelXLandscape = 50 + (coldBarWidthLandscape / 2);
+            const comfortLabelXLandscape = comfortBarStartLandscape + (comfortBarWidthLandscape / 2);
+            const hotLabelXLandscape = hotBarStartLandscape + (hotBarWidthLandscape / 2);
+
+            return {
+                comfort_percentage: comfortPercentage,
+                cold_percentage: coldPercentage,
+                hot_percentage: hotPercentage,
+
+                // Portrait dimensions
+                cold_bar_width_portrait: coldBarWidthPortrait,
+                comfort_bar_width_portrait: comfortBarWidthPortrait,
+                hot_bar_width_portrait: hotBarWidthPortrait,
+                comfort_bar_start_portrait: comfortBarStartPortrait,
+                hot_bar_start_portrait: hotBarStartPortrait,
+                cold_label_x_portrait: Math.round(coldLabelXPortrait),
+                comfort_label_x_portrait: Math.round(comfortLabelXPortrait),
+                hot_label_x_portrait: Math.round(hotLabelXPortrait),
+
+                // Landscape dimensions
+                cold_bar_width_landscape: coldBarWidthLandscape,
+                comfort_bar_width_landscape: comfortBarWidthLandscape,
+                hot_bar_width_landscape: hotBarWidthLandscape,
+                comfort_bar_start_landscape: comfortBarStartLandscape,
+                hot_bar_start_landscape: hotBarStartLandscape,
+                cold_label_x_landscape: Math.round(coldLabelXLandscape),
+                comfort_label_x_landscape: Math.round(comfortLabelXLandscape),
+                hot_label_x_landscape: Math.round(hotLabelXLandscape),
+
+                // Legacy properties for backward compatibility
+                comfort_bar_width: comfortBarWidthPortrait,
+                comfort_bar_width_landscape: comfortBarWidthLandscape,
+                comfort_bar_color: statusColor,
+                comfort_status_color: statusColor,
+                comfort_status_text: statusText
+            };
+
+        } catch (error) {
+            logger.error('Failed to calculate temperature comfort metrics', { error: error.message });
+            return {
+                comfort_percentage: 0,
+                cold_percentage: 0,
+                hot_percentage: 0,
+
+                // Portrait dimensions
+                cold_bar_width_portrait: 0,
+                comfort_bar_width_portrait: 0,
+                hot_bar_width_portrait: 0,
+                comfort_bar_start_portrait: 50,
+                hot_bar_start_portrait: 50,
+                cold_label_x_portrait: 50,
+                comfort_label_x_portrait: 50,
+                hot_label_x_portrait: 50,
+
+                // Landscape dimensions
+                cold_bar_width_landscape: 0,
+                comfort_bar_width_landscape: 0,
+                hot_bar_width_landscape: 0,
+                comfort_bar_start_landscape: 50,
+                hot_bar_start_landscape: 50,
+                cold_label_x_landscape: 50,
+                comfort_label_x_landscape: 50,
+                hot_label_x_landscape: 50,
+
+                // Legacy properties
+                comfort_bar_width: 0,
+                comfort_bar_width_landscape: 0,
+                comfort_bar_color: '#9CA3AF',
+                comfort_status_color: '#9CA3AF',
+                comfort_status_text: 'No Data'
+            };
+        }
+    }
+
+    /**
+     * Calculate acoustic comfort metrics
+     * Comfort zone: 35-45 dB, Critical threshold: 60 dB
+     * @returns {Object} Acoustic comfort indicators
+     */
+    async getAcousticComfortMetrics(startDate, endDate, source) {
+        try {
+            const timeRange = this.getTimeRange(startDate, endDate);
+
+            // Query to count readings in different sound level ranges
+            const comfortQuery = `count_over_time((iot_sensor_reading{sensor_type="soundAvg"} >= 35 and iot_sensor_reading{sensor_type="soundAvg"} <= 45)[${timeRange}])`;
+            const moderateQuery = `count_over_time((iot_sensor_reading{sensor_type="soundAvg"} > 45 and iot_sensor_reading{sensor_type="soundAvg"} < 60)[${timeRange}])`;
+            const criticalQuery = `count_over_time((iot_sensor_reading{sensor_type="soundAvg"} >= 60)[${timeRange}])`;
+
+            const [comfortResult, moderateResult, criticalResult] = await Promise.all([
+                victoriaMetricsService.query(comfortQuery, { time: endDate, source }),
+                victoriaMetricsService.query(moderateQuery, { time: endDate, source }),
+                victoriaMetricsService.query(criticalQuery, { time: endDate, source })
+            ]);
+
+            // Sum all readings across sensors
+            // Each result entry has format: { metric: {...}, value: [timestamp, "count"] }
+            const comfortReadings = comfortResult.data?.result?.reduce((sum, r) => {
+                const value = parseFloat(r.value?.[1] || r.values?.[0]?.[1] || 0);
+                return sum + value;
+            }, 0) || 0;
+            const moderateReadings = moderateResult.data?.result?.reduce((sum, r) => {
+                const value = parseFloat(r.value?.[1] || r.values?.[0]?.[1] || 0);
+                return sum + value;
+            }, 0) || 0;
+            const criticalReadings = criticalResult.data?.result?.reduce((sum, r) => {
+                const value = parseFloat(r.value?.[1] || r.values?.[0]?.[1] || 0);
+                return sum + value;
+            }, 0) || 0;
+
+            logger.info('Acoustic comfort readings', {
+                comfortReadings,
+                moderateReadings,
+                criticalReadings,
+                totalReadings: comfortReadings + moderateReadings + criticalReadings
+            });
+
+            const totalReadings = comfortReadings + moderateReadings + criticalReadings;
+
+            // Calculate percentages
+            const comfortPercentage = totalReadings > 0 ? Math.round((comfortReadings / totalReadings) * 100) : 0;
+            const moderatePercentage = totalReadings > 0 ? Math.round((moderateReadings / totalReadings) * 100) : 0;
+            const criticalPercentage = totalReadings > 0 ? Math.round((criticalReadings / totalReadings) * 100) : 0;
+
+            // Determine traffic light status
+            let statusColor, statusText;
+            if (comfortPercentage >= 70) {
+                statusColor = '#10B981'; // Green
+                statusText = 'Comfort Zone';
+            } else if (comfortPercentage >= 40) {
+                statusColor = '#F59E0B'; // Yellow
+                statusText = 'Moderate';
+            } else {
+                statusColor = '#EF4444'; // Red
+                statusText = 'Critical';
+            }
+
+            // Calculate wave amplitude based on average sound level
+            // Map 35-60 dB to Y-coordinate 10-50 (lower Y = higher amplitude)
+            const avgSoundValue = parseFloat(this.avgSound || 45);
+            const waveAmplitude = avgSoundValue <= 35 ? 10 :
+                                 avgSoundValue >= 60 ? 50 :
+                                 Math.round(10 + ((avgSoundValue - 35) / 25) * 40);
+
+            return {
+                acoustic_comfort_percentage: comfortPercentage,
+                acoustic_moderate_percentage: moderatePercentage,
+                acoustic_critical_percentage: criticalPercentage,
+                acoustic_wave_color: statusColor,
+                acoustic_wave_amplitude: waveAmplitude,
+                acoustic_status_color: statusColor,
+                acoustic_status_text: statusText
+            };
+
+        } catch (error) {
+            logger.error('Failed to calculate acoustic comfort metrics', { error: error.message });
+            return {
+                acoustic_comfort_percentage: 0,
+                acoustic_moderate_percentage: 0,
+                acoustic_critical_percentage: 0,
+                acoustic_wave_color: '#9CA3AF',
+                acoustic_wave_amplitude: 30,
+                acoustic_status_color: '#9CA3AF',
+                acoustic_status_text: 'No Data'
+            };
+        }
+    }
+
+    /**
+     * Calculate three-phase load balance metrics
+     * Queries current clamp sensors c1 and c2 with 4 channels each
+     * @returns {Object} Phase balance indicators
+     */
+    async getPhaseBalanceMetrics(startDate, endDate, source) {
+        try {
+            const timeRange = this.getTimeRange(startDate, endDate);
+
+            // Query average current for each channel
+            // Assuming: C1_Ch1, C1_Ch2, C1_Ch3 = F1, F2, F3 respectively
+            // C2 channels provide backup/redundant measurements
+            const f1Query = `avg_over_time(iot_sensor_reading{sensor_type="current_clamp_1"}[${timeRange}])`;
+            const f2Query = `avg_over_time(iot_sensor_reading{sensor_type="current_clamp_2"}[${timeRange}])`;
+            const f3Query = `avg_over_time(iot_sensor_reading{sensor_type="current_clamp_3"}[${timeRange}])`;
+
+            const [f1Result, f2Result, f3Result] = await Promise.all([
+                victoriaMetricsService.query(f1Query, { time: endDate, source }),
+                victoriaMetricsService.query(f2Query, { time: endDate, source }),
+                victoriaMetricsService.query(f3Query, { time: endDate, source })
+            ]);
+
+            // Get average current for each phase
+            const f1Current = parseFloat(f1Result.data?.result?.[0]?.values?.[0] || 0);
+            const f2Current = parseFloat(f2Result.data?.result?.[0]?.values?.[0] || 0);
+            const f3Current = parseFloat(f3Result.data?.result?.[0]?.values?.[0] || 0);
+
+            const totalCurrent = f1Current + f2Current + f3Current;
+
+            // Calculate load percentages
+            const f1Percentage = totalCurrent > 0 ? Math.round((f1Current / totalCurrent) * 100) : 33;
+            const f2Percentage = totalCurrent > 0 ? Math.round((f2Current / totalCurrent) * 100) : 33;
+            const f3Percentage = totalCurrent > 0 ? Math.round((f3Current / totalCurrent) * 100) : 34;
+
+            // Calculate bar widths (portrait: max 180px, landscape: max 360px)
+            const f1BarWidth = Math.round((f1Percentage / 100) * 180);
+            const f2BarWidth = Math.round((f2Percentage / 100) * 180);
+            const f3BarWidth = Math.round((f3Percentage / 100) * 180);
+            const f1BarWidthLandscape = Math.round((f1Percentage / 100) * 360);
+            const f2BarWidthLandscape = Math.round((f2Percentage / 100) * 360);
+            const f3BarWidthLandscape = Math.round((f3Percentage / 100) * 360);
+
+            // Calculate deviation from ideal balance (33.33%)
+            const idealPercentage = 33.33;
+            const f1Deviation = Math.abs(f1Percentage - idealPercentage);
+            const f2Deviation = Math.abs(f2Percentage - idealPercentage);
+            const f3Deviation = Math.abs(f3Percentage - idealPercentage);
+            const maxDeviation = Math.round(Math.max(f1Deviation, f2Deviation, f3Deviation));
+
+            // Determine traffic light status
+            let statusColor, statusText, deviationColor;
+            if (maxDeviation <= 5) {
+                statusColor = '#10B981'; // Green
+                deviationColor = '#10B981';
+                statusText = 'Balanced';
+            } else if (maxDeviation <= 15) {
+                statusColor = '#F59E0B'; // Yellow
+                deviationColor = '#F59E0B';
+                statusText = 'Moderate Imbalance';
+            } else {
+                statusColor = '#EF4444'; // Red
+                deviationColor = '#EF4444';
+                statusText = 'Critical Imbalance';
+            }
+
+            return {
+                phase_f1_percentage: f1Percentage,
+                phase_f2_percentage: f2Percentage,
+                phase_f3_percentage: f3Percentage,
+                phase_f1_bar_width: f1BarWidth,
+                phase_f2_bar_width: f2BarWidth,
+                phase_f3_bar_width: f3BarWidth,
+                phase_f1_bar_width_landscape: f1BarWidthLandscape,
+                phase_f2_bar_width_landscape: f2BarWidthLandscape,
+                phase_f3_bar_width_landscape: f3BarWidthLandscape,
+                phase_balance_deviation: maxDeviation,
+                phase_balance_deviation_color: deviationColor,
+                phase_balance_status_color: statusColor,
+                phase_balance_status_text: statusText
+            };
+
+        } catch (error) {
+            logger.error('Failed to calculate phase balance metrics', { error: error.message });
+            return {
+                phase_f1_percentage: 33,
+                phase_f2_percentage: 33,
+                phase_f3_percentage: 34,
+                phase_f1_bar_width: 59,
+                phase_f2_bar_width: 59,
+                phase_f3_bar_width: 61,
+                phase_f1_bar_width_landscape: 119,
+                phase_f2_bar_width_landscape: 119,
+                phase_f3_bar_width_landscape: 122,
+                phase_balance_deviation: 0,
+                phase_balance_deviation_color: '#9CA3AF',
+                phase_balance_status_color: '#9CA3AF',
+                phase_balance_status_text: 'No Data'
+            };
+        }
     }
 }
 

@@ -927,7 +927,8 @@ class ReportController {
       const baseMetrics = await reportMetricsService.getReportMetrics({
         startDate,
         endDate,
-        source
+        source,
+        reportType: 'hotspots'
       });
 
       // Fetch hotspots and cold zones data
@@ -1052,7 +1053,8 @@ class ReportController {
       const htmlOptions = {
         layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
         pageSize: pageSize.toUpperCase(),
-        chartType: 'temperature-comparison'
+        chartType: 'temperature-comparison',
+        locale
       };
 
       // Prepare chart data for temperature comparison chart
@@ -1138,7 +1140,8 @@ class ReportController {
       const baseMetrics = await reportMetricsService.getReportMetrics({
         startDate,
         endDate,
-        source
+        source,
+        reportType: 'power'
       });
 
       // Fetch power consumption analysis data
@@ -1222,7 +1225,8 @@ class ReportController {
       const htmlOptions = {
         layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
         pageSize: pageSize.toUpperCase(),
-        chartType: 'consumption-comparison'
+        chartType: 'consumption-comparison',
+        locale
       };
 
       // Prepare chart data for consumption comparison chart
@@ -1308,7 +1312,8 @@ class ReportController {
       const baseMetrics = await reportMetricsService.getReportMetrics({
         startDate,
         endDate,
-        source
+        source,
+        reportType: 'sound'
       });
 
       // Fetch sound analysis data
@@ -1392,7 +1397,8 @@ class ReportController {
       const htmlOptions = {
         layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
         pageSize: pageSize.toUpperCase(),
-        chartType: 'noise-comparison'
+        chartType: 'noise-comparison',
+        locale
       };
 
       // Prepare chart data for noise comparison chart

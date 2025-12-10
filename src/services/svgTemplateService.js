@@ -467,11 +467,13 @@ class SvgTemplateService {
    * Generate HTML wrapper for SVG with Chart.js support
    * @param {string} svgContent - SVG content
    * @param {Object} chartData - Chart data for Chart.js
+   * @param {Object} options - Options including locale
    * @returns {string} Complete HTML document
    */
   generateHtmlWithSvg(svgContent, chartData = null, options = {}) {
     const pageSize = (options.pageSize || 'A4').toUpperCase();
     const isLandscape = options.layout === 'landscape';
+    const locale = options.locale || 'es';
     const dimensions = {
       A4: { portrait: { width: '210mm', height: '297mm' }, landscape: { width: '297mm', height: '210mm' } },
       LETTER: { portrait: { width: '216mm', height: '279mm' }, landscape: { width: '279mm', height: '216mm' } },
@@ -570,6 +572,10 @@ class SvgTemplateService {
         const ctx = document.getElementById('consumption-comparison-chart');
         if (ctx) {
           const chartData = ${JSON.stringify(chartData)};
+          const locale = '${locale}';
+          const xAxisLabel = locale === 'es' ? 'Fases' : 'Phases';
+          const yAxisLabel = locale === 'es' ? 'Consumo (A)' : 'Consumption (A)';
+
           new Chart(ctx, {
             type: 'bar',
             data: chartData,
@@ -584,7 +590,7 @@ class SvgTemplateService {
                 x: {
                   title: {
                     display: true,
-                    text: 'Channels',
+                    text: xAxisLabel,
                     font: { size: 10 }
                   },
                   ticks: { font: { size: 9 } }
@@ -593,7 +599,7 @@ class SvgTemplateService {
                   beginAtZero: true,
                   title: {
                     display: true,
-                    text: 'Consumption (A)',
+                    text: yAxisLabel,
                     font: { size: 10 }
                   },
                   ticks: { font: { size: 9 } }

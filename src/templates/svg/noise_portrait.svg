@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width='210mm' height='297mm' viewBox="0 0 794 1123">
   <!-- A4 Portrait: 210mm x 297mm -->
-  <!-- Template: Sound Levels - Noise Pollution Analysis Report (Vertical) -->
+  <!-- Template: Sound Levels - Noise Pollution Analysis Report (Vertical) - PROFESSIONAL VERSION -->
 
-  <!-- Styles -->
+  <!-- ========================================= -->
+  <!-- DEFINITIONS (Styles, Gradients, Filters) -->
+  <!-- ========================================= -->
   <defs>
     <style type="text/css">
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
       .metric-title { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: {{metric_title_color}}; text-transform: uppercase; letter-spacing: 0.05em; }
       .metric-value { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; fill: {{metric_value_color}}; }
@@ -17,21 +19,52 @@
       .table-small { font-family: 'Inter', sans-serif; font-size: 9px; fill: {{table_header_color}}; }
 
       .card { fill: #ffffff; stroke: {{card_border_color}}; stroke-width: 1; }
+      .card-elevated { fill: #ffffff; stroke: {{card_border_color}}; stroke-width: 1; filter: url(#dropShadow); }
       .card-temperature { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
-      .card-humidity { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
-      .card-sound { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
-      .card-power { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
       .card-noise { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
       .card-details { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
       .divider { stroke: {{card_border_color}}; stroke-width: 0.8; }
     </style>
+
+    <!-- Drop shadow for card elevation -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.12"/>
+    </filter>
+
+    <!-- Glass overlay effect -->
+    <linearGradient id="glassOverlay" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0.08"/>
+      <stop offset="55%" stop-color="#000000" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.12"/>
+    </linearGradient>
+
+    <!-- Noise level gradients -->
+    <linearGradient id="lowNoiseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="50%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <linearGradient id="normalNoiseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <linearGradient id="highNoiseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F87171"/>
+      <stop offset="50%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#DC2626"/>
+    </linearGradient>
+
   </defs>
 
   <!-- Background -->
   <rect width="794" height="1123" fill="#FFFFFF"/>
 
   <!-- ========================================= -->
-  <!-- HEADER SECTION (Customizable) -->
+  <!-- HEADER SECTION -->
   <!-- ========================================= -->
   <g id="header">
     <rect width="794" height="140" fill="{{header_bg}}"/>
@@ -45,137 +78,154 @@
   </g>
 
   <!-- ========================================= -->
-  <!-- CONTENT AREA STARTS HERE -->
+  <!-- REPORT INFO BAR -->
   <!-- ========================================= -->
-
-  <!-- Report Info Bar -->
   <g id="report-info">
-    <rect x="30" y="160" width="734" height="45" class="card" rx="4"/>
-    <text x="50" y="177" class="table-header">Period</text>
-    <text x="50" y="194" class="table-text">{{date_range}}</text>
+    <rect x="30" y="160" width="734" height="48" class="card-elevated" rx="6" ry="6"/>
 
-    <text x="280" y="177" class="table-header">Building</text>
-    <text x="280" y="194" class="table-text">{{building_name}}</text>
-
-    <text x="480" y="177" class="table-header">Total Sensors</text>
-    <text x="480" y="194" class="metric-value" font-size="18">{{total_sensors}}</text>
-
-    <text x="630" y="177" class="table-header">Active</text>
-    <text x="630" y="194" class="metric-value" font-size="18" fill="{{accent_primary}}">{{active_sensors}}</text>
-  </g>
-
-  <!-- KPI Metric Cards Section -->
-  <g id="kpi-metrics">
-    <text x="30" y="240" class="section-header">Key Metrics</text>
-
-    <!-- 1. Temperature Card -->
-    <g id="metric-temperature">
-      <rect x="30" y="250" width="175" height="85" class="card-temperature" rx="6"/>
-      <text x="45" y="268" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Temperature</text>
-      <!-- Icon + Value -->
-      <g transform="translate(45, 280)">
-        <path d="M8 14.5c-1.4 0-2.5-1.1-2.5-2.5 0-.9.5-1.7 1.2-2.1V4c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v5.9c.7.4 1.2 1.2 1.2 2.1 0 1.4-1.1 2.5-2.5 2.5z" fill="#f59e0b" opacity="0.9"/>
-        <circle cx="8" cy="12" r="1.5" fill="#b45309"/>
-        <rect x="7" y="4" width="2" height="6" fill="#b45309"/>
-      </g>
-      <text x="68" y="298" fill="#ffffff" font-family="Inter, sans-serif" font-size="22" font-weight="700">{{avg_temperature}}</text>
-      <text x="145" y="298" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">°C</text>
-      <text x="45" y="328" fill="#64748b" font-family="Inter, sans-serif" font-size="9">Range: {{temp_min}}°C - {{temp_max}}°C</text>
+    <!-- Building Name -->
+    <g transform="translate(50, 160)">
+      <text y="18" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280" letter-spacing="0.5">NOMBRE DEL EDIFICIO</text>
+      <text y="36" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#111827">{{building_name}}</text>
     </g>
 
-    <!-- 2. Humidity Card -->
-    <g id="metric-humidity">
-      <rect x="218" y="250" width="175" height="85" class="card-humidity" rx="6"/>
-      <text x="233" y="268" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Humidity</text>
-      <!-- Icon + Value -->
-      <g transform="translate(233, 280)">
-        <path d="M8 2s-6 6.5-6 10.5c0 3.3 2.7 6 6 6s6-2.7 6-6c0-4-6-10.5-6-10.5z" fill="#3b82f6" opacity="0.9"/>
-        <path d="M6 14c-1.1 0-2-.9-2-2 0-.8.4-1.5 1-1.9" stroke="#1e40af" stroke-width="1" fill="none"/>
-      </g>
-      <text x="256" y="298" fill="#ffffff" font-family="Inter, sans-serif" font-size="22" font-weight="700">{{avg_humidity}}</text>
-      <text x="333" y="298" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">%</text>
-      <text x="233" y="328" fill="#64748b" font-family="Inter, sans-serif" font-size="9">{{humidity_min}}% - {{humidity_max}}%</text>
+    <!-- Date Range -->
+    <g transform="translate(280, 160)">
+      <text y="18" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280" letter-spacing="0.5">PERIODO DEL INFORME</text>
+      <text y="36" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#111827">{{date_range}}</text>
     </g>
 
-    <!-- 3. Sound Level Card -->
-    <g id="metric-sound">
-      <rect x="406" y="250" width="175" height="85" class="card-sound" rx="6"/>
-      <text x="421" y="268" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Sound Level</text>
-      <!-- Icon + Value -->
-      <g transform="translate(421, 280)">
-        <path d="M3 9v6h4l5 5V4L7 9H3z" fill="#ec4899" opacity="0.9"/>
-        <path d="M14 8.5c.8.8.8 2.1 0 2.9M16 6.5c1.6 1.6 1.6 4.1 0 5.7" stroke="#be185d" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      </g>
-      <text x="444" y="298" fill="#ffffff" font-family="Inter, sans-serif" font-size="22" font-weight="700">{{avg_sound}}</text>
-      <text x="521" y="298" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">dB</text>
-      <text x="421" y="328" fill="#64748b" font-family="Inter, sans-serif" font-size="9">Peak: {{peak_sound}} dB</text>
+    <!-- Total Sensors -->
+    <g transform="translate(500, 160)">
+      <text y="18" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280" letter-spacing="0.5">TOTAL SENSORES</text>
+      <text y="38" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#111827">{{total_sensors}}</text>
     </g>
 
-    <!-- 4. Power Consumption Card -->
-    <g id="metric-power">
-      <rect x="594" y="250" width="170" height="85" class="card-power" rx="6"/>
-      <text x="609" y="268" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Total Power</text>
-      <!-- Icon + Value -->
-      <g transform="translate(609, 280)">
-        <path d="M13 2L3 14h6l-2 8 10-12h-6l2-8z" fill="#10b981" opacity="0.9"/>
-        <path d="M13 2L3 14h6l-2 8 10-12h-6l2-8z" stroke="#047857" stroke-width="0.5" fill="none"/>
-      </g>
-      <text x="632" y="298" fill="#ffffff" font-family="Inter, sans-serif" font-size="22" font-weight="700">{{total_power}}</text>
-      <text x="704" y="298" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">kWh</text>
-      <text x="609" y="328" fill="#64748b" font-family="Inter, sans-serif" font-size="9">Peak: {{peak_power}} A</text>
+    <!-- Active Sensors -->
+    <g transform="translate(640, 160)">
+      <text y="18" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280" letter-spacing="0.5">ACTIVOS</text>
+      <text y="38" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="{{accent_primary}}">{{active_sensors}}</text>
     </g>
   </g>
 
-  <!-- Sound Level Analysis Chart -->
+  <!-- ========================================= -->
+  <!-- ACOUSTIC COMFORT INDICATOR -->
+  <!-- ========================================= -->
+  <g id="acoustic-comfort-indicator">
+    <rect x="30" y="220" width="734" height="120" class="card-elevated" rx="8" ry="8"/>
+
+    <!-- Title -->
+    <g transform="translate(50, 248)">
+      <text font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#1F2937">
+        <tspan fill="#EF4444">🔊</tspan>
+        <tspan dx="6">Índice de Confort Acústico</tspan>
+      </text>
+    </g>
+
+    <!-- Sound Wave Visualization -->
+    <g id="sound-waves" transform="translate(50, 245)">
+      <!-- Sound waves with gradient -->
+      <path d="M 0,20 Q 30,0 60,20 T 120,20 T 180,20 T 240,20"
+            stroke="{{acoustic_wave_color}}"
+            stroke-width="8"
+            fill="none"
+            stroke-linecap="round"
+            opacity="0.8"/>
+
+      <!-- Amplitude indicator for current level -->
+      <path d="M 260,20 Q 280,{{acoustic_wave_amplitude}} 300,20"
+            stroke="{{acoustic_wave_color}}"
+            stroke-width="12"
+            fill="none"
+            stroke-linecap="round"/>
+
+      <!-- dB Scale markers with badges -->
+      <g transform="translate(350, 0)">
+        <rect x="-4" y="-11" width="135" height="18" rx="9" fill="#FEF2F2" stroke="#FECACA" stroke-width="0.5"/>
+        <text x="0" y="3" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#DC2626">60 dB (Crítico)</text>
+      </g>
+      <g transform="translate(350, 22)">
+        <rect x="-4" y="-11" width="145" height="18" rx="9" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="0.5"/>
+        <text x="0" y="3" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#065F46">35-45 dB (Confort)</text>
+      </g>
+      <g transform="translate(350, 44)">
+        <rect x="-4" y="-11" width="160" height="18" rx="9" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="0.5"/>
+        <text x="0" y="3" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#475569">Actual: {{avg_sound}} dB</text>
+      </g>
+    </g>
+
+    <!-- Status with Traffic Light Circle -->
+    <g id="acoustic-status" transform="translate(50, 315)">
+      <!-- Traffic Light Circle with glow -->
+      <circle cx="15" cy="0" r="12" fill="{{acoustic_status_color}}">
+        <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Status Text -->
+      <text x="35" y="5" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="{{metric_value_color}}">{{acoustic_status_text}}</text>
+
+      <!-- Percentage in comfort zone with badge -->
+      <g transform="translate(350, 0)">
+        <rect x="-8" y="-14" width="310" height="24" rx="12" fill="rgba(16, 185, 129, 0.1)" stroke="#10B981" stroke-width="1"/>
+        <text x="0" y="4" font-family="Inter, sans-serif" font-size="12" font-weight="600" fill="#10B981">{{acoustic_comfort_percentage}}% tiempo en zona de confort (35-45 dB)</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ========================================= -->
+  <!-- NOISE ANALYSIS CHART SECTION -->
+  <!-- ========================================= -->
   <g id="chart-section">
-    <text x="30" y="370" class="section-header">Noise Pollution Analysis - Noisiest Locations</text>
+    <text x="30" y="370" class="section-header">Análisis de Contaminación Acústica - Ubicaciones más Ruidosas</text>
 
-    <rect x="30" y="380" width="734" height="280" class="card" rx="6"/>
+    <rect x="30" y="380" width="734" height="280" class="card-elevated" rx="8"/>
 
-    <!-- Two Column Layout: Left 40% (Sound Image) | Right 60% (Chart + Legend) -->
-
-    <!-- LEFT COLUMN: Sound Image (40% = ~294px) -->
+    <!-- LEFT COLUMN: Sound Image -->
     <g id="sound-section" transform="translate(50, 395)">
-      <!-- Sound Image -->
       <image href="{{sound_url}}" x="30" y="10" width="120" height="240" preserveAspectRatio="xMidYMid meet"/>
 
-      <!-- Sound level values on the right side -->
-      <!-- Max sound level (top - HIGH level = red) -->
-      <g id="max-sound-display" transform="translate(160, 45)">
-        <text x="0" y="0" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#ef4444">MAX</text>
-        <text x="0" y="18" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#ef4444">{{overall_max_sound}} dB</text>
+      <!-- Max Sound Level -->
+      <g transform="translate(160, 45)">
+        <rect x="-8" y="-18" width="75" height="45" rx="6" fill="#FEF2F2" stroke="#FECACA" stroke-width="0.5"/>
+        <text x="0" y="0" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#DC2626" letter-spacing="0.5">MAX</text>
+        <text x="0" y="18" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#DC2626">{{overall_max_sound}}<tspan font-size="11"> dB</tspan></text>
       </g>
 
-      <!-- Average sound level (middle - NORMAL level = yellow/amber) -->
-      <g id="avg-sound-display" transform="translate(160, 115)">
-        <text x="0" y="0" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#f59e0b">AVG</text>
-        <text x="0" y="18" font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#f59e0b">{{overall_avg_sound}} dB</text>
+      <!-- Average Sound Level -->
+      <g transform="translate(160, 115)">
+        <rect x="-8" y="-18" width="75" height="45" rx="6" fill="#FFFBEB" stroke="#FDE68A" stroke-width="0.5"/>
+        <text x="0" y="0" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#D97706" letter-spacing="0.5">AVG</text>
+        <text x="0" y="18" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#D97706">{{overall_avg_sound}}<tspan font-size="10"> dB</tspan></text>
       </g>
 
-      <!-- Min sound level (bottom - LOW level = green) -->
-      <g id="min-sound-display" transform="translate(160, 185)">
-        <text x="0" y="0" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#10b981">MIN</text>
-        <text x="0" y="18" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#10b981">{{overall_min_sound}} dB</text>
+      <!-- Min Sound Level -->
+      <g transform="translate(160, 185)">
+        <rect x="-8" y="-18" width="75" height="45" rx="6" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="0.5"/>
+        <text x="0" y="0" font-family="Inter, sans-serif" font-size="9" font-weight="700" fill="#10B981" letter-spacing="0.5">MIN</text>
+        <text x="0" y="18" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#10B981">{{overall_min_sound}}<tspan font-size="11"> dB</tspan></text>
       </g>
     </g>
 
-    <!-- RIGHT COLUMN: Chart + Legend (60% = ~440px) -->
-    <g id="chart-column" transform="translate(334, 390)">
+    <!-- RIGHT COLUMN: Chart -->
+    <g transform="translate(334, 395)">
       <!-- Chart Legend -->
-      <g id="chart-legend">
-        <text x="10" y="15" class="table-small">
-          <tspan fill="#ef4444">■</tspan> Noisiest
-        </text>
-        <text x="100" y="15" class="table-small">
-          <tspan fill="#10b981">■</tspan> Quietest
-        </text>
-        <text x="200" y="15" class="table-small">
-          <tspan fill="#9ca3af">━</tspan> Avg
-        </text>
+      <g font-family="Inter, sans-serif">
+        <g transform="translate(0, 0)">
+          <rect width="8" height="8" rx="2" fill="#EF4444"/>
+          <text x="14" y="8" font-size="9" font-weight="600" fill="#6B7280">Más ruidoso</text>
+        </g>
+        <g transform="translate(110, 0)">
+          <rect width="8" height="8" rx="2" fill="#10B981"/>
+          <text x="14" y="8" font-size="9" font-weight="600" fill="#6B7280">Más silencioso</text>
+        </g>
+        <g transform="translate(230, 0)">
+          <line x1="0" y1="4" x2="12" y2="4" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="4,2"/>
+          <text x="18" y="8" font-size="9" font-weight="600" fill="#6B7280">Promedio</text>
+        </g>
       </g>
 
       <!-- Chart Placeholder -->
-      <foreignObject x="0" y="25" width="420" height="230">
+      <foreignObject x="0" y="20" width="420" height="235">
         <div xmlns="http://www.w3.org/1999/xhtml" id="chart-container" style="width:100%; height:100%;">
           <canvas id="noise-comparison-chart"></canvas>
         </div>
@@ -183,74 +233,99 @@
     </g>
   </g>
 
-  <!-- Noise Statistics Section -->
+  <!-- ========================================= -->
+  <!-- NOISE STATISTICS SECTION -->
+  <!-- ========================================= -->
   <g id="noise-statistics">
-    <text x="30" y="690" class="section-header">Noise Statistics</text>
+    <text x="30" y="690" class="section-header">Estadísticas de Ruido</text>
 
     <!-- Noise Summary Card -->
-    <rect x="30" y="700" width="734" height="130" class="card-details" rx="6"/>
-    <text x="45" y="720" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase">
-      Sound Level Summary
-    </text>
+    <rect x="30" y="700" width="734" height="120" class="card-elevated" rx="8"/>
 
-    <!-- 3 Column Layout: Total Sensors | Avg Level | Duration Above Threshold -->
-    <g id="noise-total-sensors">
-      <text x="60" y="760" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Total Sensors</text>
-      <text x="60" y="785" fill="#ffffff" font-family="Inter, sans-serif" font-size="18" font-weight="700">{{total_sound_sensors}}</text>
-      <text x="60" y="803" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">Monitored</text>
+    <g transform="translate(45, 720)">
+      <text font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.5">
+        <tspan fill="#F59E0B">📊</tspan>
+        <tspan dx="4">RESUMEN DE NIVELES SONOROS</tspan>
+      </text>
     </g>
 
-    <g id="noise-avg-level">
-      <text x="310" y="760" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Average Level</text>
-      <text x="310" y="785" fill="#ffffff" font-family="Inter, sans-serif" font-size="18" font-weight="700">{{overall_avg_sound}}</text>
-      <text x="310" y="803" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">dB</text>
+    <!-- 3 Column Layout with dividers -->
+    <g id="noise-total-sensors" transform="translate(60, 745)">
+      <text y="0" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="0.5">SENSORES TOTALES</text>
+      <text y="25" fill="#111827" font-family="Inter, sans-serif" font-size="22" font-weight="700">{{total_sound_sensors}}</text>
+      <text y="43" fill="#6B7280" font-family="Inter, sans-serif" font-size="10">Monitoreados</text>
     </g>
 
-    <g id="noise-threshold">
-      <text x="560" y="760" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Above Threshold (70 dB)</text>
-      <text x="560" y="785" fill="#ef4444" font-family="Inter, sans-serif" font-size="18" font-weight="700">{{above_threshold_percent}}</text>
-      <text x="560" y="803" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">% of time</text>
+    <line x1="240" y1="745" x2="240" y2="793" stroke="#E5E7EB" stroke-width="1"/>
+
+    <g id="noise-avg-level" transform="translate(280, 745)">
+      <text y="0" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="0.5">NIVEL PROMEDIO</text>
+      <text y="25" fill="#111827" font-family="Inter, sans-serif" font-size="22" font-weight="700">{{overall_avg_sound}}<tspan fill="#6B7280" font-size="12"> dB</tspan></text>
+      <text y="43" fill="#6B7280" font-family="Inter, sans-serif" font-size="10">Nivel medio</text>
     </g>
-  </g>
 
-  <!-- Peak Noise Events Section -->
-  <g id="peak-noise-events">
-    <text x="30" y="860" class="section-header">Peak Noise Events</text>
+    <line x1="490" y1="745" x2="490" y2="793" stroke="#E5E7EB" stroke-width="1"/>
 
-    <rect x="30" y="870" width="734" height="100" class="card-noise" rx="6"/>
-    <text x="45" y="890" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase">
-      <tspan fill="#ef4444">🔊</tspan> Highest Noise Events
-    </text>
-
-    <!-- Table Header -->
-    <text x="45" y="915" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Rank</text>
-    <text x="100" y="915" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Location</text>
-    <text x="250" y="915" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Sensor</text>
-    <text x="350" y="915" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Peak Level</text>
-    <text x="480" y="915" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Time</text>
-    <text x="650" y="915" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Duration</text>
-
-    <line x1="45" y1="922" x2="749" y2="922" stroke="#334155" stroke-width="0.8"/>
-
-    <!-- Peak Row 1 -->
-    <text x="45" y="942" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#1</text>
-    <text x="100" y="942" fill="#e2e8f0" font-family="Inter, sans-serif" font-size="11">{{peak_noise_1_location}}</text>
-    <text x="250" y="942" fill="#e2e8f0" font-family="Inter, sans-serif" font-size="11">{{peak_noise_1_sensor}}</text>
-    <text x="350" y="942" fill="#ffffff" font-family="Inter, sans-serif" font-size="12" font-weight="700">{{peak_noise_1_value}}<tspan fill="#94a3b8" font-size="10"> dB</tspan></text>
-    <text x="480" y="942" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">{{peak_noise_1_time}}</text>
-    <text x="650" y="942" fill="#ef4444" font-family="Inter, sans-serif" font-size="11">{{peak_noise_1_duration}}</text>
-
-    <!-- Peak Row 2 -->
-    <text x="45" y="962" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#2</text>
-    <text x="100" y="962" fill="#e2e8f0" font-family="Inter, sans-serif" font-size="11">{{peak_noise_2_location}}</text>
-    <text x="250" y="962" fill="#e2e8f0" font-family="Inter, sans-serif" font-size="11">{{peak_noise_2_sensor}}</text>
-    <text x="350" y="962" fill="#ffffff" font-family="Inter, sans-serif" font-size="12" font-weight="700">{{peak_noise_2_value}}<tspan fill="#94a3b8" font-size="10"> dB</tspan></text>
-    <text x="480" y="962" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">{{peak_noise_2_time}}</text>
-    <text x="650" y="962" fill="#ef4444" font-family="Inter, sans-serif" font-size="11">{{peak_noise_2_duration}}</text>
+    <g id="noise-threshold" transform="translate(530, 745)">
+      <text y="0" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600" letter-spacing="0.5">POR ENCIMA DE UMBRAL</text>
+      <text y="25" fill="#EF4444" font-family="Inter, sans-serif" font-size="22" font-weight="700">{{above_threshold_percent}}<tspan fill="#6B7280" font-size="12">%</tspan></text>
+      <text y="43" fill="#6B7280" font-family="Inter, sans-serif" font-size="10">&gt; 70 dB del tiempo</text>
+    </g>
   </g>
 
   <!-- ========================================= -->
-  <!-- FOOTER SECTION (Customizable) -->
+  <!-- PEAK NOISE EVENTS SECTION -->
+  <!-- ========================================= -->
+  <g id="peak-noise-events">
+    <text x="30" y="850" class="section-header">Eventos de Ruido Pico</text>
+
+    <rect x="30" y="860" width="734" height="110" class="card-noise" rx="8"/>
+
+    <g transform="translate(45, 880)">
+      <text font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#FCA5A5">
+        <tspan fill="#EF4444">🔊</tspan>
+        <tspan dx="4">EVENTOS MÁS RUIDOSOS</tspan>
+        <tspan dx="6" font-size="9" font-weight="500" fill="#94A3B8">(Top 2)</tspan>
+      </text>
+    </g>
+
+    <!-- Table Header -->
+    <g transform="translate(0, 905)" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#64748B">
+      <text x="45">Rank</text>
+      <text x="100">Ubicación</text>
+      <text x="250">Sensor</text>
+      <text x="350">Nivel Pico</text>
+      <text x="480">Tiempo</text>
+      <text x="650">Duración</text>
+    </g>
+
+    <line x1="45" y1="913" x2="749" y2="913" stroke="#475569" stroke-width="0.5" opacity="0.5"/>
+
+    <!-- Peak Row 1 -->
+    <g transform="translate(0, 933)" font-family="Inter, sans-serif">
+      <rect x="40" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.2"/>
+      <text x="52" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle">#1</text>
+      <text x="100" fill="#E2E8F0" font-size="11">{{peak_noise_1_location}}</text>
+      <text x="250" fill="#E2E8F0" font-size="11">{{peak_noise_1_sensor}}</text>
+      <text x="350" fill="#FFFFFF" font-size="14" font-weight="700">{{peak_noise_1_value}}<tspan fill="#94A3B8" font-size="10"> dB</tspan></text>
+      <text x="480" fill="#94A3B8" font-size="10">{{peak_noise_1_time}}</text>
+      <text x="650" fill="#EF4444" font-size="10" font-weight="600">{{peak_noise_1_duration}}</text>
+    </g>
+
+    <!-- Peak Row 2 -->
+    <g transform="translate(0, 955)" font-family="Inter, sans-serif">
+      <rect x="40" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.15"/>
+      <text x="52" fill="#FECACA" font-size="11" font-weight="600" text-anchor="middle">#2</text>
+      <text x="100" fill="#E2E8F0" font-size="11">{{peak_noise_2_location}}</text>
+      <text x="250" fill="#E2E8F0" font-size="11">{{peak_noise_2_sensor}}</text>
+      <text x="350" fill="#FFFFFF" font-size="14" font-weight="700">{{peak_noise_2_value}}<tspan fill="#94A3B8" font-size="10"> dB</tspan></text>
+      <text x="480" fill="#94A3B8" font-size="10">{{peak_noise_2_time}}</text>
+      <text x="650" fill="#EF4444" font-size="10" font-weight="600">{{peak_noise_2_duration}}</text>
+    </g>
+  </g>
+
+  <!-- ========================================= -->
+  <!-- FOOTER SECTION -->
   <!-- ========================================= -->
   <g id="footer">
     <line x1="30" y1="1050" x2="764" y2="1050" stroke="{{footer_bg}}" stroke-width="2"/>
@@ -262,4 +337,5 @@
       {{generation_date}}
     </text>
   </g>
+
 </svg>

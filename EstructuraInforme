@@ -1,0 +1,62 @@
+***************************************************************
+
+    Nombre del edificio / zona.
+    Periodo del informe:
+
+“Incluir el periodo que se ha analizado”
+
+    Un indicador global tipo semáforo:
+
+o   🟢 Todo bien
+
+o   🟡 Hay aspectos a mejorar
+
+o   🔴 Se han detectado problemas importantes
+
+ 
+
+Este indicador se podría calcular a partir de:
+
+    % de tiempo con confort térmico adecuado.
+    % de tiempo con ruido aceptable.
+    Consumo reportado
+
+ 
+
+A continuacion, quizas ya se pueda ahondar en mas detalle en las incidencias detectadas
+
+ 
+
+    Confort térmico global. Analiza si el edificio ha contado con una temperatura adecuada para las condiciones y horarios de trabajo dentro del edificio.
+        Dato clave:
+            “El edificio ha estado en condiciones de confort térmico el 82% del tiempo.”
+        Pequeño gráfico de barra o indicador circular.
+
+ 
+
+    Confort acústico (ruido)
+        Dato clave:
+            “El nivel de ruido ha sido aceptable el 76% del tiempo.”
+        Indicar si hay horas problemáticas:
+
+“Los momentos más ruidosos se concentran de 10:00 a 12:00 y de 16:00 a 18:00.”
+
+Meter algún grafico que lo apoye, como los que pasaba German.
+
+ 
+
+    Consumo eléctrico. Aquí desconozco los análisis que se pueden derivar de las pinzas amperimétricas fijadas. Ahí va una propuesta:
+        Convertir corriente en algo entendible:
+            kWh totales del periodo.
+            Coste aproximado en € (usando una tarifa media).
+        Ejemplo:
+
+“Consumo eléctrico del periodo: 4.200 kWh, coste estimado 630 €.”
+
+ 
+
+    Principales alertas / puntos a mejorar
+        “Temperaturas demasiado altas en la planta 3 por la tarde.”
+        “Ruido elevado en la sala de reuniones 2 entre semana.”
+        “Picos de consumo eléctrico los lunes a primera hora.”
+

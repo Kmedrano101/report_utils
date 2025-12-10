@@ -78,7 +78,17 @@ async function initApp() {
             checkHealth();
             // Update database source labels without changing selection
             updateDatabaseSourceLabels();
+            // Update report title/subtitle when language changes
+            updateReportTitleFromType();
         });
+    }
+
+    // Add event listener to report type dropdown to update title/subtitle
+    const reportTypeSelect = document.getElementById('reportType');
+    if (reportTypeSelect) {
+        reportTypeSelect.addEventListener('change', updateReportTitleFromType);
+        // Set initial values
+        updateReportTitleFromType();
     }
 }
 
@@ -206,6 +216,53 @@ function formatUptime(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${minutes}m`;
+}
+
+// Update report title and subtitle based on selected report type
+function updateReportTitleFromType() {
+    const reportType = document.getElementById('reportType')?.value;
+    const pdfTitleInput = document.getElementById('pdfTitle');
+    const pdfSubtitleInput = document.getElementById('pdfSubtitle');
+
+    if (!reportType || !pdfTitleInput || !pdfSubtitleInput) return;
+
+    // Get current language
+    const currentLang = LanguageManager?.getLanguage?.() || 'es';
+
+    // Define report titles based on report type (matching templateLocalization.js)
+    const reportTitles = {
+        'hotspots-coldzones': {
+            en: 'Temperature Analysis and Comfort',
+            es: 'Análisis de Temperatura y Confort'
+        },
+        'power-consumption': {
+            en: 'Power Consumption Analysis',
+            es: 'Análisis de Consumo Energético'
+        },
+        'sound-analysis': {
+            en: 'Sound Levels and Noise Pollution',
+            es: 'Niveles de Sonido y Contaminación Acústica'
+        }
+    };
+
+    // Building information with coordinates (subtitle is always the same)
+    const buildingSubtitle = 'Madison MK, C. de Enrique Cubero, 9, 47014 Valladolid';
+
+    // Get the appropriate title for the report type and language
+    const reportConfig = reportTitles[reportType];
+    if (reportConfig) {
+        const title = reportConfig[currentLang] || reportConfig['es'];
+        pdfTitleInput.value = title;
+        pdfSubtitleInput.value = buildingSubtitle;
+
+        // Also update the PDF config if it exists
+        if (window.pdfConfig) {
+            window.pdfConfig.updateConfig({
+                reportTitle: title,
+                reportSubtitle: buildingSubtitle
+            });
+        }
+    }
 }
 
 // Dashboard

@@ -1,198 +1,194 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width='297mm' height='210mm' viewBox="0 0 1123 794">
   <!-- A4 Landscape: 297mm x 210mm -->
-  <!-- Template: Power Consumption Analysis Report -->
+  <!-- Template: Power Consumption Analysis Report - IMPROVED VERSION -->
 
-  <!-- Styles -->
   <defs>
     <style type="text/css">
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap');
-
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap');
       .metric-title { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: {{metric_title_color}}; text-transform: uppercase; letter-spacing: 0.05em; }
       .metric-value { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 700; fill: {{metric_value_color}}; }
-      .metric-unit { font-family: 'Inter', sans-serif; font-size: 11px; fill: {{metric_title_color}}; }
       .section-header { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; fill: {{section_header_color}}; }
       .table-header { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: {{table_header_color}}; text-transform: uppercase; }
       .table-text { font-family: 'Inter', sans-serif; font-size: 11px; fill: {{table_text_color}}; }
       .table-small { font-family: 'Inter', sans-serif; font-size: 9px; fill: {{table_header_color}}; }
-
       .card { fill: #ffffff; stroke: {{card_border_color}}; stroke-width: 1; }
-      .card-temperature { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
-      .card-humidity { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
-      .card-sound { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
-      .card-power { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
+      .card-elevated { fill: #ffffff; stroke: {{card_border_color}}; stroke-width: 1; filter: url(#dropShadow); }
       .card-consumption { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
       .card-details { fill: {{accent_secondary}}; stroke: {{card_border_color}}; stroke-width: 1.5; }
-      .divider { stroke: {{card_border_color}}; stroke-width: 0.8; }
     </style>
+
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.12"/>
+    </filter>
+
+    <linearGradient id="glassOverlay" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0.08"/>
+      <stop offset="55%" stop-color="#000000" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.12"/>
+    </linearGradient>
+
+    <linearGradient id="ch1Gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="50%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+
+    <linearGradient id="ch2Gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="50%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <linearGradient id="ch3Gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <linearGradient id="trackGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F3F4F6"/>
+      <stop offset="50%" stop-color="#E5E7EB"/>
+      <stop offset="100%" stop-color="#D1D5DB"/>
+    </linearGradient>
   </defs>
 
-  <!-- Background -->
   <rect width="1123" height="794" fill="#FFFFFF"/>
 
-  <!-- ========================================= -->
-  <!-- HEADER SECTION (Customizable) -->
-  <!-- ========================================= -->
   <g id="header">
     <rect width="1123" height="110" fill="{{header_bg}}"/>
     <image href="{{logo_url}}" x="45" y="15" width="105" height="105" preserveAspectRatio="xMidYMid meet"/>
-    <text x="190" y="45" fill="{{header_text_color}}" font-size="24" font-family="Inter, Arial, sans-serif" font-weight="700">
-      {{header_title}}
-    </text>
-    <text x="190" y="80" fill="{{header_subtitle_color}}" font-size="16" font-family="Inter, Arial, sans-serif" font-weight="400">
-      {{header_subtitle}}
-    </text>
+    <text x="190" y="45" fill="{{header_text_color}}" font-size="24" font-family="Inter, Arial, sans-serif" font-weight="700">{{header_title}}</text>
+    <text x="190" y="80" fill="{{header_subtitle_color}}" font-size="16" font-family="Inter, Arial, sans-serif" font-weight="400">{{header_subtitle}}</text>
   </g>
-
-  <!-- ========================================= -->
-  <!-- CONTENT AREA STARTS HERE (2-Column Layout) -->
-  <!-- ========================================= -->
 
   <!-- LEFT COLUMN -->
   <g id="left-column">
-    <!-- Report Info Bar -->
-    <g id="report-info">
-      <rect x="30" y="130" width="520" height="45" class="card" rx="4"/>
-      <text x="50" y="147" class="table-header">Period</text>
-      <text x="50" y="164" class="table-text">{{date_range}}</text>
-
-      <text x="220" y="147" class="table-header">Building</text>
-      <text x="220" y="164" class="table-text">{{building_name}}</text>
-
-      <text x="380" y="147" class="table-header">Sensors</text>
-      <text x="380" y="164" class="metric-value" font-size="16">{{total_sensors}} / <tspan fill="{{accent_primary}}">{{active_sensors}}</tspan></text>
-    </g>
-
-    <!-- KPI Metric Cards Section (Vertical Stack) -->
-    <g id="kpi-metrics">
-      <text x="30" y="205" class="section-header">Key Metrics</text>
-
-      <!-- 1. Temperature Card -->
-      <g id="metric-temperature">
-        <rect x="30" y="215" width="160" height="75" class="card-temperature" rx="6"/>
-        <text x="45" y="233" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Temperature</text>
-        <!-- Icon + Value -->
-        <g transform="translate(45, 245)">
-          <path d="M8 14.5c-1.4 0-2.5-1.1-2.5-2.5 0-.9.5-1.7 1.2-2.1V4c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v5.9c.7.4 1.2 1.2 1.2 2.1 0 1.4-1.1 2.5-2.5 2.5z" fill="#f59e0b" opacity="0.9"/>
-          <circle cx="8" cy="12" r="1.5" fill="#b45309"/>
-          <rect x="7" y="4" width="2" height="6" fill="#b45309"/>
-        </g>
-        <text x="68" y="263" fill="#ffffff" font-family="Inter, sans-serif" font-size="20" font-weight="700">{{avg_temperature}}</text>
-        <text x="135" y="263" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">°C</text>
-        <text x="45" y="284" fill="#64748b" font-family="Inter, sans-serif" font-size="9">{{temp_min}}°C - {{temp_max}}°C</text>
+    <g id="report-info" role="region" aria-label="Report Information">
+      <rect x="30" y="130" width="520" height="48" class="card-elevated" rx="6" ry="6"/>
+      <g class="info-column" transform="translate(50, 130)">
+        <text y="18" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280" letter-spacing="0.5">NOMBRE DEL EDIFICIO</text>
+        <text y="36" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#111827">{{building_name}}</text>
       </g>
-
-      <!-- 2. Humidity Card -->
-      <g id="metric-humidity">
-        <rect x="30" y="300" width="160" height="75" class="card-humidity" rx="6"/>
-        <text x="45" y="318" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Humidity</text>
-        <!-- Icon + Value -->
-        <g transform="translate(45, 330)">
-          <path d="M8 2s-6 6.5-6 10.5c0 3.3 2.7 6 6 6s6-2.7 6-6c0-4-6-10.5-6-10.5z" fill="#3b82f6" opacity="0.8"/>
-          <path d="M6 14c-1.1 0-2-.9-2-2 0-.8.4-1.5 1-1.9" stroke="#1e40af" stroke-width="1" fill="none"/>
-        </g>
-        <text x="68" y="348" fill="#ffffff" font-family="Inter, sans-serif" font-size="20" font-weight="700">{{avg_humidity}}</text>
-        <text x="135" y="348" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">%</text>
-        <text x="45" y="369" fill="#64748b" font-family="Inter, sans-serif" font-size="9">{{humidity_min}}% - {{humidity_max}}%</text>
+      <g class="info-column" transform="translate(230, 130)">
+        <text y="18" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280" letter-spacing="0.5">PERIODO DEL INFORME</text>
+        <text y="36" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#111827">{{date_range}}</text>
       </g>
-
-      <!-- 3. Sound Level Card -->
-      <g id="metric-sound">
-        <rect x="30" y="385" width="160" height="75" class="card-sound" rx="6"/>
-        <text x="45" y="403" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Avg Sound Level</text>
-        <!-- Icon + Value -->
-        <g transform="translate(45, 415)">
-          <path d="M3 9v6h4l5 5V4L7 9H3z" fill="#ec4899" opacity="0.9"/>
-          <path d="M14 8.5c.8.8.8 2.1 0 2.9M16 6.5c1.6 1.6 1.6 4.1 0 5.7" stroke="#be185d" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        </g>
-        <text x="68" y="433" fill="#ffffff" font-family="Inter, sans-serif" font-size="20" font-weight="700">{{avg_sound}}</text>
-        <text x="135" y="433" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">dB</text>
-        <text x="45" y="454" fill="#64748b" font-family="Inter, sans-serif" font-size="9">Peak: {{peak_sound}} dB</text>
-      </g>
-
-      <!-- 4. Power Consumption Card -->
-      <g id="metric-power">
-        <rect x="30" y="470" width="160" height="75" class="card-power" rx="6"/>
-        <text x="45" y="488" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase" letter-spacing="0.05em">Total Power</text>
-        <!-- Icon + Value -->
-        <g transform="translate(45, 500)">
-          <path d="M13 2L3 14h6l-2 8 10-12h-6l2-8z" fill="#10b981" opacity="0.8"/>
-          <path d="M13 2L3 14h6l-2 8 10-12h-6l2-8z" stroke="#047857" stroke-width="0.5" fill="none"/>
-        </g>
-        <text x="68" y="518" fill="#ffffff" font-family="Inter, sans-serif" font-size="20" font-weight="700">{{total_power}}</text>
-        <text x="135" y="518" fill="#94a3b8" font-family="Inter, sans-serif" font-size="11">kWh</text>
-        <text x="45" y="539" fill="#64748b" font-family="Inter, sans-serif" font-size="9">Peak: {{peak_power}} A</text>
+      <g class="info-column" transform="translate(420, 130)">
+        <text y="18" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280" letter-spacing="0.5">SENSORES</text>
+        <text y="38" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#111827">{{total_sensors}} / <tspan fill="{{accent_primary}}">{{active_sensors}}</tspan></text>
       </g>
     </g>
 
-    <!-- Status Summary -->
-    <g id="status-summary">
-      <text x="30" y="575" class="section-header">Status Summary</text>
-      <rect x="30" y="585" width="160" height="140" class="card" rx="6"/>
-      <text x="45" y="605" class="table-small">Active Sensors</text>
-      <text x="45" y="625" class="metric-value" font-size="28" fill="{{accent_primary}}">{{active_count}}</text>
+    <g id="phase-balance-indicator" role="figure">
+      <rect x="30" y="190" width="520" height="380" class="card-elevated" rx="8" ry="8"/>
+      <g id="balance-header" transform="translate(50, 218)">
+        <text font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#1F2937">
+          <tspan fill="#F59E0B">⚡</tspan>
+          <tspan dx="6">Three-Phase Load Balance</tspan>
+        </text>
+      </g>
 
-      <line x1="45" y1="640" x2="175" y2="640" class="divider"/>
+      <g id="phase-bars" transform="translate(50, 245)">
+        <g id="phase-ch1">
+          <text x="0" y="15" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#1F2937">Fase R</text>
+          <rect x="35" y="0" width="360" height="22" fill="url(#trackGradient)" rx="11" opacity="0.6"/>
+          <rect x="35" y="0" width="0" height="22" fill="url(#ch1Gradient)" rx="11">
+            <animate attributeName="width" from="0" to="{{phase_f1_bar_width_landscape}}" dur="0.8s" fill="freeze" calcMode="spline" keySplines="0.25 0.1 0.25 1"/>
+          </rect>
+          <rect x="35" y="0" width="360" height="22" fill="url(#glassOverlay)" rx="11" pointer-events="none"/>
+          <text x="405" y="16" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#1F2937">{{phase_f1_percentage}}%</text>
+        </g>
 
-      <text x="45" y="660" class="table-small">Offline</text>
-      <text x="45" y="680" class="metric-value" font-size="18" fill="#ef4444">{{offline_count}}</text>
+        <g id="phase-ch2" transform="translate(0, 35)">
+          <text x="0" y="15" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#1F2937">Fase S</text>
+          <rect x="35" y="0" width="360" height="22" fill="url(#trackGradient)" rx="11" opacity="0.6"/>
+          <rect x="35" y="0" width="0" height="22" fill="url(#ch2Gradient)" rx="11">
+            <animate attributeName="width" from="0" to="{{phase_f2_bar_width_landscape}}" dur="0.8s" begin="0.15s" fill="freeze" calcMode="spline" keySplines="0.25 0.1 0.25 1"/>
+          </rect>
+          <rect x="35" y="0" width="360" height="22" fill="url(#glassOverlay)" rx="11" pointer-events="none"/>
+          <text x="405" y="16" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#1F2937">{{phase_f2_percentage}}%</text>
+        </g>
 
-      <text x="45" y="705" class="table-small">Last Update</text>
-      <text x="45" y="718" class="table-small">{{last_update_time}}</text>
+        <g id="phase-ch3" transform="translate(0, 70)">
+          <text x="0" y="15" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#1F2937">Fase T</text>
+          <rect x="35" y="0" width="360" height="22" fill="url(#trackGradient)" rx="11" opacity="0.6"/>
+          <rect x="35" y="0" width="0" height="22" fill="url(#ch3Gradient)" rx="11">
+            <animate attributeName="width" from="0" to="{{phase_f3_bar_width_landscape}}" dur="0.8s" begin="0.3s" fill="freeze" calcMode="spline" keySplines="0.25 0.1 0.25 1"/>
+          </rect>
+          <rect x="35" y="0" width="360" height="22" fill="url(#glassOverlay)" rx="11" pointer-events="none"/>
+          <text x="405" y="16" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#1F2937">{{phase_f3_percentage}}%</text>
+        </g>
+      </g>
+
+      <g id="balance-status" transform="translate(50, 350)">
+        <rect x="0" y="0" width="460" height="190" rx="6" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="0.5"/>
+        <text x="15" y="25" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#6B7280" letter-spacing="0.5">BALANCE STATUS</text>
+        <g transform="translate(15, 50)">
+          <circle cx="10" cy="0" r="8" fill="{{phase_balance_status_color}}" opacity="0.2"/>
+          <circle cx="10" cy="0" r="5" fill="{{phase_balance_status_color}}"/>
+          <text x="25" y="5" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#111827">{{phase_balance_status_text}}</text>
+        </g>
+        <line x1="15" y1="75" x2="445" y2="75" stroke="#E5E7EB" stroke-width="1"/>
+        <g transform="translate(15, 100)">
+          <rect x="-5" y="-5" width="200" height="60" rx="4" fill="#FEF2F2" opacity="0.3"/>
+          <text x="0" y="10" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280">Maximum Deviation</text>
+          <text x="0" y="35" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#DC2626">{{phase_balance_deviation}}%</text>
+        </g>
+        <g transform="translate(235, 100)">
+          <rect x="-5" y="-5" width="200" height="60" rx="4" fill="#ECFDF5" opacity="0.3"/>
+          <text x="0" y="10" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#6B7280">Total Power</text>
+          <text x="0" y="35" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#059669">{{total_power}} kWh</text>
+        </g>
+      </g>
     </g>
   </g>
 
   <!-- RIGHT COLUMN -->
   <g id="right-column">
-    <!-- Power Consumption Analysis Chart -->
     <g id="chart-section">
       <text x="570" y="145" class="section-header">Average Consumption per Channel</text>
-
-      <rect x="570" y="155" width="523" height="250" class="card" rx="6"/>
-
-      <!-- Two Column Layout: Left 40% (Electric Image) | Right 60% (Chart + Legend) -->
-
-      <!-- LEFT COLUMN: Electric Image (40% = ~209px) -->
+      <rect x="570" y="155" width="523" height="250" class="card-elevated" rx="8"/>
       <g id="electric-section" transform="translate(580, 165)">
-        <!-- Electric Image -->
         <image href="{{electric_url}}" x="20" y="5" width="80" height="180" preserveAspectRatio="xMidYMid meet"/>
-
-        <!-- Consumption values on the right side -->
-        <!-- Max consumption (top - HIGH level = red) -->
         <g id="max-consumption-display" transform="translate(110, 25)">
-          <text x="0" y="0" fill="#ef4444" font-family="Inter, sans-serif" font-size="8" font-weight="700">MAX</text>
-          <text x="0" y="16" fill="#ef4444" font-family="Inter, sans-serif" font-size="14" font-weight="700">{{overall_max_consumption}} {{max_consumption_unit}}</text>
+          <rect x="-6" y="-14" width="65" height="38" rx="5" fill="#FEF2F2" stroke="#FECACA" stroke-width="0.5"/>
+          <text x="0" y="0" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#DC2626" letter-spacing="0.5">MAX</text>
+          <text x="0" y="16" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#DC2626">{{overall_max_consumption}}</text>
+          <text x="0" y="28" font-family="Inter, sans-serif" font-size="8" fill="#F87171">{{max_consumption_unit}}</text>
         </g>
-
-        <!-- Average consumption (middle - NORMAL level = yellow/amber) -->
         <g id="avg-consumption-display" transform="translate(110, 85)">
-          <text x="0" y="0" fill="#f59e0b" font-family="Inter, sans-serif" font-size="8" font-weight="700">AVG</text>
-          <text x="0" y="16" fill="#f59e0b" font-family="Inter, sans-serif" font-size="12" font-weight="700">{{overall_avg_consumption}} {{avg_consumption_unit}}</text>
+          <rect x="-6" y="-14" width="65" height="38" rx="5" fill="#FFFBEB" stroke="#FDE68A" stroke-width="0.5"/>
+          <text x="0" y="0" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#D97706" letter-spacing="0.5">AVG</text>
+          <text x="0" y="16" font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#D97706">{{overall_avg_consumption}}</text>
+          <text x="0" y="28" font-family="Inter, sans-serif" font-size="8" fill="#F59E0B">{{avg_consumption_unit}}</text>
         </g>
-
-        <!-- Min consumption (bottom - LOW level = green) -->
         <g id="min-consumption-display" transform="translate(110, 145)">
-          <text x="0" y="0" fill="#10b981" font-family="Inter, sans-serif" font-size="8" font-weight="700">MIN</text>
-          <text x="0" y="16" fill="#10b981" font-family="Inter, sans-serif" font-size="14" font-weight="700">{{overall_min_consumption}} {{min_consumption_unit}}</text>
+          <rect x="-6" y="-14" width="65" height="38" rx="5" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="0.5"/>
+          <text x="0" y="0" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#059669" letter-spacing="0.5">MIN</text>
+          <text x="0" y="16" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#059669">{{overall_min_consumption}}</text>
+          <text x="0" y="28" font-family="Inter, sans-serif" font-size="8" fill="#10B981">{{min_consumption_unit}}</text>
         </g>
       </g>
-
-      <!-- RIGHT COLUMN: Chart + Legend (60% = ~314px) -->
       <g id="chart-column" transform="translate(779, 155)">
-        <!-- Chart Legend -->
-        <g id="chart-legend">
-          <text x="10" y="20" class="table-small">
-            <tspan fill="#3b82f6">■</tspan> Sensor C1
-          </text>
-          <text x="100" y="20" class="table-small">
-            <tspan fill="#10b981">■</tspan> Sensor C2
-          </text>
-          <text x="200" y="20" class="table-small">
-            <tspan fill="#9ca3af">━</tspan> Avg
-          </text>
+        <g id="chart-legend" font-family="Inter, sans-serif">
+          <g transform="translate(0, 0)">
+            <rect x="-4" y="-11" width="85" height="22" rx="11" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="0.5"/>
+            <rect x="4" y="-3" width="8" height="8" rx="2" fill="url(#ch1Gradient)"/>
+            <text x="18" y="4" font-size="9" font-weight="600" fill="#1E40AF">Fase R</text>
+          </g>
+          <g transform="translate(95, 0)">
+            <rect x="-4" y="-11" width="85" height="22" rx="11" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="0.5"/>
+            <rect x="4" y="-3" width="8" height="8" rx="2" fill="url(#ch2Gradient)"/>
+            <text x="18" y="4" font-size="9" font-weight="600" fill="#065F46">Fase S</text>
+          </g>
+          <g transform="translate(190, 0)">
+            <rect x="-4" y="-11" width="85" height="22" rx="11" fill="#FEF3C7" stroke="#FDE68A" stroke-width="0.5"/>
+            <rect x="4" y="-3" width="8" height="8" rx="2" fill="url(#ch3Gradient)"/>
+            <text x="18" y="4" font-size="9" font-weight="600" fill="#92400E">Fase T</text>
+          </g>
         </g>
-
-        <!-- Chart Placeholder -->
         <foreignObject x="0" y="30" width="304" height="210">
           <div xmlns="http://www.w3.org/1999/xhtml" id="chart-container" style="width:100%; height:100%;">
             <canvas id="consumption-comparison-chart"></canvas>
@@ -201,74 +197,75 @@
       </g>
     </g>
 
-    <!-- Consumption Details Section -->
     <g id="consumption-details">
-      <text x="570" y="435" class="section-header">Consumption Details & Peak Loads</text>
-
-      <!-- Total Consumption Details Card -->
-      <rect x="570" y="445" width="523" height="110" class="card-details" rx="6"/>
-      <text x="585" y="465" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase">
-        Total Consumption Summary
-      </text>
-
-      <!-- 3 Column Layout: Amperes | kWh | Estimated Cost -->
-      <g id="consumption-amperes">
-        <text x="610" y="495" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Total Amperes</text>
-        <text x="610" y="517" fill="#ffffff" font-family="Inter, sans-serif" font-size="16" font-weight="700">{{total_amperes}}</text>
-        <text x="610" y="533" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10">A</text>
+      <text x="570" y="435" class="section-header">Consumption Details &amp; Peak Loads</text>
+      <rect x="570" y="445" width="523" height="110" class="card-elevated" rx="8"/>
+      <g transform="translate(585, 465)">
+        <text font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.5">
+          <tspan fill="#3B82F6">📊</tspan>
+          <tspan dx="4">Total Consumption Summary</tspan>
+        </text>
       </g>
-
-      <g id="consumption-kwh">
-        <text x="790" y="495" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Total Energy</text>
-        <text x="790" y="517" fill="#ffffff" font-family="Inter, sans-serif" font-size="16" font-weight="700">{{total_kwh}}</text>
-        <text x="790" y="533" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10">kWh</text>
+      <g id="consumption-amperes" transform="translate(610, 495)">
+        <rect x="-10" y="-5" width="140" height="55" rx="5" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="0.5"/>
+        <text y="10" fill="#6B7280" font-family="Inter, sans-serif" font-size="9" font-weight="600">Total Amperes</text>
+        <text y="32" fill="#111827" font-family="Inter, sans-serif" font-size="18" font-weight="700">{{total_amperes}}</text>
+        <text y="46" fill="#9CA3AF" font-family="Inter, sans-serif" font-size="10" font-weight="600">A</text>
       </g>
-
-      <g id="consumption-cost">
-        <text x="970" y="495" fill="#64748b" font-family="Inter, sans-serif" font-size="9" font-weight="600">Estimated Cost (Spain)</text>
-        <text x="970" y="517" fill="#10b981" font-family="Inter, sans-serif" font-size="16" font-weight="700">€{{total_cost}}</text>
-        <text x="970" y="533" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10">EUR</text>
+      <g id="consumption-kwh" transform="translate(790, 495)">
+        <rect x="-10" y="-5" width="140" height="55" rx="5" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="0.5"/>
+        <text y="10" fill="#6B7280" font-family="Inter, sans-serif" font-size="9" font-weight="600">Total Energy</text>
+        <text y="32" fill="#111827" font-family="Inter, sans-serif" font-size="18" font-weight="700">{{total_kwh}}</text>
+        <text y="46" fill="#9CA3AF" font-family="Inter, sans-serif" font-size="10" font-weight="600">kWh</text>
+      </g>
+      <g id="consumption-cost" transform="translate(970, 495)">
+        <rect x="-10" y="-5" width="110" height="55" rx="5" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="0.5"/>
+        <text y="10" fill="#6B7280" font-family="Inter, sans-serif" font-size="8" font-weight="600">Cost (Spain)</text>
+        <text y="32" fill="#059669" font-family="Inter, sans-serif" font-size="18" font-weight="700">€{{total_cost}}</text>
+        <text y="46" fill="#10B981" font-family="Inter, sans-serif" font-size="10" font-weight="600">EUR</text>
       </g>
     </g>
 
-    <!-- Peak Load Times Section -->
     <g id="peak-loads">
-      <rect x="570" y="565" width="523" height="130" class="card-consumption" rx="6"/>
-      <text x="585" y="585" fill="#94a3b8" font-family="Inter, sans-serif" font-size="10" font-weight="600" text-transform="uppercase">
-        <tspan fill="#ef4444">⚡</tspan> Peak Load Events
-      </text>
-
-      <!-- Peak Row 1 -->
-      <text x="585" y="610" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#1 {{peak_1_sensor}} - {{peak_1_channel}}</text>
-      <text x="780" y="610" fill="#ffffff" font-family="Inter, sans-serif" font-size="14" font-weight="700">{{peak_1_value}}<tspan fill="#94a3b8" font-size="10">A</tspan></text>
-      <text x="880" y="610" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">{{peak_1_time}}</text>
-      <text x="1040" y="610" fill="#ef4444" font-family="Inter, sans-serif" font-size="10">{{peak_1_power}} kW</text>
-
-      <!-- Peak Row 2 -->
-      <text x="585" y="640" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#2 {{peak_2_sensor}} - {{peak_2_channel}}</text>
-      <text x="780" y="640" fill="#ffffff" font-family="Inter, sans-serif" font-size="14" font-weight="700">{{peak_2_value}}<tspan fill="#94a3b8" font-size="10">A</tspan></text>
-      <text x="880" y="640" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">{{peak_2_time}}</text>
-      <text x="1040" y="640" fill="#ef4444" font-family="Inter, sans-serif" font-size="10">{{peak_2_power}} kW</text>
-
-      <!-- Peak Row 3 -->
-      <text x="585" y="670" fill="#ffffff" font-family="Inter, sans-serif" font-size="11" font-weight="600">#3 {{peak_3_sensor}} - {{peak_3_channel}}</text>
-      <text x="780" y="670" fill="#ffffff" font-family="Inter, sans-serif" font-size="14" font-weight="700">{{peak_3_value}}<tspan fill="#94a3b8" font-size="10">A</tspan></text>
-      <text x="880" y="670" fill="#94a3b8" font-family="Inter, sans-serif" font-size="9">{{peak_3_time}}</text>
-      <text x="1040" y="670" fill="#ef4444" font-family="Inter, sans-serif" font-size="10">{{peak_3_power}} kW</text>
+      <rect x="570" y="565" width="523" height="130" class="card-consumption" rx="8"/>
+      <g transform="translate(585, 585)">
+        <text font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#FCA5A5">
+          <tspan fill="#EF4444">⚡</tspan>
+          <tspan dx="4">Peak Load Events</tspan>
+          <tspan dx="6" font-size="9" font-weight="500" fill="#94A3B8">(Top 3)</tspan>
+        </text>
+      </g>
+      <g transform="translate(0, 610)" font-family="Inter, sans-serif">
+        <rect x="580" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.2"/>
+        <text x="592" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle">#1</text>
+        <text x="615" fill="#E2E8F0" font-size="11" font-weight="600">{{peak_1_sensor}} - {{peak_1_channel}}</text>
+        <text x="780" fill="#FFFFFF" font-size="14" font-weight="700">{{peak_1_value}}<tspan fill="#94A3B8" font-size="10">A</tspan></text>
+        <text x="880" fill="#94A3B8" font-size="9">{{peak_1_time}}</text>
+        <text x="1040" fill="#EF4444" font-size="10" font-weight="600">{{peak_1_power}} kW</text>
+      </g>
+      <g transform="translate(0, 640)" font-family="Inter, sans-serif">
+        <rect x="580" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.15"/>
+        <text x="592" fill="#FCA5A5" font-size="11" font-weight="600" text-anchor="middle">#2</text>
+        <text x="615" fill="#E2E8F0" font-size="11" font-weight="600">{{peak_2_sensor}} - {{peak_2_channel}}</text>
+        <text x="780" fill="#FFFFFF" font-size="14" font-weight="700">{{peak_2_value}}<tspan fill="#94A3B8" font-size="10">A</tspan></text>
+        <text x="880" fill="#94A3B8" font-size="9">{{peak_2_time}}</text>
+        <text x="1040" fill="#EF4444" font-size="10" font-weight="600">{{peak_2_power}} kW</text>
+      </g>
+      <g transform="translate(0, 670)" font-family="Inter, sans-serif">
+        <rect x="580" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.1"/>
+        <text x="592" fill="#F87171" font-size="11" font-weight="600" text-anchor="middle">#3</text>
+        <text x="615" fill="#E2E8F0" font-size="11" font-weight="600">{{peak_3_sensor}} - {{peak_3_channel}}</text>
+        <text x="780" fill="#FFFFFF" font-size="14" font-weight="700">{{peak_3_value}}<tspan fill="#94A3B8" font-size="10">A</tspan></text>
+        <text x="880" fill="#94A3B8" font-size="9">{{peak_3_time}}</text>
+        <text x="1040" fill="#EF4444" font-size="10" font-weight="600">{{peak_3_power}} kW</text>
+      </g>
     </g>
   </g>
 
-  <!-- ========================================= -->
-  <!-- FOOTER SECTION (Customizable) -->
-  <!-- ========================================= -->
   <g id="footer">
     <line x1="30" y1="725" x2="1093" y2="725" stroke="{{footer_bg}}" stroke-width="2"/>
     <rect y="733" width="1123" height="61" fill="{{footer_bg}}"/>
-    <text x="40" y="767" fill="{{footer_text_color}}" font-size="12" font-family="Inter, Arial, sans-serif">
-      {{footer_text}}
-    </text>
-    <text x="1083" y="767" fill="{{footer_date_color}}" font-size="12" font-family="Inter, Arial, sans-serif" text-anchor="end">
-      {{generation_date}}
-    </text>
+    <text x="40" y="767" fill="{{footer_text_color}}" font-size="12" font-family="Inter, Arial, sans-serif">{{footer_text}}</text>
+    <text x="1083" y="767" fill="{{footer_date_color}}" font-size="12" font-family="Inter, Arial, sans-serif" text-anchor="end">{{generation_date}}</text>
   </g>
 </svg>

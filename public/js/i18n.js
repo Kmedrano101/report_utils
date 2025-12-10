@@ -17,6 +17,7 @@
 
     const TEXT_TRANSLATIONS = {
         'Tidop IoT Report Utils': { en: 'Tidop IoT Report Utils', es: 'Tidop IoT Report Utils' },
+        'IoT Report Generation': { en: 'IoT Report Generation', es: 'Generación de Informes IoT' },
         'Configuration & Management': { en: 'Configuration & Management', es: 'Configuración y gestión' },
         'Checking...': { en: 'Checking...', es: 'Verificando...' },
         'Refresh': { en: 'Refresh', es: 'Actualizar' },
@@ -216,7 +217,10 @@
         'List metrics': { en: 'List metrics', es: 'Listar métricas' },
         'IoT Sensor Summary Report': { en: 'IoT Sensor Summary Report', es: 'Reporte resumido de sensores IoT' },
         'Real-time monitoring and analytics': { en: 'Real-time monitoring and analytics', es: 'Monitoreo y análisis en tiempo real' },
-        'Madison - IoT Report': { en: 'Madison - IoT Report', es: 'Madison - Reporte IoT' }
+        'Madison - IoT Report': { en: 'Madison - IoT Report', es: 'Madison - Reporte IoT' },
+        'Temperature Analysis': { en: 'Temperature Analysis', es: 'Análisis de temperatura' },
+        'Power Consumption Analysis': { en: 'Power Consumption Analysis', es: 'Análisis de consumo energético' },
+        'Sound Levels Analysis': { en: 'Sound Levels Analysis', es: 'Análisis de niveles de sonido' }
     };
 
     const KEY_TRANSLATIONS = {

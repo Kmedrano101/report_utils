@@ -378,7 +378,7 @@ class UserMetricsService {
             const peakLoads = await this.getPeakLoadEvents(startDate, endDate, source, timeRange, voltage, locale);
 
             // Get average consumption per channel for chart
-            const channelData = await this.getAverageConsumptionPerChannel(startDate, endDate, source, timeRange);
+            const channelData = await this.getAverageConsumptionPerChannel(startDate, endDate, source, timeRange, locale);
 
             const report = {
                 reportName: 'Power Consumption Analysis',
@@ -744,7 +744,7 @@ class UserMetricsService {
     /**
      * Get average consumption per channel for chart visualization
      */
-    async getAverageConsumptionPerChannel(startDate, endDate, source, timeRange) {
+    async getAverageConsumptionPerChannel(startDate, endDate, source, timeRange, locale = 'es-ES') {
         const channels = ['current_clamp_1', 'current_clamp_2', 'current_clamp_3', 'current_clamp_4'];
         const sensors = ['c1', 'c2'];
 
@@ -769,8 +769,13 @@ class UserMetricsService {
 
         const sensorData = await Promise.all(channelDataPromises);
 
+        // Generate labels based on locale
+        const phaseLabels = locale.startsWith('es')
+            ? ['Fase R', 'Fase S', 'Fase T', 'Neutro']
+            : ['Phase R', 'Phase S', 'Phase T', 'Neutral'];
+
         return {
-            labels: channels.map((_, i) => `Ch${i + 1}`),
+            labels: phaseLabels,
             datasets: [
                 {
                     label: 'Sensor C1',
