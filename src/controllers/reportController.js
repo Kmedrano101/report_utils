@@ -975,6 +975,39 @@ class ReportController {
         // Base metrics from VictoriaMetrics
         ...baseMetrics,
 
+        // Labels for template (will be translated by translateTemplateText)
+        label_building_name: 'BUILDING NAME',
+        label_report_period: 'REPORT PERIOD',
+        label_total_sensors: 'TOTAL SENSORS',
+        label_active: 'ACTIVE',
+        label_report_overview: 'Report Overview',
+        label_key_metrics: 'Key Metrics',
+        label_comfort: 'Comfort',
+        label_critical: 'Critical',
+        label_ideal_zone: 'Ideal Zone',
+        label_out_of_range: 'Out of Range',
+        label_temp_distribution: 'Temperature Distribution',
+        label_temperature_trends: 'Temperature Trends',
+        label_total: 'Total',
+        label_cold: 'Cold',
+        label_heat: 'Heat',
+        label_temp_ranges: 'Temperature Ranges',
+        label_hotspots_coldzones: 'Hotspots and Cold Zones',
+        label_temp_details: 'Temperature Details by Sensor',
+        label_sensor: 'SENSOR',
+        label_prom: 'AVG',
+        label_max: 'MAX',
+        label_min: 'MIN',
+        label_avg: 'AVG',
+        label_hotspot: 'HOTSPOT',
+        label_coldzone: 'COLD ZONE',
+        label_average: 'Average',
+
+        // Report description (locale-specific)
+        report_description: locale === 'es'
+          ? 'Este informe analiza los patrones de temperatura en todos los sensores monitoreados para identificar zonas calientes (áreas con temperaturas consistentemente altas) y zonas frías (áreas con temperaturas consistentemente bajas). La zona de confort se define como temperaturas entre 20°C y 26°C, proporcionando condiciones óptimas para la ocupación y operación de equipos.'
+          : 'This report analyzes temperature patterns across all monitored sensors to identify hotspots (areas with consistently high temperatures) and cold zones (areas with consistently low temperatures). The comfort zone is defined as temperatures between 20°C and 26°C, providing optimal conditions for occupancy and equipment operation.',
+
         // Building name
         building_name: 'Madison Arena',
 
@@ -1053,12 +1086,12 @@ class ReportController {
       const htmlOptions = {
         layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
         pageSize: pageSize.toUpperCase(),
-        chartType: 'temperature-comparison',
+        chartType: 'temperature-trends',
         locale
       };
 
-      // Prepare chart data for temperature comparison chart
-      const chartData = hotspotsData.chartData?.comparisonChart || null;
+      // Prepare chart data for both temperature comparison and trends charts
+      const chartData = hotspotsData.chartData || null;
 
       if (format === 'html') {
         const htmlContent = svgTemplateService.generateHtmlWithSvg(localizedSvg, chartData, htmlOptions);

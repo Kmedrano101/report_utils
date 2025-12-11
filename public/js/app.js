@@ -887,9 +887,10 @@ async function generateReport() {
             body.footerText = config.footer?.text || document.getElementById('pdfFooterText')?.value || 'Madison - IoT Report';
             body.logoUrl = '/images/logo_madison.png';
             body.theme = config.theme || document.getElementById('pdfTheme')?.value || 'professional-blue';
-            body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'landscape';
+            body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'portrait';  // Changed default to portrait
             body.pageSize = config.pageSize || document.getElementById('pdfPageSize')?.value || 'a4';
             body.source = 'external'; // Always use external VictoriaMetrics
+            body.locale = LanguageManager?.getLanguage?.() || 'en';  // Add locale parameter
 
         } else if (reportType === 'power-consumption') {
             url += 'power-consumption';
@@ -901,9 +902,10 @@ async function generateReport() {
             body.footerText = config.footer?.text || document.getElementById('pdfFooterText')?.value || 'Madison - IoT Report';
             body.logoUrl = '/images/logo_madison.png';
             body.theme = config.theme || document.getElementById('pdfTheme')?.value || 'professional-blue';
-            body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'landscape';
+            body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'portrait';  // Changed default to portrait
             body.pageSize = config.pageSize || document.getElementById('pdfPageSize')?.value || 'a4';
             body.source = 'external'; // Always use external VictoriaMetrics
+            body.locale = LanguageManager?.getLanguage?.() || 'en';  // Add locale parameter
 
         } else if (reportType === 'sound-analysis') {
             url += 'sound-analysis';
@@ -915,9 +917,10 @@ async function generateReport() {
             body.footerText = config.footer?.text || document.getElementById('pdfFooterText')?.value || 'Madison - IoT Report';
             body.logoUrl = '/images/logo_madison.png';
             body.theme = config.theme || document.getElementById('pdfTheme')?.value || 'professional-blue';
-            body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'landscape';
+            body.layout = config.layout || document.getElementById('pdfLayout')?.value || 'portrait';  // Changed default to portrait
             body.pageSize = config.pageSize || document.getElementById('pdfPageSize')?.value || 'a4';
             body.source = 'external'; // Always use external VictoriaMetrics
+            body.locale = LanguageManager?.getLanguage?.() || 'en';  // Add locale parameter
 
         } else if (reportType === 'test-template') {
             url += 'test-template';

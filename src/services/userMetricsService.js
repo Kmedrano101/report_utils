@@ -76,6 +76,21 @@ class UserMetricsService {
             // Generate chart data for visualization
             const chartData = this.generateTemperatureChartData(sensorData, hotspots, coldZones);
 
+            // Generate trends chart data (time-series for warmest and coldest sensors)
+            // Always use top warmest and coldest sensors, even if they don't meet hotspot/coldzone thresholds
+            const warmestSensor = hotspots.length > 0 ? hotspots[0] : (sensorData.length > 0 ? sensorData[0] : null);
+            const coldestSensor = coldZones.length > 0 ? coldZones[0] : (sensorData.length > 0 ? sensorData[sensorData.length - 1] : null);
+
+            const trendsChartData = await this.generateTrendsChartData(
+                startDate,
+                endDate,
+                source,
+                warmestSensor,
+                coldestSensor,
+                overallAvg,
+                locale
+            );
+
             const report = {
                 reportName: 'Hotspots and Cold Zones',
                 reportType: 'temperature-analysis',
@@ -116,7 +131,10 @@ class UserMetricsService {
                 })),
 
                 // Chart data for graphics
-                chartData: chartData,
+                chartData: {
+                    ...chartData,
+                    trendsChart: trendsChartData
+                },
 
                 // All sensor temperatures for heatmap
                 allSensors: sensorData.map(s => ({
@@ -292,6 +310,312 @@ class UserMetricsService {
             comparisonChart,
             rangeChart
         };
+    }
+
+    /**
+     * Generate trends chart data (time-series for hotspot and cold zone)
+     * @param {string} startDate - Start date
+     * @param {string} endDate - End date
+     * @param {string} source - Data source
+     * @param {Object} hotspot - Hotspot sensor object
+     * @param {Object} coldZone - Cold zone sensor object
+     * @param {number} overallAvg - Overall average temperature
+     * @param {string} locale - Locale for labels (e.g., 'es-ES', 'en')
+     * @returns {Promise<Object>} Trends chart data
+     */
+    async generateTrendsChartData(startDate, endDate, source, warmestSensor, coldestSensor, overallAvg, locale = 'es-ES') {
+        try {
+            // Calculate appropriate step size based on time range
+            const startTime = new Date(startDate).getTime();
+            const endTime = new Date(endDate).getTime();
+            const durationHours = (endTime - startTime) / (1000 * 60 * 60);
+            const rangeStartMs = Number.isFinite(startTime) ? startTime : null;
+            const rangeEndMs = Number.isFinite(endTime) ? endTime : null;
+
+            // Use smaller step for short ranges, daily/weekly for long ranges
+            // This keeps data points optimal for Chart.js performance and readable axes
+            let step;
+            let timeUnit;
+            const durationDays = durationHours / 24;
+
+            // Determine if locale is Spanish
+            const isSpanish = locale && (locale.startsWith('es') || locale === 'es-ES');
+
+            if (durationHours <= 48) {
+                step = '1h'; // Hourly for up to 2 days
+                timeUnit = 'hour';
+            } else if (durationDays <= 30) {
+                step = '1d'; // Daily for up to 1 month
+                timeUnit = 'day';
+            } else {
+                step = '1w'; // Weekly beyond one month
+                timeUnit = 'week';
+            }
+
+            // Localized time unit labels for chart legend
+            const timeUnitLabels = {
+                hour: isSpanish ? 'por hora' : 'hourly',
+                day: isSpanish ? 'diario' : 'daily',
+                week: isSpanish ? 'semanal' : 'weekly'
+            };
+            const timeUnitLabel = timeUnitLabels[timeUnit];
+
+            logger.info('Generating aggregate trends chart', {
+                durationHours,
+                step,
+                timeUnit,
+                startDate,
+                endDate
+            });
+
+            // Query aggregate temperature trends across ALL sensors
+            // This shows overall hot, cold, and average temperature patterns over time
+            const maxTempQuery = `max(iot_sensor_reading{sensor_type="temperature"})`;
+            const minTempQuery = `min(iot_sensor_reading{sensor_type="temperature"})`;
+            const avgTempQuery = `avg(iot_sensor_reading{sensor_type="temperature"})`;
+
+            const [maxResult, minResult, avgResult] = await Promise.all([
+                victoriaMetricsService.queryRange(maxTempQuery, {
+                    start: startDate,
+                    end: endDate,
+                    step,
+                    source
+                }),
+                victoriaMetricsService.queryRange(minTempQuery, {
+                    start: startDate,
+                    end: endDate,
+                    step,
+                    source
+                }),
+                victoriaMetricsService.queryRange(avgTempQuery, {
+                    start: startDate,
+                    end: endDate,
+                    step,
+                    source
+                })
+            ]);
+
+            // Log result structure for debugging
+            logger.info('Query result structure', {
+                maxHasData: !!maxResult.data,
+                maxHasResult: !!maxResult.data?.result,
+                maxResultLength: maxResult.data?.result?.length,
+                maxFirstResult: maxResult.data?.result?.[0] ? Object.keys(maxResult.data.result[0]) : []
+            });
+
+            // Process aggregate data from VictoriaMetrics range queries
+            const maxResultData = maxResult.data?.result?.[0];
+            const minResultData = minResult.data?.result?.[0];
+            const avgResultData = avgResult.data?.result?.[0];
+
+            // Normalize VictoriaMetrics range responses regardless of shape
+            // Supported shapes:
+            // - values: [[ts, value], ...]
+            // - values: [value, ...] + timestamps: [ts, ...]
+            const parseRangeSeries = (resultData) => {
+                const timestamps = [];
+                const values = [];
+
+                if (!resultData) return { timestamps, values };
+
+                // Common VM range format: values = [[ts, value], ...]
+                if (Array.isArray(resultData.values) && Array.isArray(resultData.values[0])) {
+                    resultData.values.forEach(point => {
+                        if (!Array.isArray(point) || point.length < 2) return;
+                        const [tsRaw, valueRaw] = point;
+                        const ts = parseFloat(tsRaw);
+                        const val = parseFloat(valueRaw);
+                        if (Number.isFinite(ts) && Number.isFinite(val)) {
+                            timestamps.push(ts);
+                            values.push(val);
+                        }
+                    });
+                    return { timestamps, values };
+                }
+
+                // Alternate shape: separate timestamps and values arrays
+                if (Array.isArray(resultData.values) && Array.isArray(resultData.timestamps)) {
+                    for (let i = 0; i < resultData.values.length; i++) {
+                        const ts = parseFloat(resultData.timestamps[i]);
+                        const val = parseFloat(resultData.values[i]);
+                        if (Number.isFinite(ts) && Number.isFinite(val)) {
+                            timestamps.push(ts);
+                            values.push(val);
+                        }
+                    }
+                    return { timestamps, values };
+                }
+
+                // Object-based points: [{ timestamp, value }]
+                if (Array.isArray(resultData.values) && resultData.values.length && typeof resultData.values[0] === 'object') {
+                    resultData.values.forEach(point => {
+                        const ts = parseFloat(point.timestamp ?? point.ts);
+                        const val = parseFloat(point.value ?? point.val);
+                        if (Number.isFinite(ts) && Number.isFinite(val)) {
+                            timestamps.push(ts);
+                            values.push(val);
+                        }
+                    });
+                    return { timestamps, values };
+                }
+
+                return { timestamps, values };
+            };
+
+            const maxSeries = parseRangeSeries(maxResultData);
+            const minSeries = parseRangeSeries(minResultData);
+            const avgSeries = parseRangeSeries(avgResultData);
+
+            // Use the longest available timestamp series as reference
+            const availableSeries = [maxSeries, minSeries, avgSeries].filter(s => s.timestamps.length > 0);
+            const referenceSeries = availableSeries.sort((a, b) => b.timestamps.length - a.timestamps.length)[0];
+
+            logger.info('Aggregate trends data fetched', {
+                maxDataPoints: maxSeries.values.length,
+                minDataPoints: minSeries.values.length,
+                avgDataPoints: avgSeries.values.length,
+                timestampsCount: referenceSeries?.timestamps.length || 0,
+                sampleMaxValue: maxSeries.values[0],
+                sampleTimestamp: referenceSeries?.timestamps[0]
+            });
+
+            // If no data available, return null
+            if (!referenceSeries || referenceSeries.timestamps.length === 0) {
+                logger.warn('No time-series data available for trends chart');
+                return null;
+            }
+
+            // Detect if timestamps are in seconds or milliseconds
+            // Unix seconds for year 2020+ are around 1.6e9, milliseconds are around 1.6e12
+            const sampleTs = referenceSeries.timestamps[0];
+            const isMilliseconds = sampleTs > 1e11; // If > 100 billion, it's milliseconds
+
+            logger.info('Timestamp format detection', {
+                sampleTimestamp: sampleTs,
+                isMilliseconds,
+                interpretation: isMilliseconds
+                    ? new Date(sampleTs).toISOString()
+                    : new Date(sampleTs * 1000).toISOString()
+            });
+
+            // Convert timestamp to milliseconds consistently
+            const toMs = (ts) => isMilliseconds ? ts : ts * 1000;
+
+            // Filter reference timestamps to the requested range (defensive in case backend returns extra points)
+            let filteredReference = referenceSeries.timestamps;
+            if (rangeStartMs !== null && rangeEndMs !== null) {
+                filteredReference = referenceSeries.timestamps.filter(ts => {
+                    const tsMs = toMs(ts);
+                    return tsMs >= rangeStartMs && tsMs <= rangeEndMs;
+                });
+            }
+
+            if (filteredReference.length === 0) {
+                logger.warn('No time-series points remain after filtering by requested range; falling back to full reference series');
+                filteredReference = referenceSeries.timestamps;
+            }
+
+            // Align series values to the filtered reference timestamps
+            const mapSeriesToReference = (series, referenceTimestamps) => {
+                const lookup = new Map(series.timestamps.map((ts, idx) => [ts, series.values[idx]]));
+                return referenceTimestamps.map(ts => lookup.has(ts) ? lookup.get(ts) : null);
+            };
+
+            // Convert timestamps to ISO strings for JSON serialization
+            const timestamps = filteredReference.map(ts => new Date(toMs(ts)).toISOString());
+
+            // Extract aligned temperature values
+            const maxTemps = mapSeriesToReference(maxSeries, filteredReference);
+            const minTemps = mapSeriesToReference(minSeries, filteredReference);
+            const avgTemps = mapSeriesToReference(avgSeries, filteredReference);
+
+            // Convert to {x, y} points for Chart.js time scale
+            const toPoints = (values) => timestamps.map((ts, idx) => ({
+                x: ts,
+                y: values[idx] !== undefined ? values[idx] : null
+            }));
+            const maxPoints = toPoints(maxTemps);
+            const minPoints = toPoints(minTemps);
+            const avgPoints = toPoints(avgTemps);
+
+            logger.info('Trends chart data processed', {
+                timestamps: timestamps.length,
+                maxTempsValid: maxTemps.filter(t => t !== null).length,
+                minTempsValid: minTemps.filter(t => t !== null).length,
+                avgTempsValid: avgTemps.filter(t => t !== null).length,
+                rangeStart: rangeStartMs ? new Date(rangeStartMs).toISOString() : null,
+                rangeEnd: rangeEndMs ? new Date(rangeEndMs).toISOString() : null
+            });
+
+            // Localized dataset labels with time unit
+            const maxLabel = isSpanish
+                ? `🔥 Temp. Máx. (${timeUnitLabel})`
+                : `🔥 Max Temp. (${timeUnitLabel})`;
+            const avgLabel = isSpanish
+                ? `📊 Temp. Prom. (${timeUnitLabel})`
+                : `📊 Avg Temp. (${timeUnitLabel})`;
+            const minLabel = isSpanish
+                ? `❄️ Temp. Mín. (${timeUnitLabel})`
+                : `❄️ Min Temp. (${timeUnitLabel})`;
+
+            return {
+                type: 'line',
+                labels: timestamps,
+                datasets: [
+                    {
+                        label: maxLabel,
+                        data: maxPoints,
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        spanGaps: true
+                    },
+                    {
+                        label: avgLabel,
+                        data: avgPoints,
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        spanGaps: true
+                    },
+                    {
+                        label: minLabel,
+                        data: minPoints,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.4,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        spanGaps: true
+                    }
+                ],
+                options: {
+                    comfortZoneMin: 20,
+                    comfortZoneMax: 26,
+                    overallAvg: parseFloat(overallAvg),
+                    timeUnit: timeUnit,
+                    timeUnitLabel: timeUnitLabel,
+                    timestamps,
+                    // Pass the user-selected date range for x-axis bounds
+                    rangeStart: startDate,
+                    rangeEnd: endDate
+                }
+            };
+
+        } catch (error) {
+            logger.error('Failed to generate trends chart data', { error: error.message });
+            return null;
+        }
     }
 
     /**

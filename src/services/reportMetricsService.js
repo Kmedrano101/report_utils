@@ -361,24 +361,62 @@ class ReportMetricsService {
      */
     async getTemperatureComfortMetrics(startDate, endDate, source) {
         try {
-            const sensorFilter = 'sensor_type="temperature", sensor_name=~"tx|t[1-9]|t[12][0-9]|t30"';
-            const timeRange = this.getTimeRange(startDate, endDate);
+            // Updated regex to include all sensors t1-t30
+            const sensorFilter = 'sensor_type="temperature", sensor_name=~"t[1-9]|t[12][0-9]|t30"';
 
-            // Query to count readings in different temperature ranges
-            const comfortQuery = `count_over_time(iot_sensor_reading{${sensorFilter}}[${timeRange}] >= 20 <= 26)`;
-            const coldQuery = `count_over_time(iot_sensor_reading{${sensorFilter}}[${timeRange}] < 20)`;
-            const hotQuery = `count_over_time(iot_sensor_reading{${sensorFilter}}[${timeRange}] > 26)`;
+            // VictoriaMetrics doesn't support value comparisons in queries
+            // We need to fetch all temperature readings and filter them in JavaScript
+            const query = `iot_sensor_reading{${sensorFilter}}`;
 
-            const [comfortResult, coldResult, hotResult] = await Promise.all([
-                victoriaMetricsService.query(comfortQuery, { time: endDate, source }),
-                victoriaMetricsService.query(coldQuery, { time: endDate, source }),
-                victoriaMetricsService.query(hotQuery, { time: endDate, source })
-            ]);
+            // Use query_range to get all temperature readings over the time period
+            const result = await victoriaMetricsService.queryRange(query, {
+                start: startDate,
+                end: endDate,
+                step: '5m',  // 5-minute intervals
+                source
+            });
 
-            // Sum all readings across sensors
-            const comfortReadings = comfortResult.data?.result?.reduce((sum, r) => sum + parseFloat(r.values?.[0] || 0), 0) || 0;
-            const coldReadings = coldResult.data?.result?.reduce((sum, r) => sum + parseFloat(r.values?.[0] || 0), 0) || 0;
-            const hotReadings = hotResult.data?.result?.reduce((sum, r) => sum + parseFloat(r.values?.[0] || 0), 0) || 0;
+            logger.info('Query range result structure', {
+                hasData: !!result.data,
+                hasResult: !!result.data?.result,
+                resultCount: result.data?.result?.length || 0,
+                resultType: typeof result.data?.result
+            });
+
+            // Count readings in each temperature range
+            let comfortReadings = 0;
+            let coldReadings = 0;
+            let hotReadings = 0;
+
+            // Process all sensor time series
+            if (result.data?.result) {
+                for (const series of result.data.result) {
+                    if (series.values && Array.isArray(series.values)) {
+                        // Values are returned as arrays of [timestamp, value]
+                        for (const value of series.values) {
+                            // VictoriaMetrics returns [timestamp, "value"]
+                            // We need to parse the second element (the value)
+                            const temp = Array.isArray(value) ? parseFloat(value[1]) : parseFloat(value);
+                            if (!isNaN(temp)) {
+                                if (temp < 20) {
+                                    coldReadings++;
+                                } else if (temp >= 20 && temp <= 26) {
+                                    comfortReadings++;
+                                } else if (temp > 26) {
+                                    hotReadings++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            logger.info('Temperature comfort readings counted', {
+                comfortReadings,
+                coldReadings,
+                hotReadings,
+                totalReadings: comfortReadings + coldReadings + hotReadings
+            });
 
             const totalReadings = comfortReadings + coldReadings + hotReadings;
 
@@ -386,6 +424,9 @@ class ReportMetricsService {
             const comfortPercentage = totalReadings > 0 ? Math.round((comfortReadings / totalReadings) * 100) : 0;
             const coldPercentage = totalReadings > 0 ? Math.round((coldReadings / totalReadings) * 100) : 0;
             const hotPercentage = totalReadings > 0 ? Math.round((hotReadings / totalReadings) * 100) : 0;
+
+            // Calculate critical percentage (cold + hot = out of comfort zone)
+            const criticalPercentage = coldPercentage + hotPercentage;
 
             // Determine traffic light status
             let statusColor, statusText;
@@ -438,11 +479,31 @@ class ReportMetricsService {
             const circleCircumference = 251.2;
             const comfortCircleOffset = circleCircumference - (circleCircumference * comfortPercentage / 100);
 
+            // Calculate donut chart arc lengths and offsets
+            // Donut chart circumference: 2 * π * 31.5 ≈ 198
+            const donutCircumference = 198;
+            const coldArcLength = (coldPercentage / 100) * donutCircumference;
+            const comfortArcLength = (comfortPercentage / 100) * donutCircumference;
+            const hotArcLength = (hotPercentage / 100) * donutCircumference;
+
+            // Arc offsets (negative because we want clockwise drawing)
+            // Cold starts at 0, Comfort starts after cold, Hot starts after comfort
+            const comfortArcOffset = -coldArcLength;
+            const hotArcOffset = -(coldArcLength + comfortArcLength);
+
             return {
                 comfort_percentage: comfortPercentage,
                 cold_percentage: coldPercentage,
                 hot_percentage: hotPercentage,
+                critical_percentage: criticalPercentage,
                 comfort_circle_offset: comfortCircleOffset.toFixed(2),
+
+                // Donut chart arc lengths and offsets
+                cold_arc_length: coldArcLength.toFixed(1),
+                comfort_arc_length: comfortArcLength.toFixed(1),
+                hot_arc_length: hotArcLength.toFixed(1),
+                comfort_arc_offset: comfortArcOffset.toFixed(1),
+                hot_arc_offset: hotArcOffset.toFixed(1),
 
                 // Portrait dimensions
                 cold_bar_width_portrait: coldBarWidthPortrait,
@@ -478,7 +539,15 @@ class ReportMetricsService {
                 comfort_percentage: 0,
                 cold_percentage: 0,
                 hot_percentage: 0,
+                critical_percentage: 0,
                 comfort_circle_offset: '251.2',
+
+                // Donut chart arc lengths and offsets
+                cold_arc_length: '0',
+                comfort_arc_length: '0',
+                hot_arc_length: '0',
+                comfort_arc_offset: '0',
+                hot_arc_offset: '0',
 
                 // Portrait dimensions
                 cold_bar_width_portrait: 0,

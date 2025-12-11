@@ -100,9 +100,9 @@ class SvgTemplateService {
    * @param {boolean} useCache - Whether to use cached template
    * @returns {Promise<string>} SVG content
    */
-  async loadTemplate(templateName, useCache = true) {
+  async loadTemplate(templateName, useCache = false) {
     try {
-      // Check cache first
+      // Check cache first (disabled by default in development)
       if (useCache && this.templateCache.has(templateName)) {
         logger.debug(`Using cached template: ${templateName}`);
         return this.templateCache.get(templateName);
@@ -490,6 +490,7 @@ class SvgTemplateService {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IoT Report</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -516,6 +517,9 @@ class SvgTemplateService {
       height: ${height};
     }
     #chart-container { width: 100%; height: 100%; }
+    #trends-chart-container { width: 337px; height: 170px; display: block; }
+    #temperature-trends-chart { display: block; }
+    canvas { image-rendering: -webkit-optimize-contrast; }
     @page {
       size: ${pageSize} ${isLandscape ? 'landscape' : 'portrait'};
       margin: 0;
@@ -531,43 +535,51 @@ class SvgTemplateService {
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
       ${chartData ? `
-      // Generate Chart.js chart
-      const chartType = '${options.chartType || 'time-series'}';
+      // Generate Chart.js charts
+      const allChartData = ${JSON.stringify(chartData)};
+      const locale = '${locale}';
+      const chartType = '${options.chartType || ''}';
 
-      if (chartType === 'temperature-comparison') {
-        // Temperature comparison chart (horizontal bar)
-        const ctx = document.getElementById('temperature-comparison-chart');
-        if (ctx) {
-          const chartData = ${JSON.stringify(chartData)};
-          new Chart(ctx, {
-            type: 'bar',
-            data: chartData,
-            options: {
-              indexAxis: 'y',
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                title: { display: false }
-              },
-              scales: {
-                x: {
-                  beginAtZero: false,
-                  title: {
-                    display: true,
-                    text: 'Temperature (°C)',
-                    font: { size: 10 }
-                  },
-                  ticks: { font: { size: 9 } }
+      // Temperature comparison chart (horizontal bar) - render if canvas exists
+      const tempComparisonCtx = document.getElementById('temperature-comparison-chart');
+      if (tempComparisonCtx && allChartData.comparisonChart) {
+        new Chart(tempComparisonCtx, {
+          type: 'bar',
+          data: allChartData.comparisonChart,
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+              onComplete: function() {
+                console.log('Temperature comparison chart animation complete');
+                window.dispatchEvent(new Event('chartRendered'));
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              title: { display: false }
+            },
+            scales: {
+              x: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'Temperature (°C)',
+                  font: { size: 10 }
                 },
-                y: {
-                  ticks: { font: { size: 9 } }
-                }
+                ticks: { font: { size: 9 } }
+              },
+              y: {
+                ticks: { font: { size: 9 } }
               }
             }
-          });
-        }
-      } else if (chartType === 'consumption-comparison') {
+          }
+        });
+      }
+
+      // Other chart types (consumption, noise, time-series)
+      if (chartType === 'consumption-comparison') {
         // Power consumption comparison chart (bar chart)
         const ctx = document.getElementById('consumption-comparison-chart');
         if (ctx) {
@@ -641,6 +653,151 @@ class SvgTemplateService {
             }
           });
         }
+      } else if (chartType === 'temperature-trends') {
+        // Temperature trends over time chart (dual-line chart with comfort zone)
+        const ctx = document.getElementById('temperature-trends-chart');
+        if (ctx) {
+          const trendsData = ${JSON.stringify(chartData.trendsChart)};
+
+          if (trendsData && trendsData.datasets) {
+            const locale = '${locale}';
+            trendsData.labels = trendsData.labels || trendsData.options?.timestamps || [];
+
+            // Create background comfort zone plugin
+            const comfortZonePlugin = {
+              id: 'comfortZone',
+              beforeDatasetsDraw: (chart) => {
+                const { ctx, chartArea, scales } = chart;
+                if (!chartArea) return;
+
+                const comfortMin = ${chartData.trendsChart?.options?.comfortZoneMin || 20};
+                const comfortMax = ${chartData.trendsChart?.options?.comfortZoneMax || 26};
+                const yMin = scales.y.getPixelForValue(comfortMin);
+                const yMax = scales.y.getPixelForValue(comfortMax);
+
+                // Draw comfort zone background
+                ctx.save();
+                ctx.fillStyle = 'rgba(34, 197, 94, 0.1)';
+                ctx.fillRect(chartArea.left, yMax, chartArea.right - chartArea.left, yMin - yMax);
+                ctx.restore();
+              }
+            };
+
+            // Add average temperature line to datasets
+            const overallAvg = ${chartData.trendsChart?.options?.overallAvg || 0};
+            const timeUnitLabel = trendsData?.options?.timeUnitLabel || '';
+            const avgLineData = (trendsData.options?.timestamps || trendsData.labels || []).map(ts => ({
+              x: ts,
+              y: overallAvg
+            }));
+
+            // Localized overall average label
+            const overallAvgLabel = locale === 'es'
+              ? 'Promedio general'
+              : 'Overall Average';
+
+            trendsData.datasets.push({
+              label: overallAvgLabel,
+              data: avgLineData,
+              borderColor: 'rgb(156, 163, 175)',
+              borderDash: [5, 5],
+              borderWidth: 1.5,
+              fill: false,
+              pointRadius: 0,
+              tension: 0,
+              spanGaps: true
+            });
+
+            const timeUnit = trendsData?.options?.timeUnit || 'hour';
+            const displayFormats = timeUnit === 'hour'
+              ? { hour: 'MMM dd HH:mm' }
+              : timeUnit === 'day'
+                ? { day: 'MMM dd' }
+                : { week: 'MMM dd' };
+
+            // Get the user-selected date range for x-axis bounds
+            const rangeStart = trendsData?.options?.rangeStart || null;
+            const rangeEnd = trendsData?.options?.rangeEnd || null;
+
+            new Chart(ctx, {
+              type: 'line',
+              data: trendsData,
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                parsing: {
+                  xAxisKey: 'x',
+                  yAxisKey: 'y'
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                      boxWidth: 12,
+                      font: { size: 8 },
+                      padding: 8,
+                      usePointStyle: true
+                    }
+                  },
+                  title: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '°C';
+                      }
+                    }
+                  }
+                },
+                // Ensure render-complete marker is triggered even with animations disabled
+                animation: {
+                  duration: 0,
+                  onComplete: function() {
+                    window.dispatchEvent(new Event('chartRendered'));
+                  }
+                },
+                scales: {
+                  x: {
+                    type: 'time',
+                    time: {
+                      unit: timeUnit,
+                      minUnit: timeUnit,
+                      displayFormats
+                    },
+                    // Set explicit min/max bounds based on user-selected date range
+                    min: rangeStart,
+                    max: rangeEnd,
+                    title: {
+                      display: true,
+                      text: locale === 'es' ? 'Tiempo' : 'Time',
+                      font: { size: 9 }
+                    },
+                    ticks: {
+                      font: { size: 8 },
+                      maxRotation: 45,
+                      minRotation: 0
+                    }
+                  },
+                  y: {
+                    beginAtZero: false,
+                    title: {
+                      display: true,
+                      text: locale === 'es' ? 'Temperatura (°C)' : 'Temperature (°C)',
+                      font: { size: 9 }
+                    },
+                    ticks: {
+                      font: { size: 8 },
+                      callback: function(value) {
+                        return value.toFixed(0) + '°C';
+                      }
+                    }
+                  }
+                }
+              },
+              plugins: [comfortZonePlugin]
+            });
+          }
+        }
       } else {
         // Default time-series chart
         const ctx = document.getElementById('time-series-chart');
@@ -665,13 +822,43 @@ class SvgTemplateService {
       }
       ` : ''}
 
-      // Signal that rendering is complete for Puppeteer
-      setTimeout(() => {
+      // Wait for all Chart.js charts to finish rendering before signaling complete
+      let chartsRendered = 0;
+      const totalCharts = document.querySelectorAll('canvas').length;
+      console.log('Waiting for', totalCharts, 'chart(s) to render...');
+
+      // Fallback timeout in case charts don't render
+      const fallbackTimeout = setTimeout(() => {
+        console.log('Fallback timeout reached, adding marker anyway');
         const marker = document.createElement('div');
         marker.id = 'render-complete';
         marker.style.display = 'none';
         document.body.appendChild(marker);
-      }, 1000);
+      }, 5000);
+
+      // Add render complete marker when all charts are done
+      window.addEventListener('chartRendered', () => {
+        chartsRendered++;
+        console.log('Chart rendered:', chartsRendered, '/', totalCharts);
+
+        if (chartsRendered >= totalCharts) {
+          clearTimeout(fallbackTimeout);
+          console.log('All charts rendered, adding marker');
+          const marker = document.createElement('div');
+          marker.id = 'render-complete';
+          marker.style.display = 'none';
+          document.body.appendChild(marker);
+        }
+      });
+
+      // If no charts to render, add marker immediately
+      if (totalCharts === 0) {
+        clearTimeout(fallbackTimeout);
+        const marker = document.createElement('div');
+        marker.id = 'render-complete';
+        marker.style.display = 'none';
+        document.body.appendChild(marker);
+      }
     });
   </script>
 </body>

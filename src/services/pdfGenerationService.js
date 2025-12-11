@@ -96,11 +96,11 @@ class PdfGenerationService {
         // Wait for render-complete marker (similar to maps-are-loaded in treeads-report)
         try {
           await page.waitForSelector('#render-complete', {
-            timeout: options.renderTimeout || 5000
+            timeout: options.renderTimeout || 20000 // Increased to 20000ms to handle large date ranges with many data points
           });
           logger.debug('Render complete marker detected');
         } catch (err) {
-          logger.warn('Render complete marker not found, proceeding anyway');
+          logger.warn('Render complete marker not found, proceeding anyway', { timeout: options.renderTimeout || 20000 });
         }
 
         // Additional wait for dynamic content
