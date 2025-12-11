@@ -3,6 +3,7 @@ const SUPPORTED_LOCALES = ['en', 'es'];
 const TEMPLATE_TEXT_TRANSLATIONS = {
   '% of time': { es: '% del tiempo' },
   'Above Threshold (70 dB)': { es: 'Por encima del umbral (70 dB)' },
+  'Above Threshold': { es: 'Por encima del umbral' },
   Active: { es: 'Activos' },
   'Active Sensors': { es: 'Sensores activos' },
   'Average Consumption per Channel': { es: 'Consumo medio por canal' },
@@ -107,7 +108,29 @@ const TEMPLATE_TEXT_TRANSLATIONS = {
   'Total sensores': { es: 'Total sensores' },
   dB: { es: 'dB' },
   kWh: { es: 'kWh' },
-  '°C': { es: '°C' }
+  '°C': { es: '°C' },
+
+  // Noise Report - Distribution labels
+  'Noise Distribution': { es: 'Distribución de ruido' },
+  'Noise Ranges': { es: 'Rangos de ruido' },
+  'Quiet': { es: 'Silencioso' },
+  'Normal': { es: 'Normal' },
+  'Loud': { es: 'Ruidoso' },
+
+  // Noise Report - Section headers
+  'Noisiest and Quietest Locations': { es: 'Ubicaciones más ruidosas y silenciosas' },
+  'Noise Details by Sensor': { es: 'Detalles de ruido por sensor' },
+  'Noise Trends': { es: 'Tendencias de ruido' },
+
+  // Noise Report - Sensor cards
+  'NOISIEST LOCATION': { es: 'UBICACIÓN MÁS RUIDOSA' },
+  'QUIETEST LOCATION': { es: 'UBICACIÓN MÁS SILENCIOSA' },
+  'PEAK': { es: 'PICO' },
+  'DEV': { es: 'DESV' },
+
+  // Noise Report - Chart legend
+  'Overall Avg': { es: 'Prom. general' },
+  'Overall Average': { es: 'Promedio general' }
 };
 
 const REPORT_COPY = {

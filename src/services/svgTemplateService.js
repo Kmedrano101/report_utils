@@ -518,7 +518,7 @@ class SvgTemplateService {
     }
     #chart-container { width: 100%; height: 100%; }
     #trends-chart-container { width: 337px; height: 170px; display: block; }
-    #temperature-trends-chart { display: block; }
+    #temperature-trends-chart, #noise-trends-chart { display: block; }
     canvas { image-rendering: -webkit-optimize-contrast; }
     @page {
       size: ${pageSize} ${isLandscape ? 'landscape' : 'portrait'};
@@ -542,7 +542,7 @@ class SvgTemplateService {
 
       // Temperature comparison chart (horizontal bar) - render if canvas exists
       const tempComparisonCtx = document.getElementById('temperature-comparison-chart');
-      if (tempComparisonCtx && allChartData.comparisonChart) {
+      if (tempComparisonCtx && allChartData?.comparisonChart) {
         new Chart(tempComparisonCtx, {
           type: 'bar',
           data: allChartData.comparisonChart,
@@ -620,14 +620,13 @@ class SvgTemplateService {
             }
           });
         }
-      } else if (chartType === 'noise-comparison') {
+      } else if (chartType === 'noise-trends' || chartType === 'noise-comparison') {
         // Noise pollution comparison chart (horizontal bar chart)
-        const ctx = document.getElementById('noise-comparison-chart');
-        if (ctx) {
-          const chartData = ${JSON.stringify(chartData)};
-          new Chart(ctx, {
+        const comparisonCtx = document.getElementById('noise-comparison-chart');
+        if (comparisonCtx && allChartData?.comparisonChart) {
+          new Chart(comparisonCtx, {
             type: 'bar',
-            data: chartData,
+            data: allChartData.comparisonChart,
             options: {
               indexAxis: 'y',
               responsive: true,
@@ -636,12 +635,18 @@ class SvgTemplateService {
                 legend: { display: false },
                 title: { display: false }
               },
+              animation: {
+                duration: 0,
+                onComplete: function() {
+                  window.dispatchEvent(new Event('chartRendered'));
+                }
+              },
               scales: {
                 x: {
                   beginAtZero: true,
                   title: {
                     display: true,
-                    text: 'Sound Level (dB)',
+                    text: locale === 'es' ? 'Nivel sonoro (dB)' : 'Sound Level (dB)',
                     font: { size: 10 }
                   },
                   ticks: { font: { size: 9 } }
@@ -652,6 +657,142 @@ class SvgTemplateService {
               }
             }
           });
+        }
+
+        // Noise trends line chart (adaptive time unit)
+        if (chartType === 'noise-trends') {
+          const ctx = document.getElementById('noise-trends-chart');
+          const trendsData = allChartData?.trendsChart;
+
+          if (ctx && trendsData && trendsData.datasets) {
+            const locale = '${locale}';
+            trendsData.labels = trendsData.labels || trendsData.options?.timestamps || [];
+
+            const comfortZonePlugin = {
+              id: 'noiseComfortZone',
+              beforeDatasetsDraw: (chart) => {
+                const { ctx, chartArea, scales } = chart;
+                if (!chartArea) return;
+
+                const comfortMin = ${chartData?.trendsChart?.options?.comfortZoneMin || 35};
+                const comfortMax = ${chartData?.trendsChart?.options?.comfortZoneMax || 45};
+                const yMin = scales.y.getPixelForValue(comfortMin);
+                const yMax = scales.y.getPixelForValue(comfortMax);
+
+                ctx.save();
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+                ctx.fillRect(chartArea.left, yMax, chartArea.right - chartArea.left, yMin - yMax);
+                ctx.restore();
+              }
+            };
+
+            const overallAvg = ${chartData?.trendsChart?.options?.overallAvg || 0};
+            const avgLineData = (trendsData.options?.timestamps || trendsData.labels || []).map(ts => ({
+              x: ts,
+              y: overallAvg
+            }));
+            const overallAvgLabel = locale === 'es'
+              ? 'Prom. general'
+              : 'Overall Average';
+
+            trendsData.datasets.push({
+              label: overallAvgLabel,
+              data: avgLineData,
+              borderColor: 'rgb(156, 163, 175)',
+              borderDash: [5, 5],
+              borderWidth: 1.25,
+              fill: false,
+              pointRadius: 0,
+              tension: 0,
+              spanGaps: true
+            });
+
+            const timeUnit = trendsData?.options?.timeUnit || 'hour';
+            const displayFormats = timeUnit === 'hour'
+              ? { hour: 'MMM dd HH:mm' }
+              : timeUnit === 'day'
+                ? { day: 'MMM dd' }
+                : { week: 'MMM dd' };
+
+            const rangeStart = trendsData?.options?.rangeStart || null;
+            const rangeEnd = trendsData?.options?.rangeEnd || null;
+
+            new Chart(ctx, {
+              type: 'line',
+              data: trendsData,
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                parsing: {
+                  xAxisKey: 'x',
+                  yAxisKey: 'y'
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                      boxWidth: 12,
+                      font: { size: 8 },
+                      padding: 8,
+                      usePointStyle: true
+                    }
+                  },
+                  title: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' dB';
+                      }
+                    }
+                  }
+                },
+                animation: {
+                  duration: 0,
+                  onComplete: function() {
+                    window.dispatchEvent(new Event('chartRendered'));
+                  }
+                },
+                scales: {
+                  x: {
+                    type: 'time',
+                    time: {
+                      unit: timeUnit,
+                      minUnit: timeUnit,
+                      displayFormats
+                    },
+                    min: rangeStart,
+                    max: rangeEnd,
+                    title: {
+                      display: true,
+                      text: locale === 'es' ? 'Tiempo' : 'Time',
+                      font: { size: 9 }
+                    },
+                    ticks: {
+                      font: { size: 8 },
+                      maxRotation: 45,
+                      minRotation: 0
+                    }
+                  },
+                  y: {
+                    beginAtZero: false,
+                    title: {
+                      display: true,
+                      text: locale === 'es' ? 'Nivel de ruido (dB)' : 'Noise level (dB)',
+                      font: { size: 9 }
+                    },
+                    ticks: {
+                      font: { size: 8 },
+                      callback: function(value) {
+                        return value.toFixed(0) + ' dB';
+                      }
+                    }
+                  }
+                }
+              },
+              plugins: [comfortZonePlugin]
+            });
+          }
         }
       } else if (chartType === 'temperature-trends') {
         // Temperature trends over time chart (dual-line chart with comfort zone)

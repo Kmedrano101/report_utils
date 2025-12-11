@@ -140,139 +140,17 @@
   </g>
 
   <!-- ========================================= -->
-  <!-- THREE-PHASE LOAD BALANCE (Improved) -->
-  <!-- ========================================= -->
-  <g id="phase-balance-indicator" role="figure" aria-label="Three-Phase Load Balance">
-    <!-- Card Container with Elevation -->
-    <rect x="30" y="220" width="734" height="150" class="card-elevated" rx="8" ry="8"/>
-
-    <!-- Section Header with Icon -->
-    <g id="balance-header" transform="translate(50, 248)">
-      <text font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#1F2937">
-        <tspan fill="#F59E0B">⚡</tspan>
-        <tspan dx="6">Three-Phase Load Balance</tspan>
-      </text>
-    </g>
-
-    <!-- Phase Bars Container -->
-    <g id="phase-bars" transform="translate(50, 265)">
-
-      <!-- Phase R (Blue) -->
-      <g id="phase-ch1">
-        <text x="0" y="17" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#1F2937">Fase R</text>
-
-        <!-- Background Track -->
-        <rect x="45" y="2" width="200" height="24" fill="url(#trackGradient)" rx="12" opacity="0.6"/>
-
-        <!-- Progress Bar with Animation -->
-        <rect x="45" y="2" width="0" height="24" fill="url(#ch1Gradient)" rx="12">
-          <animate
-            attributeName="width"
-            from="0" to="{{phase_f1_bar_width}}"
-            dur="0.8s"
-            fill="freeze"
-            calcMode="spline"
-            keySplines="0.25 0.1 0.25 1"
-          />
-        </rect>
-
-        <!-- Glass Overlay -->
-        <rect x="45" y="2" width="200" height="24" fill="url(#glassOverlay)" rx="12" pointer-events="none"/>
-
-        <!-- Percentage Label -->
-        <text x="255" y="17" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#1F2937">{{phase_f1_percentage}}%</text>
-      </g>
-
-      <!-- Phase S (Green) -->
-      <g id="phase-ch2" transform="translate(0, 35)">
-        <text x="0" y="17" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#1F2937">Fase S</text>
-
-        <!-- Background Track -->
-        <rect x="45" y="2" width="200" height="24" fill="url(#trackGradient)" rx="12" opacity="0.6"/>
-
-        <!-- Progress Bar with Animation -->
-        <rect x="45" y="2" width="0" height="24" fill="url(#ch2Gradient)" rx="12">
-          <animate
-            attributeName="width"
-            from="0" to="{{phase_f2_bar_width}}"
-            dur="0.8s"
-            begin="0.15s"
-            fill="freeze"
-            calcMode="spline"
-            keySplines="0.25 0.1 0.25 1"
-          />
-        </rect>
-
-        <!-- Glass Overlay -->
-        <rect x="45" y="2" width="200" height="24" fill="url(#glassOverlay)" rx="12" pointer-events="none"/>
-
-        <!-- Percentage Label -->
-        <text x="255" y="17" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#1F2937">{{phase_f2_percentage}}%</text>
-      </g>
-
-      <!-- Phase T (Amber) -->
-      <g id="phase-ch3" transform="translate(0, 70)">
-        <text x="0" y="17" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#1F2937">Fase T</text>
-
-        <!-- Background Track -->
-        <rect x="45" y="2" width="200" height="24" fill="url(#trackGradient)" rx="12" opacity="0.6"/>
-
-        <!-- Progress Bar with Animation -->
-        <rect x="45" y="2" width="0" height="24" fill="url(#ch3Gradient)" rx="12">
-          <animate
-            attributeName="width"
-            from="0" to="{{phase_f3_bar_width}}"
-            dur="0.8s"
-            begin="0.3s"
-            fill="freeze"
-            calcMode="spline"
-            keySplines="0.25 0.1 0.25 1"
-          />
-        </rect>
-
-        <!-- Glass Overlay -->
-        <rect x="45" y="2" width="200" height="24" fill="url(#glassOverlay)" rx="12" pointer-events="none"/>
-
-        <!-- Percentage Label -->
-        <text x="255" y="17" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="#1F2937">{{phase_f3_percentage}}%</text>
-      </g>
-
-      <!-- Balance Status Card -->
-      <g id="balance-status" transform="translate(360, 0)">
-        <!-- Status Card Background -->
-        <rect x="-10" y="-5" width="300" height="75" rx="8" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="1"/>
-
-        <!-- Title -->
-        <text x="0" y="12" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#6B7280" letter-spacing="0.5">Balance Status</text>
-
-        <!-- Status Indicator with Badge -->
-        <g transform="translate(0, 25)">
-          <circle cx="12" cy="0" r="10" fill="{{phase_balance_status_color}}" opacity="0.2"/>
-          <circle cx="12" cy="0" r="6" fill="{{phase_balance_status_color}}"/>
-          <text x="30" y="5" font-family="Inter, sans-serif" font-size="14" font-weight="700" fill="#111827">{{phase_balance_status_text}}</text>
-        </g>
-
-        <!-- Deviation Info -->
-        <g transform="translate(0, 50)">
-          <text x="0" y="0" font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#6B7280">Deviation: </text>
-          <text x="65" y="0" font-family="Inter, sans-serif" font-size="12" font-weight="700" fill="#DC2626">{{phase_balance_deviation}}%</text>
-        </g>
-      </g>
-    </g>
-  </g>
-
-  <!-- ========================================= -->
   <!-- POWER CONSUMPTION CHART SECTION (Improved) -->
   <!-- ========================================= -->
   <g id="chart-section">
-    <text x="30" y="390" class="section-header">Average Consumption per Channel</text>
+    <text x="30" y="230" class="section-header">Average Consumption per Channel</text>
 
-    <rect x="30" y="400" width="734" height="280" class="card-elevated" rx="8"/>
+    <rect x="30" y="240" width="734" height="280" class="card-elevated" rx="8"/>
 
     <!-- Two Column Layout: Left 40% (Electric Image) | Right 60% (Chart + Legend) -->
 
     <!-- LEFT COLUMN: Electric Image (40% = ~294px) -->
-    <g id="electric-section" transform="translate(50, 415)">
+    <g id="electric-section" transform="translate(50, 255)">
       <!-- Electric Image -->
       <image href="{{electric_url}}" x="30" y="10" width="120" height="240" preserveAspectRatio="xMidYMid meet"/>
 
@@ -304,7 +182,7 @@
     </g>
 
     <!-- RIGHT COLUMN: Chart + Legend (60% = ~440px) -->
-    <g id="chart-column" transform="translate(334, 410)">
+    <g id="chart-column" transform="translate(334, 250)">
       <!-- Chart Legend with Badge Style -->
       <g id="chart-legend" font-family="Inter, sans-serif">
         <!-- Fase R Legend -->
@@ -342,13 +220,13 @@
   <!-- CONSUMPTION DETAILS SECTION (Improved) -->
   <!-- ========================================= -->
   <g id="consumption-details">
-    <text x="30" y="710" class="section-header">Consumption Details</text>
+    <text x="30" y="540" class="section-header">Consumption Details</text>
 
     <!-- Total Consumption Details Card -->
-    <rect x="30" y="720" width="734" height="145" class="card-elevated" rx="8"/>
+    <rect x="30" y="550" width="734" height="145" class="card-elevated" rx="8"/>
 
     <!-- Card Header -->
-    <g transform="translate(45, 740)">
+    <g transform="translate(45, 570)">
       <text font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.5">
         <tspan fill="#3B82F6">📊</tspan>
         <tspan dx="4">Total Consumption Summary</tspan>
@@ -358,7 +236,7 @@
     <!-- 3 Column Layout: Amperes | kWh | Estimated Cost -->
 
     <!-- Amperes Column -->
-    <g id="consumption-amperes" transform="translate(60, 780)">
+    <g id="consumption-amperes" transform="translate(60, 610)">
       <rect x="-15" y="-5" width="180" height="70" rx="6" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="0.5"/>
       <text y="0" fill="#6B7280" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">Total Amperes</text>
       <text y="30" fill="#111827" font-family="Inter, sans-serif" font-size="24" font-weight="800">{{total_amperes}}</text>
@@ -366,7 +244,7 @@
     </g>
 
     <!-- kWh Column -->
-    <g id="consumption-kwh" transform="translate(310, 780)">
+    <g id="consumption-kwh" transform="translate(310, 610)">
       <rect x="-15" y="-5" width="180" height="70" rx="6" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="0.5"/>
       <text y="0" fill="#6B7280" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">Total Energy</text>
       <text y="30" fill="#111827" font-family="Inter, sans-serif" font-size="24" font-weight="800">{{total_kwh}}</text>
@@ -374,7 +252,7 @@
     </g>
 
     <!-- Cost Column -->
-    <g id="consumption-cost" transform="translate(560, 780)">
+    <g id="consumption-cost" transform="translate(560, 610)">
       <rect x="-15" y="-5" width="180" height="70" rx="6" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="0.5"/>
       <text y="0" fill="#6B7280" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">Estimated Cost (Spain)</text>
       <text y="30" fill="#059669" font-family="Inter, sans-serif" font-size="24" font-weight="800">€{{total_cost}}</text>
@@ -386,14 +264,14 @@
   <!-- PEAK LOAD TIMES SECTION (Improved) -->
   <!-- ========================================= -->
   <g id="peak-loads">
-    <text x="30" y="895" class="section-header">Peak Load Times &amp; Values</text>
+    <text x="30" y="725" class="section-header">Peak Load Times &amp; Values</text>
 
     <!-- Card with light grayscale background -->
-    <rect x="30" y="905" width="734" height="115" class="card-elevated" rx="8"/>
-    <rect x="30" y="905" width="734" height="115" rx="8" fill="#F9FAFB" opacity="0.8"/>
+    <rect x="30" y="735" width="734" height="115" class="card-elevated" rx="8"/>
+    <rect x="30" y="735" width="734" height="115" rx="8" fill="#F9FAFB" opacity="0.8"/>
 
     <!-- Table Title -->
-    <g transform="translate(45, 925)">
+    <g transform="translate(45, 755)">
       <text font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#DC2626">
         <tspan fill="#EF4444">⚡</tspan>
         <tspan dx="4">Peak Load Events</tspan>
@@ -402,7 +280,7 @@
     </g>
 
     <!-- Table Header -->
-    <g transform="translate(0, 950)" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#64748B">
+    <g transform="translate(0, 780)" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#64748B">
       <text x="45">Rank</text>
       <text x="100">Sensor</text>
       <text x="240">Channel</text>
@@ -411,10 +289,10 @@
       <text x="660">Power (kW)</text>
     </g>
 
-    <line x1="45" y1="958" x2="749" y2="958" stroke="#CBD5E1" stroke-width="0.8" opacity="0.6"/>
+    <line x1="45" y1="788" x2="749" y2="788" stroke="#CBD5E1" stroke-width="0.8" opacity="0.6"/>
 
     <!-- Peak Row 1 -->
-    <g transform="translate(0, 978)" font-family="Inter, sans-serif">
+    <g transform="translate(0, 808)" font-family="Inter, sans-serif">
       <rect x="40" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.2"/>
       <text x="52" fill="#DC2626" font-size="11" font-weight="700" text-anchor="middle">#1</text>
       <text x="100" fill="#1F2937" font-size="11">{{peak_1_sensor}}</text>
@@ -425,7 +303,7 @@
     </g>
 
     <!-- Peak Row 2 -->
-    <g transform="translate(0, 1000)" font-family="Inter, sans-serif">
+    <g transform="translate(0, 830)" font-family="Inter, sans-serif">
       <rect x="40" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.15"/>
       <text x="52" fill="#EF4444" font-size="11" font-weight="600" text-anchor="middle">#2</text>
       <text x="100" fill="#1F2937" font-size="11">{{peak_2_sensor}}</text>

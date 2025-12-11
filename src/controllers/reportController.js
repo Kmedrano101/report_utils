@@ -1393,6 +1393,38 @@ class ReportController {
         // Base metrics from VictoriaMetrics (for key metrics cards)
         ...baseMetrics,
 
+        // Labels for template (will be translated by translateTemplateText)
+        label_building_name: 'BUILDING NAME',
+        label_report_period: 'REPORT PERIOD',
+        label_total_sensors: 'TOTAL SENSORS',
+        label_active: 'ACTIVE',
+        label_report_overview: 'Report Overview',
+        label_key_metrics: 'Key Metrics',
+        label_comfort: 'Comfort',
+        label_critical: 'Critical',
+        label_ideal_zone: 'Ideal Zone',
+        label_above_threshold: 'Above Threshold',
+        label_noise_distribution: 'Noise Distribution',
+        label_total: 'Total',
+        label_quiet: 'Quiet',
+        label_normal: 'Normal',
+        label_loud: 'Loud',
+        label_noise_ranges: 'Noise Ranges',
+        label_noisiest_quietest: 'Noisiest and Quietest Locations',
+        label_noise_details: 'Noise Details by Sensor',
+        label_noise_trends: 'Noise Trends',
+        label_average: 'Average',
+        label_noise_trend_max: null, // Filled after trends chart is computed
+        label_noise_trend_avg: null,
+        label_noise_trend_min: null,
+        label_noise_trend_comfort: null,
+        label_noise_trend_overall_avg: null,
+
+        // Report description (locale-specific)
+        report_description: locale === 'es'
+          ? 'Este informe analiza los niveles de ruido en todas las ubicaciones monitoreadas para identificar zonas ruidosas y silenciosas. La zona de confort acústico se define entre 35-45 dB, proporcionando condiciones óptimas para la concentración y el bienestar. Niveles superiores a 70 dB se consideran críticos.'
+          : 'This report analyzes noise levels across all monitored locations to identify noisy and quiet zones. The acoustic comfort zone is defined between 35-45 dB, providing optimal conditions for concentration and well-being. Levels above 70 dB are considered critical.',
+
         // Building name
         building_name: 'Madison Arena',
 
@@ -1415,11 +1447,23 @@ class ReportController {
         // Sound analysis data
         ...soundData,
 
+        // Generation date
+        generation_date: new Date().toLocaleDateString(languageTag, { year: 'numeric', month: 'long', day: 'numeric' }),
+
         // Status info
         last_update_time: new Date().toLocaleString(languageTag)
       };
 
       logger.info('Generating report with template', { templateName, layout: normalizedLayout });
+
+      // Build adaptive legend labels for noise trends (hourly/daily/weekly)
+      const trendsOptions = soundData.chartData?.trendsChart?.options || {};
+      const timeUnitLabel = trendsOptions.timeUnitLabel ? ` (${trendsOptions.timeUnitLabel})` : '';
+      templateData.label_noise_trend_max = locale === 'es' ? `Máx${timeUnitLabel}` : `Max${timeUnitLabel}`;
+      templateData.label_noise_trend_avg = locale === 'es' ? `Promedio${timeUnitLabel}` : `Average${timeUnitLabel}`;
+      templateData.label_noise_trend_min = locale === 'es' ? `Mín${timeUnitLabel}` : `Min${timeUnitLabel}`;
+      templateData.label_noise_trend_comfort = locale === 'es' ? 'Zona de confort' : 'Comfort Zone';
+      templateData.label_noise_trend_overall_avg = locale === 'es' ? 'Prom. general' : 'Overall Avg';
 
       // Load and process template
       const templateContent = await svgTemplateService.loadTemplate(templateName);
@@ -1430,11 +1474,11 @@ class ReportController {
       const htmlOptions = {
         layout: normalizedLayout === 'landscape' || normalizedLayout === 'horizontal' ? 'landscape' : 'portrait',
         pageSize: pageSize.toUpperCase(),
-        chartType: 'noise-comparison',
+        chartType: 'noise-trends',
         locale
       };
 
-      // Prepare chart data for noise comparison chart
+      // Prepare chart data for noise comparison and trends charts
       const chartData = soundData.chartData || null;
 
       if (format === 'html') {

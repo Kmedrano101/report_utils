@@ -619,6 +619,240 @@ class UserMetricsService {
     }
 
     /**
+     * Generate trends chart data for noise levels (max/avg/min) with adaptive buckets
+     * @param {string} startDate - Start date
+     * @param {string} endDate - End date
+     * @param {string} source - Data source
+     * @param {number|string} overallAvg - Overall average sound level
+     * @param {string} locale - Locale for labels (e.g., 'es-ES', 'en')
+     * @returns {Promise<Object|null>} Trends chart data
+     */
+    async generateNoiseTrendsChartData(startDate, endDate, source, overallAvg, locale = 'es-ES') {
+        try {
+            const startTime = new Date(startDate).getTime();
+            const endTime = new Date(endDate).getTime();
+            const durationHours = (endTime - startTime) / (1000 * 60 * 60);
+            const durationDays = durationHours / 24;
+            const rangeStartMs = Number.isFinite(startTime) ? startTime : null;
+            const rangeEndMs = Number.isFinite(endTime) ? endTime : null;
+            const isSpanish = locale && (locale.startsWith('es') || locale === 'es-ES');
+
+            let step;
+            let timeUnit;
+            if (durationHours <= 48) {
+                step = '1h';
+                timeUnit = 'hour';
+            } else if (durationDays <= 30) {
+                step = '1d';
+                timeUnit = 'day';
+            } else {
+                step = '1w';
+                timeUnit = 'week';
+            }
+
+            const timeUnitLabels = {
+                hour: isSpanish ? 'por hora' : 'hourly',
+                day: isSpanish ? 'diario' : 'daily',
+                week: isSpanish ? 'semanal' : 'weekly'
+            };
+            const timeUnitLabel = timeUnitLabels[timeUnit];
+
+            logger.info('Generating noise trends chart', {
+                durationHours,
+                step,
+                timeUnit,
+                startDate,
+                endDate
+            });
+
+            const maxSoundQuery = `max(iot_sensor_reading{sensor_type="soundPeak"})`;
+            const minSoundQuery = `min(iot_sensor_reading{sensor_type="soundAvg"})`;
+            const avgSoundQuery = `avg(iot_sensor_reading{sensor_type="soundAvg"})`;
+
+            const [maxResult, minResult, avgResult] = await Promise.all([
+                victoriaMetricsService.queryRange(maxSoundQuery, {
+                    start: startDate,
+                    end: endDate,
+                    step,
+                    source
+                }),
+                victoriaMetricsService.queryRange(minSoundQuery, {
+                    start: startDate,
+                    end: endDate,
+                    step,
+                    source
+                }),
+                victoriaMetricsService.queryRange(avgSoundQuery, {
+                    start: startDate,
+                    end: endDate,
+                    step,
+                    source
+                })
+            ]);
+
+            const parseRangeSeries = (resultData) => {
+                const timestamps = [];
+                const values = [];
+
+                if (!resultData) return { timestamps, values };
+
+                if (Array.isArray(resultData.values) && Array.isArray(resultData.values[0])) {
+                    resultData.values.forEach(point => {
+                        if (!Array.isArray(point) || point.length < 2) return;
+                        const [tsRaw, valueRaw] = point;
+                        const ts = parseFloat(tsRaw);
+                        const val = parseFloat(valueRaw);
+                        if (Number.isFinite(ts) && Number.isFinite(val)) {
+                            timestamps.push(ts);
+                            values.push(val);
+                        }
+                    });
+                    return { timestamps, values };
+                }
+
+                if (Array.isArray(resultData.values) && Array.isArray(resultData.timestamps)) {
+                    for (let i = 0; i < resultData.values.length; i++) {
+                        const ts = parseFloat(resultData.timestamps[i]);
+                        const val = parseFloat(resultData.values[i]);
+                        if (Number.isFinite(ts) && Number.isFinite(val)) {
+                            timestamps.push(ts);
+                            values.push(val);
+                        }
+                    }
+                    return { timestamps, values };
+                }
+
+                if (Array.isArray(resultData.values) && resultData.values.length && typeof resultData.values[0] === 'object') {
+                    resultData.values.forEach(point => {
+                        const ts = parseFloat(point.timestamp ?? point.ts);
+                        const val = parseFloat(point.value ?? point.val);
+                        if (Number.isFinite(ts) && Number.isFinite(val)) {
+                            timestamps.push(ts);
+                            values.push(val);
+                        }
+                    });
+                    return { timestamps, values };
+                }
+
+                return { timestamps, values };
+            };
+
+            const maxSeries = parseRangeSeries(maxResult.data?.result?.[0]);
+            const minSeries = parseRangeSeries(minResult.data?.result?.[0]);
+            const avgSeries = parseRangeSeries(avgResult.data?.result?.[0]);
+
+            const availableSeries = [maxSeries, minSeries, avgSeries].filter(s => s.timestamps.length > 0);
+            const referenceSeries = availableSeries.sort((a, b) => b.timestamps.length - a.timestamps.length)[0];
+
+            if (!referenceSeries || referenceSeries.timestamps.length === 0) {
+                logger.warn('No time-series data available for noise trends chart');
+                return null;
+            }
+
+            const sampleTs = referenceSeries.timestamps[0];
+            const isMilliseconds = sampleTs > 1e11;
+            const toMs = (ts) => isMilliseconds ? ts : ts * 1000;
+
+            let filteredReference = referenceSeries.timestamps;
+            if (rangeStartMs !== null && rangeEndMs !== null) {
+                filteredReference = referenceSeries.timestamps.filter(ts => {
+                    const tsMs = toMs(ts);
+                    return tsMs >= rangeStartMs && tsMs <= rangeEndMs;
+                });
+            }
+
+            if (filteredReference.length === 0) {
+                filteredReference = referenceSeries.timestamps;
+            }
+
+            const mapSeriesToReference = (series, referenceTimestamps) => {
+                const lookup = new Map(series.timestamps.map((ts, idx) => [ts, series.values[idx]]));
+                return referenceTimestamps.map(ts => lookup.has(ts) ? lookup.get(ts) : null);
+            };
+
+            const timestamps = filteredReference.map(ts => new Date(toMs(ts)).toISOString());
+            const maxValues = mapSeriesToReference(maxSeries, filteredReference);
+            const minValues = mapSeriesToReference(minSeries, filteredReference);
+            const avgValues = mapSeriesToReference(avgSeries, filteredReference);
+
+            const toPoints = (values) => timestamps.map((ts, idx) => ({
+                x: ts,
+                y: values[idx] !== undefined ? values[idx] : null
+            }));
+
+            const maxPoints = toPoints(maxValues);
+            const minPoints = toPoints(minValues);
+            const avgPoints = toPoints(avgValues);
+
+            const maxLabel = isSpanish
+                ? `🔊 Ruido máx. (${timeUnitLabel})`
+                : `🔊 Max noise (${timeUnitLabel})`;
+            const avgLabel = isSpanish
+                ? `📊 Ruido prom. (${timeUnitLabel})`
+                : `📊 Avg noise (${timeUnitLabel})`;
+            const minLabel = isSpanish
+                ? `🤫 Ruido mín. (${timeUnitLabel})`
+                : `🤫 Min noise (${timeUnitLabel})`;
+
+            return {
+                type: 'line',
+                labels: timestamps,
+                datasets: [
+                    {
+                        label: maxLabel,
+                        data: maxPoints,
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                        borderWidth: 2.5,
+                        tension: 0.35,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        spanGaps: true
+                    },
+                    {
+                        label: avgLabel,
+                        data: avgPoints,
+                        borderColor: 'rgb(249, 115, 22)',
+                        backgroundColor: 'rgba(249, 115, 22, 0.12)',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        spanGaps: true
+                    },
+                    {
+                        label: minLabel,
+                        data: minPoints,
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        fill: false,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        spanGaps: true
+                    }
+                ],
+                options: {
+                    comfortZoneMin: 35,
+                    comfortZoneMax: 45,
+                    overallAvg: parseFloat(overallAvg) || 0,
+                    timeUnit,
+                    timeUnitLabel,
+                    timestamps,
+                    rangeStart: startDate,
+                    rangeEnd: endDate
+                }
+            };
+        } catch (error) {
+            logger.error('Failed to generate noise trends chart data', { error: error.message });
+            return null;
+        }
+    }
+
+    /**
      * Get temperature status label
      */
     getTemperatureStatus(temp, zone) {
@@ -883,8 +1117,17 @@ class UserMetricsService {
             // Get max, avg, min sound levels
             const soundMetrics = await this.getDetailedSoundMetrics(startDate, endDate, source, timeRange);
 
-            // Get noisiest locations for chart
-            const noisiestLocations = await this.getNoisiestLocations(startDate, endDate, source, timeRange);
+            // Get noisiest locations for chart and sensor details
+            const { chartData: comparisonChart, sensorDetails } = await this.getNoisiestAndQuietestLocations(startDate, endDate, source, timeRange);
+
+            // Build time-series trends chart (max/avg/min) with adaptive bucket size
+            const trendsChart = await this.generateNoiseTrendsChartData(
+                startDate,
+                endDate,
+                source,
+                soundMetrics.overall_avg_sound,
+                locale
+            );
 
             // Get peak noise events
             const peakNoiseEvents = await this.getPeakNoiseEvents(startDate, endDate, source, timeRange, locale);
@@ -892,14 +1135,48 @@ class UserMetricsService {
             // Calculate statistics
             const statistics = await this.getSoundStatistics(startDate, endDate, source, timeRange);
 
+            // Calculate noise distribution for donut chart
+            const noiseDistribution = await this.getNoiseDistribution(startDate, endDate, source, timeRange);
+
+            // Calculate comfort/critical percentages for key metrics
+            const overallAvg = parseFloat(soundMetrics.overall_avg_sound) || 0;
+            // Comfort zone: 35-45 dB, Critical: >70 dB
+            const comfortPercentage = noiseDistribution.quiet_percentage;
+            const criticalPercentage = noiseDistribution.loud_percentage;
+
             const report = {
                 reportName: 'Sound Levels - Noise Pollution Analysis',
                 reportType: 'sound-analysis',
-                dateRange: `${this.formatDate(startDate, locale)} - ${this.formatDate(endDate, locale)}`,
+                date_range: `${this.formatDate(startDate, locale)} - ${this.formatDate(endDate, locale)}`,
                 generatedAt: new Date().toISOString(),
 
                 // Sound metrics
                 ...soundMetrics,
+
+                // Key metrics percentages
+                comfort_percentage: comfortPercentage,
+                critical_percentage: criticalPercentage,
+
+                // Noise distribution for donut chart
+                ...noiseDistribution,
+
+                // Sensor counts
+                total_sensors: sensorDetails.totalSensors || 0,
+                active_sensors: sensorDetails.activeSensors || 0,
+
+                // Noisiest sensor details
+                noisiest_1_name: sensorDetails.noisiest?.name || 'N/A',
+                noisiest_1_avg: sensorDetails.noisiest?.avg || '0',
+                noisiest_1_peak: sensorDetails.noisiest?.peak || '0',
+                noisiest_1_min: sensorDetails.noisiest?.min || '0',
+                noisiest_1_deviation: sensorDetails.noisiest?.deviation || '0',
+
+                // Quietest sensor details
+                quietest_1_name: sensorDetails.quietest?.name || 'N/A',
+                quietest_1_avg: sensorDetails.quietest?.avg || '0',
+                quietest_1_peak: sensorDetails.quietest?.peak || '0',
+                quietest_1_min: sensorDetails.quietest?.min || '0',
+                quietest_1_deviation: sensorDetails.quietest?.deviation || '0',
 
                 // Statistics
                 ...statistics,
@@ -908,7 +1185,10 @@ class UserMetricsService {
                 ...peakNoiseEvents,
 
                 // Chart data
-                chartData: noisiestLocations
+                chartData: {
+                    comparisonChart,
+                    trendsChart
+                }
             };
 
             logger.info('Sound Level Analysis report generated successfully');
@@ -921,6 +1201,162 @@ class UserMetricsService {
             });
             throw error;
         }
+    }
+
+    /**
+     * Get noise distribution percentages for donut chart
+     */
+    async getNoiseDistribution(startDate, endDate, source, timeRange) {
+        const query = `avg_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${timeRange}])`;
+        const result = await victoriaMetricsService.query(query, { time: endDate, source });
+
+        let quietCount = 0;  // < 45 dB
+        let normalCount = 0; // 45-70 dB
+        let loudCount = 0;   // > 70 dB
+        let total = 0;
+
+        result.data?.result?.forEach(r => {
+            const avgSound = parseFloat(r.values?.[0] || 0);
+            total++;
+            if (avgSound < 45) {
+                quietCount++;
+            } else if (avgSound <= 70) {
+                normalCount++;
+            } else {
+                loudCount++;
+            }
+        });
+
+        const quietPercentage = total > 0 ? Math.round((quietCount / total) * 100) : 0;
+        const normalPercentage = total > 0 ? Math.round((normalCount / total) * 100) : 0;
+        const loudPercentage = total > 0 ? Math.round((loudCount / total) * 100) : 0;
+
+        // Calculate arc lengths for donut chart (circumference = 2 * PI * r = 2 * 3.14159 * 31.5 ≈ 198)
+        const circumference = 198;
+        const quietArcLength = (quietPercentage / 100) * circumference;
+        const normalArcLength = (normalPercentage / 100) * circumference;
+        const loudArcLength = (loudPercentage / 100) * circumference;
+
+        // Calculate offsets (negative of cumulative arc lengths)
+        const normalArcOffset = -quietArcLength;
+        const loudArcOffset = -(quietArcLength + normalArcLength);
+
+        return {
+            quiet_percentage: quietPercentage,
+            normal_percentage: normalPercentage,
+            loud_percentage: loudPercentage,
+            quiet_arc_length: quietArcLength.toFixed(1),
+            normal_arc_length: normalArcLength.toFixed(1),
+            loud_arc_length: loudArcLength.toFixed(1),
+            normal_arc_offset: normalArcOffset.toFixed(1),
+            loud_arc_offset: loudArcOffset.toFixed(1)
+        };
+    }
+
+    /**
+     * Get noisiest and quietest locations with sensor details
+     */
+    async getNoisiestAndQuietestLocations(startDate, endDate, source, timeRange) {
+        const avgQuery = `avg_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${timeRange}])`;
+        const peakQuery = `max_over_time(iot_sensor_reading{sensor_type="soundPeak"}[${timeRange}])`;
+        const minQuery = `min_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${timeRange}])`;
+
+        const [avgResult, peakResult, minResult] = await Promise.all([
+            victoriaMetricsService.query(avgQuery, { time: endDate, source }),
+            victoriaMetricsService.query(peakQuery, { time: endDate, source }),
+            victoriaMetricsService.query(minQuery, { time: endDate, source })
+        ]);
+
+        // Build sensor data map
+        const sensorMap = new Map();
+
+        avgResult.data?.result?.forEach(r => {
+            const sensorName = r.metric?.sensor_name || 'unknown';
+            const avgSound = parseFloat(r.values?.[0] || 0);
+            if (!sensorMap.has(sensorName)) {
+                sensorMap.set(sensorName, { name: sensorName, avg: 0, peak: 0, min: 0 });
+            }
+            sensorMap.get(sensorName).avg = avgSound;
+        });
+
+        peakResult.data?.result?.forEach(r => {
+            const sensorName = r.metric?.sensor_name || 'unknown';
+            const peakSound = parseFloat(r.values?.[0] || 0);
+            if (sensorMap.has(sensorName)) {
+                sensorMap.get(sensorName).peak = peakSound;
+            }
+        });
+
+        minResult.data?.result?.forEach(r => {
+            const sensorName = r.metric?.sensor_name || 'unknown';
+            const minSound = parseFloat(r.values?.[0] || 0);
+            if (sensorMap.has(sensorName)) {
+                sensorMap.get(sensorName).min = minSound;
+            }
+        });
+
+        // Convert to array and sort
+        const locations = Array.from(sensorMap.values());
+        locations.sort((a, b) => b.avg - a.avg);
+
+        const totalSensors = locations.length;
+        const activeSensors = locations.filter(l => l.avg > 0).length;
+
+        // Calculate overall average for deviation
+        const overallAvg = locations.length > 0
+            ? locations.reduce((sum, l) => sum + l.avg, 0) / locations.length
+            : 0;
+
+        // Get noisiest and quietest
+        const noisiest = locations[0] || null;
+        const quietest = locations[locations.length - 1] || null;
+
+        const formatSensor = (sensor) => {
+            if (!sensor) return null;
+            const deviation = sensor.avg - overallAvg;
+            return {
+                name: sensor.name,
+                avg: sensor.avg.toFixed(1),
+                peak: sensor.peak.toFixed(1),
+                min: sensor.min.toFixed(1),
+                deviation: Math.abs(deviation).toFixed(1)
+            };
+        };
+
+        // Build chart data
+        const top5Noisiest = locations.slice(0, Math.min(5, locations.length));
+        const bottom3Quietest = locations.slice(-Math.min(3, locations.length)).reverse();
+
+        const chartData = {
+            labels: [...top5Noisiest.map(l => l.name), ...bottom3Quietest.map(l => l.name)],
+            datasets: [
+                {
+                    label: 'Noisiest Locations',
+                    data: top5Noisiest.map(l => parseFloat(l.avg.toFixed(1))),
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderColor: 'rgb(239, 68, 68)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Quietest Locations',
+                    data: Array(top5Noisiest.length).fill(null).concat(bottom3Quietest.map(l => parseFloat(l.avg.toFixed(1)))),
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 1
+                }
+            ]
+        };
+
+        return {
+            chartData,
+            sensorDetails: {
+                totalSensors,
+                activeSensors,
+                noisiest: formatSensor(noisiest),
+                quietest: formatSensor(quietest),
+                overallAvg: overallAvg.toFixed(1)
+            }
+        };
     }
 
     /**
@@ -952,51 +1388,6 @@ class UserMetricsService {
         };
     }
 
-    /**
-     * Get noisiest locations for chart
-     */
-    async getNoisiestLocations(startDate, endDate, source, timeRange) {
-        const query = `avg_over_time(iot_sensor_reading{sensor_type="soundAvg"}[${timeRange}])`;
-        const result = await victoriaMetricsService.query(query, { time: endDate, source });
-
-        const locations = [];
-        result.data?.result?.forEach(r => {
-            const avgSound = parseFloat(r.values?.[0] || 0);
-            const sensorName = r.metric?.sensor_name || 'unknown';
-
-            locations.push({
-                sensor: sensorName,
-                avgSound: avgSound.toFixed(1)
-            });
-        });
-
-        // Sort by sound level descending
-        locations.sort((a, b) => parseFloat(b.avgSound) - parseFloat(a.avgSound));
-
-        // Get top 5 noisiest and bottom 3 quietest
-        const noisiest = locations.slice(0, Math.min(5, locations.length));
-        const quietest = locations.slice(-Math.min(3, locations.length)).reverse();
-
-        return {
-            labels: [...noisiest.map(l => l.sensor), ...quietest.map(l => l.sensor)],
-            datasets: [
-                {
-                    label: 'Noisiest Locations',
-                    data: noisiest.map(l => parseFloat(l.avgSound)),
-                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                    borderColor: 'rgb(239, 68, 68)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Quietest Locations',
-                    data: Array(noisiest.length).fill(null).concat(quietest.map(l => parseFloat(l.avgSound))),
-                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                    borderColor: 'rgb(16, 185, 129)',
-                    borderWidth: 1
-                }
-            ]
-        };
-    }
 
     /**
      * Get peak noise events
