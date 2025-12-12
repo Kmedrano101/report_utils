@@ -140,17 +140,33 @@
   </g>
 
   <!-- ========================================= -->
+  <!-- REPORT OVERVIEW -->
+  <!-- ========================================= -->
+  <g id="report-description">
+    <text x="30" y="230" class="section-header">{{label_report_overview}}</text>
+
+    <rect x="30" y="240" width="734" height="70" class="card-elevated" rx="8" ry="8"/>
+
+    <!-- Description Text -->
+    <foreignObject x="50" y="252" width="694" height="46">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Inter', sans-serif; font-size: 10px; line-height: 1.5; color: #4B5563; text-align: justify;">
+        {{report_description}}
+      </div>
+    </foreignObject>
+  </g>
+
+  <!-- ========================================= -->
   <!-- POWER CONSUMPTION CHART SECTION (Improved) -->
   <!-- ========================================= -->
   <g id="chart-section">
-    <text x="30" y="230" class="section-header">Average Consumption per Channel</text>
+    <text x="30" y="330" class="section-header">Average Consumption per Channel</text>
 
-    <rect x="30" y="240" width="734" height="280" class="card-elevated" rx="8"/>
+    <rect x="30" y="340" width="734" height="280" class="card-elevated" rx="8"/>
 
     <!-- Two Column Layout: Left 40% (Electric Image) | Right 60% (Chart + Legend) -->
 
     <!-- LEFT COLUMN: Electric Image (40% = ~294px) -->
-    <g id="electric-section" transform="translate(50, 255)">
+    <g id="electric-section" transform="translate(50, 355)">
       <!-- Electric Image -->
       <image href="{{electric_url}}" x="30" y="10" width="120" height="240" preserveAspectRatio="xMidYMid meet"/>
 
@@ -182,7 +198,7 @@
     </g>
 
     <!-- RIGHT COLUMN: Chart + Legend (60% = ~440px) -->
-    <g id="chart-column" transform="translate(334, 250)">
+    <g id="chart-column" transform="translate(334, 350)">
       <!-- Chart Legend with Badge Style -->
       <g id="chart-legend" font-family="Inter, sans-serif">
         <!-- Fase R Legend -->
@@ -220,13 +236,13 @@
   <!-- CONSUMPTION DETAILS SECTION (Improved) -->
   <!-- ========================================= -->
   <g id="consumption-details">
-    <text x="30" y="540" class="section-header">Consumption Details</text>
+    <text x="30" y="640" class="section-header">Consumption Details</text>
 
     <!-- Total Consumption Details Card -->
-    <rect x="30" y="550" width="734" height="145" class="card-elevated" rx="8"/>
+    <rect x="30" y="650" width="734" height="145" class="card-elevated" rx="8"/>
 
     <!-- Card Header -->
-    <g transform="translate(45, 570)">
+    <g transform="translate(45, 670)">
       <text font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#6B7280" letter-spacing="0.5">
         <tspan fill="#3B82F6">📊</tspan>
         <tspan dx="4">Total Consumption Summary</tspan>
@@ -236,7 +252,7 @@
     <!-- 3 Column Layout: Amperes | kWh | Estimated Cost -->
 
     <!-- Amperes Column -->
-    <g id="consumption-amperes" transform="translate(60, 610)">
+    <g id="consumption-amperes" transform="translate(60, 710)">
       <rect x="-15" y="-5" width="180" height="70" rx="6" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="0.5"/>
       <text y="0" fill="#6B7280" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">Total Amperes</text>
       <text y="30" fill="#111827" font-family="Inter, sans-serif" font-size="24" font-weight="800">{{total_amperes}}</text>
@@ -244,7 +260,7 @@
     </g>
 
     <!-- kWh Column -->
-    <g id="consumption-kwh" transform="translate(310, 610)">
+    <g id="consumption-kwh" transform="translate(310, 710)">
       <rect x="-15" y="-5" width="180" height="70" rx="6" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="0.5"/>
       <text y="0" fill="#6B7280" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">Total Energy</text>
       <text y="30" fill="#111827" font-family="Inter, sans-serif" font-size="24" font-weight="800">{{total_kwh}}</text>
@@ -252,7 +268,7 @@
     </g>
 
     <!-- Cost Column -->
-    <g id="consumption-cost" transform="translate(560, 610)">
+    <g id="consumption-cost" transform="translate(560, 710)">
       <rect x="-15" y="-5" width="180" height="70" rx="6" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="0.5"/>
       <text y="0" fill="#6B7280" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">Estimated Cost (Spain)</text>
       <text y="30" fill="#059669" font-family="Inter, sans-serif" font-size="24" font-weight="800">€{{total_cost}}</text>
@@ -264,23 +280,23 @@
   <!-- PEAK LOAD TIMES SECTION (Improved) -->
   <!-- ========================================= -->
   <g id="peak-loads">
-    <text x="30" y="725" class="section-header">Peak Load Times &amp; Values</text>
+    <text x="30" y="825" class="section-header">Peak Load Times &amp; Values</text>
 
     <!-- Card with light grayscale background -->
-    <rect x="30" y="735" width="734" height="115" class="card-elevated" rx="8"/>
-    <rect x="30" y="735" width="734" height="115" rx="8" fill="#F9FAFB" opacity="0.8"/>
+    <rect x="30" y="835" width="734" height="137" class="card-elevated" rx="8"/>
+    <rect x="30" y="835" width="734" height="137" rx="8" fill="#F9FAFB" opacity="0.8"/>
 
     <!-- Table Title -->
-    <g transform="translate(45, 755)">
+    <g transform="translate(45, 855)">
       <text font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="#DC2626">
         <tspan fill="#EF4444">⚡</tspan>
         <tspan dx="4">Peak Load Events</tspan>
-        <tspan dx="6" font-size="9" font-weight="500" fill="#6B7280">(Top 2)</tspan>
+        <tspan dx="6" font-size="9" font-weight="500" fill="#6B7280">(Top 3)</tspan>
       </text>
     </g>
 
     <!-- Table Header -->
-    <g transform="translate(0, 780)" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#64748B">
+    <g transform="translate(0, 880)" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#64748B">
       <text x="45">Rank</text>
       <text x="100">Sensor</text>
       <text x="240">Channel</text>
@@ -289,10 +305,10 @@
       <text x="660">Power (kW)</text>
     </g>
 
-    <line x1="45" y1="788" x2="749" y2="788" stroke="#CBD5E1" stroke-width="0.8" opacity="0.6"/>
+    <line x1="45" y1="888" x2="749" y2="888" stroke="#CBD5E1" stroke-width="0.8" opacity="0.6"/>
 
     <!-- Peak Row 1 -->
-    <g transform="translate(0, 808)" font-family="Inter, sans-serif">
+    <g transform="translate(0, 908)" font-family="Inter, sans-serif">
       <rect x="40" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.2"/>
       <text x="52" fill="#DC2626" font-size="11" font-weight="700" text-anchor="middle">#1</text>
       <text x="100" fill="#1F2937" font-size="11">{{peak_1_sensor}}</text>
@@ -303,7 +319,7 @@
     </g>
 
     <!-- Peak Row 2 -->
-    <g transform="translate(0, 830)" font-family="Inter, sans-serif">
+    <g transform="translate(0, 930)" font-family="Inter, sans-serif">
       <rect x="40" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.15"/>
       <text x="52" fill="#EF4444" font-size="11" font-weight="600" text-anchor="middle">#2</text>
       <text x="100" fill="#1F2937" font-size="11">{{peak_2_sensor}}</text>
@@ -311,6 +327,17 @@
       <text x="360" fill="#111827" font-size="13" font-weight="700">{{peak_2_value}}<tspan fill="#6B7280" font-size="10">A</tspan></text>
       <text x="500" fill="#6B7280" font-size="10">{{peak_2_time}}</text>
       <text x="660" fill="#DC2626" font-size="12" font-weight="600">{{peak_2_power}} kW</text>
+    </g>
+
+    <!-- Peak Row 3 -->
+    <g transform="translate(0, 952)" font-family="Inter, sans-serif">
+      <rect x="40" y="-12" width="24" height="18" rx="4" fill="#EF4444" opacity="0.1"/>
+      <text x="52" fill="#F87171" font-size="11" font-weight="600" text-anchor="middle">#3</text>
+      <text x="100" fill="#1F2937" font-size="11">{{peak_3_sensor}}</text>
+      <text x="240" fill="#1F2937" font-size="11">{{peak_3_channel}}</text>
+      <text x="360" fill="#111827" font-size="13" font-weight="700">{{peak_3_value}}<tspan fill="#6B7280" font-size="10">A</tspan></text>
+      <text x="500" fill="#6B7280" font-size="10">{{peak_3_time}}</text>
+      <text x="660" fill="#DC2626" font-size="12" font-weight="600">{{peak_3_power}} kW</text>
     </g>
   </g>
 

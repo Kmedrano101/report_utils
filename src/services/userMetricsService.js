@@ -1041,31 +1041,86 @@ class UserMetricsService {
 
     /**
      * Get peak load events
+     * Uses range query to find the actual time when max value occurred
      */
     async getPeakLoadEvents(startDate, endDate, source, timeRange, voltage, locale = 'es-ES') {
         const channels = ['current_clamp_1', 'current_clamp_2', 'current_clamp_3', 'current_clamp_4'];
 
+        // Calculate step based on time range for range query
+        const durationMs = new Date(endDate) - new Date(startDate);
+        const durationHours = durationMs / (1000 * 60 * 60);
+        const step = durationHours <= 24 ? '5m' : durationHours <= 168 ? '1h' : '6h';
+
         const peakPromises = channels.map(async (channel) => {
-            const query = `max_over_time(range_trim_spikes(0.009, iot_sensor_reading{sensor_type="${channel}"})[${timeRange}])`;
-            const result = await victoriaMetricsService.query(query, { time: endDate, source });
+            // Use range query to get time-series data and find actual peak time
+            const query = `range_trim_spikes(0.009, iot_sensor_reading{sensor_type="${channel}"})`;
+            const result = await victoriaMetricsService.queryRange(query, {
+                start: startDate,
+                end: endDate,
+                step,
+                source
+            });
 
             const peaks = [];
             result.data?.result?.forEach(r => {
-                const value = parseFloat(r.values?.[0] || 0);
                 const sensorName = r.metric?.sensor_name || 'unknown';
-                const power = ((value * voltage) / 1000).toFixed(2);
 
-                    peaks.push({
-                        sensor: sensorName,
-                        channel: channel,
-                        value: value.toFixed(2),
-                        power: power,
-                        time: new Date(endDate).toLocaleString(locale, {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })
+                // Find the maximum value and its timestamp from the range data
+                let maxValue = 0;
+                let maxTimestamp = null;
+
+                // VictoriaMetrics may return data in different formats:
+                // 1. values: [[ts, val], ...] - standard Prometheus format
+                // 2. values: [val1, val2, ...] + timestamps: [ts1, ts2, ...] - VictoriaMetrics format
+                const values = r.values || [];
+                const timestamps = r.timestamps || [];
+
+                if (timestamps.length > 0 && values.length === timestamps.length) {
+                    // VictoriaMetrics format: separate values and timestamps arrays
+                    values.forEach((val, idx) => {
+                        const parsedVal = parseFloat(val);
+                        if (Number.isFinite(parsedVal) && parsedVal > maxValue) {
+                            maxValue = parsedVal;
+                            maxTimestamp = timestamps[idx];
+                        }
+                    });
+                } else {
+                    // Standard Prometheus format: [[ts, val], ...]
+                    values.forEach(point => {
+                        if (Array.isArray(point) && point.length >= 2) {
+                            const ts = parseFloat(point[0]);
+                            const val = parseFloat(point[1]);
+                            if (Number.isFinite(val) && val > maxValue) {
+                                maxValue = val;
+                                maxTimestamp = ts;
+                            }
+                        }
+                    });
+                }
+
+                // Skip if no valid data found
+                if (maxValue === 0 || maxTimestamp === null) {
+                    return;
+                }
+
+                const power = ((maxValue * voltage) / 1000).toFixed(2);
+
+                // Detect if timestamp is in seconds or milliseconds
+                // Unix seconds for year 2020+ are around 1.6e9, milliseconds are around 1.6e12
+                const isMs = maxTimestamp > 1e11;
+                const timestampMs = isMs ? maxTimestamp : maxTimestamp * 1000;
+
+                peaks.push({
+                    sensor: sensorName,
+                    channel: channel,
+                    value: maxValue.toFixed(2),
+                    power: power,
+                    time: new Date(timestampMs).toLocaleString(locale, {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
                 });
             });
 

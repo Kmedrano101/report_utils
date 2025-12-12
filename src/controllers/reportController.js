@@ -1240,6 +1240,12 @@ class ReportController {
         accent_primary: themeColors.accent_primary,
         accent_secondary: themeColors.accent_secondary,
 
+        // Overview copy
+        label_report_overview: 'Report Overview',
+        report_description: locale === 'es'
+          ? 'Este informe analiza el consumo eléctrico en las fases monitoreadas para destacar la carga total, la energía usada, el coste estimado y los eventos pico para la planificación operativa.'
+          : 'This report analyzes electrical consumption across monitored phases to highlight total load, energy usage, estimated cost, and peak events for operational planning.',
+
         // Power consumption data
         ...powerData,
 
